@@ -1,7 +1,3 @@
-<style>
-   red {color:red;}
-   green {color:lightgreen;}
-</style>
 # I. Introduction
 Test-time adaptation (TTA), an emerging paradigm, has the potential to adapt a pre-trained model to unlabeled data during testing, before making predictions.
 
@@ -40,8 +36,8 @@ The TTA algorithm uses uniform steps in all different types. The only difference
 2. The algorithm uses the unlabeled testing dataset (a part or full) to train the pre-trained model. Since the testing dataset does not include any label, then the loss function will be different, such as entropy instead of the mean square error or cross-entropy. This step is the adaptation step.
 ## II.2 Algorithm 2
 1. The algorithm uses the training dataset to train the model until reaches a high training accuracy. After the model finishes the training, we say that the model is the pre-trained model.
-2. The testing data (a part or full) will be labeled by pseudo-label technical (clustering, etc).
-3. The algorithm uses the labeled testing data to train the model. This step is the adaptation step.
+2. The testing data (a part or full) will be labelled by pseudo-label technical (clustering, etc).
+3. The algorithm uses the labelled testing data to train the model. This step is the adaptation step.
 # III. Problem Definition
 ## III.1 SFDA Problem Definition
 ### Definition 1 (Domain)
@@ -67,18 +63,18 @@ Given a well-trained classifier $\mathcal{f_S: X_S \rightarrow Y_S}$ on the sour
 `Note` that, all test data (target data) are required to be seen during adaptation.
 ## III.2 TTBA Problem Definition
 ### Definition 3 (Test-Time Instance Adaptation, TTIA)
-Given a classifier $\mathcal{f_S}$ learned on the source domain $\mathcal{D_S}$, and an unlabeled target instance $x_t \in \mathcal{D_T}$ under distribution shift, **test-time instance adaptation** aims to leverage the labeled knowledge implied in $\mathcal{f_S}$ to infer the label of $x_t$ adaptively.
+Given a classifier $\mathcal{f_S}$ learned on the source domain $\mathcal{D_S}$, and an unlabeled target instance $x_t \in \mathcal{D_T}$ under distribution shift, **test-time instance adaptation** aims to leverage the labelled knowledge implied in $\mathcal{f_S}$ to infer the label of $x_t$ adaptively.
 ### Definition 4 (Test-Time Batch Adaptation, TTBA)
-Given a classifier $\mathcal{f_S}$ learned on the source domain $\mathcal{D_S}$, and a mini-batch of unlabeled target instances $\{x_t^1, \cdots, x_t^B\}$ from $\mathcal{D_T}$ under distribution shift ($B \ge 1$), **test-time batch adaptation** aims to leverage the labeled knowledge implied in $\mathcal{f_S}$ to infer the label of each instance at the same time.
+Given a classifier $\mathcal{f_S}$ learned on the source domain $\mathcal{D_S}$, and a mini-batch of unlabeled target instances $\{x_t^1, \cdots, x_t^B\}$ from $\mathcal{D_T}$ under distribution shift ($B \ge 1$), **test-time batch adaptation** aims to leverage the labelled knowledge implied in $\mathcal{f_S}$ to infer the label of each instance at the same time.
 
 It is important to acknowledge that the inference of each instance is not independent, but rather influenced by the other instances in the mini-batch.
 + Test-Time Batch Adaptation (TTBA) can be considered a form of SFDA when the batch size $B$ is sufficiently large.
-+ when the batch size $B$ is equal to 1, TTBA degrades to TTIA.
++ When the batch size $B$ is equal to 1, TTBA degrades to TTIA.
   
 Typically, these schemes assume no access to the source data or the ground-truth labels of data on the target distribution. In the following, we provide a taxonomy of TTBA (including TTIA) algorithms, as well as the learning scenarios.
 ## III.3 OTTA Problem Definition
 ### Definition 5 (Online Test-Time Adaptation, OTTA)
-Given a well-trained classifier $\mathcal{f_S}$ on the source domain $\mathcal{D_S}$ and a sequence of unlabeled mini-batches $\{\mathcal{B_1, B_2, \cdots}\}$, online test-time adaptation aims to leverage the labeled knowledge implied in $\mathcal{f_S}$ to infer labels of samples in $\mathcal{B}_i$ under distribution shift, in an online manner.
+Given a well-trained classifier $\mathcal{f_S}$ on the source domain $\mathcal{D_S}$ and a sequence of unlabeled mini-batches $\{\mathcal{B_1, B_2, \cdots}\}$, online test-time adaptation aims to leverage the labelled knowledge implied in $\mathcal{f_S}$ to infer labels of samples in $\mathcal{B}_i$ under distribution shift, in an online manner.
 
 In other words, the knowledge learned in previously seen mini-batches could be accumulated for adaptation to the current mini-batch.
 
@@ -93,6 +89,7 @@ Given a classifier $\mathcal{f_S}$ learned on the source domain $\mathcal{D_S}$ 
 Formally, prior shift (*a.k.a*.label shift), denotes that the marginal label distributions differ but the conditional distributions of input given label remain the same across domains, namely, $\mathcal{p_S(y) \ne p_T(y), p_S(x|y)=p_T(x|y)}$.
 
 Based on the Bayes theorem and the label shift assumption, we have the following equations,
+
 $$
 \begin{align}
    \begin{aligned}
@@ -101,6 +98,7 @@ $$
    \end{aligned}
 \end{align}
 $$
+
 where $\mathcal{p_T(y|x)}$ denotes the corrected posterior probability from the biased prediction $\mathcal{p_S(y|x) \in \mathbb{R}^C}$ for each sample $x$ in the target set $\mathcal{D_T}$.
 
 Therefore, the key to the prior-shift adaptation problem lies in how to obtain the test-time prior $\mathcal{p_T(y)}$ or the prior ratio $\mathcal{w(y) = \frac{p_T(y)}{p_S(y)}}$.  Moreover, the prior ratio could be also considered as the importance weight ($\mathcal{p_T(x,y)/p_S(x,y)}$), which further facilitates retraining the source classifier with a weighted empirical risk minimization. Note that, we only review different strategies of estimating the prior or prior ratio without the source training data, regardless of the follow-up correction strategy
