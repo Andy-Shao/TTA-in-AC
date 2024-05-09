@@ -109,7 +109,8 @@ Pseudo-labeling aims to assign a class label $\hat{y} \in \mathbb{R}^C$ for each
 
 $$
 \begin{align}
-   \min_{\theta}\mathbb{E}_{\{x,\hat{y}\} \in \mathcal{D}_t} w{pl}(x) \cdot d{pl}(\hat{y},p(y|x;\theta))
+   \min_{\theta}\mathbb{E}_{\{x,\hat{y}\} \in \mathcal{D}_t} \\
+   w_{pl}(x) \cdot d_{pl}(\hat{y},p(y|x;\theta))
 \end{align}
 $$
 
