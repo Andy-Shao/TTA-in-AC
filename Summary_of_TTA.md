@@ -106,11 +106,13 @@ Therefore, the key to the prior-shift adaptation problem lies in how to obtain t
 `Note`. TTPA also has an online model in which their historical samples cannot be stored.
 # IV. Pseudo-label
 Pseudo-labeling aims to assign a class label $\hat{y} \in \mathbb{R}^C$ for each unlabeled sample $x$ in $\mathcal{X}_t$ and optimize the following supervised learning objective to guide the learning process,
+
 $$
 \begin{align}
    \min_{\theta}\mathbb{E}_{\{x,\hat{y}\} \in \mathcal{D}_t} w_{pl}(x)\cdot d_{pl}(\hat{y},p(y|x;\theta))
 \end{align}
 $$
+
 where
 + $w_{pl}(x) \in \mathbb{R}$ denotes the weight associated with each pseudo-labeled sample $\{x,\hat{y}\}$
 + $d_{pl}(\hat{y},p(y|x;\theta))$ denotes the divergence between the predicted label probability distribution. e.g., $-\sum_c \hat{y}_c \log[p(y|x;\theta)]_c$ if using the cross entropy as the divergence measure.
@@ -125,6 +127,7 @@ The TTAs include so many pseudo-label methods, that this chapter only lists a `f
 
 ## IV.1 Centroid-based pseudo labels
 The key idea is to obtain target-specific class centroids based on the network predictions and the target features and then derive the unbiased pseudo labels via the nearest centroid classifier.
+
 $$
 \begin{align}
    \begin{cases}
@@ -133,6 +136,7 @@ $$
    \end{cases}
 \end{align}
 $$
+
 where
 + $p_{\theta}(y_c|x)=[p(y|x;\theta)]_c$ denotes the probability associated with the $c$-th class
 + $g(x)$ denotes the feature of input $x$
