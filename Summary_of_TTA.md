@@ -140,23 +140,27 @@ where
 + $d(\cdot,\cdot)$ denotes the cosine distance function
 
 ## IV.2 Neighbor-based pseudo labels
-Inspired by neighborhood aggregation, one line of work maintains a memory bank storing both features and predictions of the target data $\{g(x_i),q_i\}_{i=1}^n$, allowing online refinement of pseudo labels.  Typically, the refined pseudo label is obtained through
+Inspired by neighbourhood aggregation, one line of work maintains a memory bank storing both features and predictions of the target data $\{g(x_i),q_i\}_{i=1}^n$, allowing online refinement of pseudo labels.  Typically, the refined pseudo label is obtained through
+
 $$
 \begin{align}
    \hat{p}_i = \frac{1}{m} \sum_{j \in \mathcal{N}_i} q_j
 \end{align}
 $$
+
 where
 + $\mathcal{N}_i$ denotes the indices of $m$ nearest neighbors of
 $g(x_i)$ in the memory bank.
 
 ## IV.3 Complementary pseudo labels
 randomly chooses a label from the set $\{1, \cdots, C\}\{\hat{y}_i\}$ as the complementary label $\bar{y}_i$ and thus optimizes the following loss function,
+
 $$
 \begin{align}
    \min_{\theta} - \sum_{i=1}^{\mathcal{N}_t} \sum_{c=1}^C 1_{\bar{y}_i=c} \log (1 - p_{\theta}(y_c|x_i))
 \end{align}
 $$
+
 where 
 + $\hat{y}_i$ denotes the inferred hard pseudo label.
 + $\bar{y}$ as a negative pseudo label that indicates the given input does not belong to this label.
@@ -167,6 +171,7 @@ Note that, the probability of correctness is $\frac{C-1}{C}$ for the complementa
 By leveraging the prior knowledge of the target label distribution like class balance, a line of SFDA methods varies the threshold for each class so that a certain proportion of points per class are selected.  Such a strategy would avoid the ‘winner-takes-all’ dilemma where pseudo labels come from several major categories and deteriorate the following training process.  
 
 The pseudo labels $\hat{p}_i$ and solves the following optimization problem,
+
 $$
 \begin{align}
    \begin{aligned}
@@ -175,6 +180,7 @@ $$
    \end{aligned}
 \end{align}
 $$
+
 # V. Training
 ## V.1 Training in the SFDA
 ### V.1.1 Consistency Training
@@ -186,11 +192,13 @@ Besides, another line of consistency training methods tries to match the statist
 Benefiting from advanced data augmentation techniques, several prominent semi-supervised learning methods, unleash the power of consistency regularization over unlabeled data that can be effortlessly adopted in SFDA approaches.
 
 Formally, an exemplar of consistency regularization is expressed as:
+
 $$
 \begin{align}
    \mathcal{L}_{fm}^{con} = \frac{1}{\mathcal{N}_t}\sum_{i=1}^{\mathcal{N_t}} CE(p_{\tilde{\theta}}(y|x_i), p_{\theta}(y_c|\hat{x}_i))
 \end{align}
 $$
+
 where
 + $p_{\theta}(y|x_i) = p(y|x;\theta)$
 + $CE(\cdot,\cdot)$ refers to cross-entropy between two distribution
@@ -199,11 +207,13 @@ where
 
 
 Another representative consistency regularization is virtual adversarial training (VAT)  that devises a smoothness constraint as follows,
+
 $$
 \begin{align}
    \mathcal{L}_{vat}^{con} = \frac{1}{\mathcal{N}_t}\sum_{i=1}^{\mathcal{N_t}} \max_{||\bigtriangleup_i||\le\epsilon} [KL(p_{\tilde{\theta}}(y|x_i)|| p_{\theta}(y|x_i + \bigtriangleup_i))]
 \end{align}
 $$
+
 where 
 + $\bigtriangleup_i$  is a perturbation that disperses the prediction most within an intensity range of $\epsilon$ for the target data $x_i$
 +  KL denotes the Kullback–Leibler divergence
@@ -215,22 +225,26 @@ change.
 + SFDA-UR and RuST append multiple extra dropout layers behind the feature encoder and minimize the mean squared error between predictions as uncertainty.
 + FMML offers another type of model variation by network slimming and sought predictive consistency across different networks.
 + the mean teacher framework is also utilized to form a strong teacher model and a learnable student model, where the teacher and the student share the same architecture, and the weights of the teacher model $θ_{tea}$ are gradually updated by,
+  
 $$
 \begin{align}
    \theta_{tea} = (1 - \eta)\theta_{tea}+ \eta \theta
 \end{align} 
 $$
+
 where 
 1. $\theta$ denotes the weights of the student model,
 2. $\eta$ is the momentum coefficient
 
 #### Consistency under data & model variations
 For example, the mean teacher framework is enhanced by blending strong data augmentation techniques, and the discrepancy between predictions of the student and teacher models is minimized as follows,
+
 $$
 \begin{align}
    \mathcal{L}_{mt}^{con} = \mathbb{E}_{x \in \mathcal{D}_t} d_{mt}(p(y|x,\theta), p(y|\tau(x), \theta_{tea}))
 \end{align}
 $$
+
 where 
 + $\tau(\cdot)$ denotes the strong data augmentation
 + $d_{mt}$ denotes the divergence measure, such as MSE, the Kullback-Leibler, and cross-entropy loss.
@@ -240,18 +254,21 @@ Except for the pseudo-labeling paradigm, one assumption explicitly or implicitly
 
 #### Entropy minimization
 To encourage confident predictions for unlabeled target data, ASFA borrows robust measures from information theory and minimizes the following $\alpha$-Tsallis entropy,
+
 $$
 \begin{align}
    \mathcal{L}_{tsa} = \frac{1}{\mathcal{N}_t}\sum_{i=1}^{\mathcal{N}_t} \frac{1}{\alpha - 1} [1 - \sum_{c=1}^C p_{\theta}(y_c | x_i)^{\alpha}]
 \end{align}
 $$
+
 where $\alpha \gt 0$ is called the entropic index.
 
-+ when $\alpha$ approaches 1, the Tsallis entropy exactly recovers the standard Shannon entropy in $\mathcal{H}(p_{\theta}(y|x_i))=\sum_c p_{\theta}(y_c | x_i) \log p_{\theta}(y_c | x_i)$
++ When $\alpha$ approaches 1, the Tsallis entropy exactly recovers the standard Shannon entropy in $\mathcal{H}(p_{\theta}(y|x_i))=\sum_c p_{\theta}(y_c | x_i) \log p_{\theta}(y_c | x_i)$
 + When α equals 2, the Tsallis entropy corresponds to the maximum squares loss, $\sum_c p_{\theta}(y_c | x_i)^2$. Compared with the Shannon entropy, the gradient of the maximum squares loss increases linearly, preventing easy samples from dominating the training process in the high probability area.
 
 #### Mutual information maximization
-Another favorable clustering-based regularization is mutual information maximization, which tries to maximize the mutual information between inputs and the discrete labels as follows,
+Another favourable clustering-based regularization is mutual information maximization, which tries to maximize the mutual information between inputs and the discrete labels as follows,
+
 $$
 \begin{align}
    \begin{aligned}
@@ -260,6 +277,7 @@ $$
    \end{aligned}
 \end{align} 
 $$
+
 where $\bar{p}_{\theta}(y_c) =\frac{1}{\mathcal{N}_t} \sum_i p_{\theta}(y_c |x_i)$ denotes the $c$-th element in the estimated class label distribution.
 
 Intuitively, increasing the additional diversity term $\mathcal{H(\hat{Y}_t)}$ encourages the target labels to be uniformly distributed, circumventing the degenerate solution where every sample is assigned to the same class.
@@ -273,12 +291,14 @@ where
 This term alone has also been used in many SFDA methods to avoid class collapse.
 
 #### Explicit clustering
-Other clustering-based methods explicitly perform feature-level clustering to encourage more discriminative decision boundaries.  Inspired by neighborhood clustering, CPGA and StickerDA calculate the normalized instance-to-instance similarity with a memory bank $\{\bar{g}(x_i)\}_{i=1}^{\mathcal{N}_t}$ and thus minimize the following entropy,
+Other clustering-based methods explicitly perform feature-level clustering to encourage more discriminative decision boundaries.  Inspired by neighbourhood clustering, CPGA and StickerDA calculate the normalized instance-to-instance similarity with a memory bank $\{\bar{g}(x_i)\}_{i=1}^{\mathcal{N}_t}$ and thus minimize the following entropy,
+
 $$
 \begin{align}
    \mathcal{L}_{nc} = - \frac{1}{\mathcal{N}_t}\sum_{i=1}^{\mathcal{N_t}} \sum_{j \ne i} s_{ij} \log s_{ij}
 \end{align}
 $$
+
 where 
 + $s_{ij} = \frac{exp(g(x_i)^{\top}\bar{g}(x_j)/\tau)}{\sum_{k\ne i} exp(g(x_i)^{\top}\bar{g}(x_k)/\tau)}$ represents the normalized similarity between the $i$-th target feature and the $j$-th feature stored in the memory bank
 + $\tau$ denotes the temperature parameter
@@ -293,11 +313,13 @@ Entropy minimization is a widely used technique to handle unlabeled data. A pion
 There exist many alternatives to entropy minimization for adapting models to unlabeled test samples including class confusion minimization, batch nuclear-norm maximization, maximum squares loss, and mutual information maximization. 
 
 SAR encourages the model to lie in a flat area of the entropy loss surface and optimizes the minimax entropy objective below,
+
 $$
 \begin{align}
    \min_{\theta} \max_{||\bigtriangleup_{\theta}||_2 \le \epsilon} \mathcal{H}(x;\theta + \bigtriangleup_{\theta})
 \end{align} 
 $$
+
 where
 + $\mathcal{H}(\cdot)$ denotes the entropy function
 + $\bigtriangleup_{\theta}$ denotes the weight perturbation in a Euclidean ball with radius $\epsilon$
@@ -308,45 +330,53 @@ a standard procedure used for estimating the test-time prior involves the comput
 the observation in fact belongs to the $j$-th class.
 
 Specifically, the confusion matrix-based method tries to solve the following system of $C$ linear equations with respect to $\mathcal{p_T(\hat{y})}$,
+
 $$
 \begin{align}
    \mathcal{p_T(\hat{y}=i)}=\sum_{j=1}^C [C_{\hat{y}|y}]_{i,j}\mathcal{p_T(y=j)}, i=1,\cdots, C
 \end{align} 
 $$
+
 Intuitively, there exists a closed-form solution, $\mathcal{\hat{p}_T(y)=[C_{\hat{y}|y}]^{-1}p_T(\hat{y})}$, where $\mathcal{p_T(\hat{y})}$ denotes the estimated class label frequency over the original predictions $\mathcal{f_S(x)}$ on the unlabeled test data set.
 
 Note that, the confusion matrix $C_{\hat{y}|y}$ could be obtained using a holdout training data set, which is proven to be unchanged under the label shift assumption. To avoid such infeasible solutions, a bootstrap method is developed to alternately calculate the confusion matrix $C_{\hat{y}|y}$ on holdout data and estimate the predicted class frequency $\mathcal{p_T(\hat{y})}$ on test data.
 
 #### Prior ratio estimation
 BBSE exploits the confusion matrix with <u>joint probability instead of the conditional one above</u>, and directly estimates the prior ratio $\mathcal{w(y) =p_T(y)/p_S(y)}$ based on the following equation,
+
 $$
 \begin{align}
    \mathcal{p_T(\hat{y}=i)} = \sum_{j=1}^C [C_{\hat{y},y}]_{i,j} w(y=j), i=1,\cdots, C
 \end{align}
 $$
+
 $$
 \begin{aligned}
    & \sum_{j=1}^C \mathcal{p(\hat{y}=i | y=j) \cdot p_T(y=j)} \\
    & = \sum_{j=1}^C \mathcal{\frac{p(\hat{y}=i,y=j)}{p_S(y=j)} \cdot p_T(y=j)}
 \end{aligned}
 $$
+
 where 
 + the confusion matrix $[C_{\hat{y},y}]_{i,j}$ is computed with hard predictions over the holdout training data set
-+  a soft variant is further explored in [20].
++  A soft variant is further explored in [20].
 
 To diminish large variances in prior ratio estimation, RLLS proposes to incorporate an additional regularization term $||\theta||_2$,  forming
-the constrained optimization problem as follows,
+the constrained optimization problem is as follows,
+
 $$
 \begin{align}
    \min_{\theta} ||C_{\hat{y},y}\cdot (\theta + 1) - \mathcal{p_T(\hat{y})}||_2 + \lambda ||\theta||_2
 \end{align}
 $$
+
 where 
 + $\theta = w - 1$ is called the amount of weight shift
 + $\lambda$ is a regularization hyper-parameter
 
 ### V.4.2 Maximum Likelihood Estimation (MLE)
 MLLS proposes a straightforward instance of the Expectation-Maximization (EM) algorithm to maximize the likelihood, providing a simple iterative procedure for estimating the prior $\mathcal{p_T(y)}$. In particular, MLLS alternately reestimates the posterior probabilities $\mathcal{\hat{p}_T(y|x)}$ for each test sample and the prior probability $\mathcal{\hat{p}_T(y)}$ as follows,
+
 $$
 \begin{align}
    \begin{aligned}
@@ -356,23 +386,27 @@ $$
    \end{aligned}
 \end{align}
 $$
+
 where
 + $\mathcal{p_S(y|x)}$ is modeled by the classifier’s output $\mathcal{f_S(x)}$
 + $\mathcal{\hat{p}_T(x)}$ is initialized by the estimation of class frequencies in the target domain
 
 this iterative procedure will increase the likelihood of target data at each step. Besides, the EM algorithm could be also reformulated as minimizing the KL divergence between the target data distribution $\mathcal{p_T(x)}$ and its approximation by a linear combination of class-wise distributions $\mathcal{p_T'(x)}$,
+
 $$
 \begin{align}
    \mathcal{p_T'(x)} = \sum_c \lambda_c \mathcal{p_T(x|y = c)}, 
    \text{s.t. } \sum_c \lambda_c = 1
 \end{align}
 $$
+
 where $\lambda_c$ can be considered as an exact approximation of $\mathcal{p_T(y=c)}$.
 
 #### Calibration
 + the probability estimates are calibrated from naive Bayes in the maximization step (M-step).
 + BCTS offers a temperature scaling solution to achieve an explicit calibration for $\mathcal{p_T(y|x)}$ in the expectation step (E-step), which is inspired by a prominent method.  To be specific, BCTS scales the softmax logits $l(x)$ with a temperature parameter T and additionally
 considers the class-specific bias terms $\{b_i\}_{i=1}^C$ as follows,
+
 $$
 \begin{align}
    \mathcal{p_T(y=i|x)} = \frac{exp([l(x)]_i/T) + b_i}{\sum_j exp([l(x)]_j/T) + b_j}
@@ -381,6 +415,7 @@ $$
 
 ### V.4.3 MLE with Confusion Matrix
 MLLS-CM unifies the confusion matrix strategy and the EM-based MLE strategy under a common framework. In particular, the confusion matrix strategy is employed to obtain a calibrated predictor in the E-step. Besides, SCML provides another confusion-based MLE approach that inserts the confusion matrix-based prior into the log-likelihood maximization objective as follows,
+
 $$
 \begin{align}
    \begin{aligned}
@@ -389,6 +424,7 @@ $$
    \end{aligned}
 \end{align}
 $$
+
 where 
 + $m_i$ is the number of samples predicated to the $i$-th class on the target set. 
 
@@ -398,21 +434,25 @@ The projected gradient ascent algorithm with a simplex constraint is iteratively
 Without requiring the whole dataset at test time, another line of TTPA methods focuses on the case of online adaptation at prediction time (*i.e*., sample after sample).  It is worth noting that offline TTPA algorithms could also address the online label shift scenario, for instance, estimating the priors from the already-seen examples. In the following, we mainly introduce online TTPA methods when historical samples could not be stored.
 
 OEM provides an online (or evolving) prior estimation approach to adjust the posterior probability sample by sample. OEM is built on the seminal work in **Maximum Likelihood Estimation** that extends the prior estimation step as:
+
 $$
 \begin{align}
    \mathcal{\hat{p}_T(y=i) \leftarrow (1-\alpha)\hat{p}_T(y=i) + \alpha\hat{p}_T(y=i|x_t)}
 \end{align}
 $$
+
 where
 + $x_t$ denotes the $t$-th test data from the sequence
 + $\alpha$ is the hyper-parameter to control the updating rate
 
 Besides, $PTCA_U$ directly estimates a categorical distribution from a set of $L$ most recent target samples below,
+
 $$
 \begin{align}
    \mathcal{\hat{p}_T}(y=i|x_i) = \frac{\sum_{r=t-L+1}^t [\delta_r(y)]_i + \alpha}{L+C\cdot\alpha}
 \end{align}
 $$
+
 where
 + $\delta_r(y) \in \mathbb{R}^C$ denotes the prediction of $x_r$
 + $\alpha \gt 0$ is the parameter of the Dirichlet prior
@@ -422,49 +462,59 @@ where
 The TTA has a special procedure during batch normalization. Here will list the standard batch normalization algorithm then the subsection will discuss the modification by the TTA.
 
 For example, a batch normalization (BN) layer calculates the mean and variance for each activation over the training data $\mathcal{X_S}$, and normalizes each incoming sample $x_s$ as follows,
+
 $$
 \begin{align}
    \hat{x}_s = \gamma \frac{x_s - \mathbb{E}[X_\mathcal{S}]}{\sqrt{\mathbb{V}[X_{\mathcal{S}}] + \epsilon}} + \beta
 \end{align} 
 $$
+
 where 
 + $\gamma$ and $\beta$ denote the scale and shift parameters
 + $\epsilon$ is a small constant introduced for numerical stability
 
 The BN statistics (i.e., the mean $\mathbb{E}[X_\mathcal{S}]$ and variance $\mathbb{V}[X_{\mathcal{S}}]$) are typically approximated using exponential moving averages over batch-level estimates $\{\mu_k, \sigma^2_k\}$,
+
 $$
 \begin{align}
    \hat{\mu}_{k+1} = (1 - \rho)\cdot \hat{\mu}_k + \rho \cdot \mu_k, \hat{\sigma}^2_{k+1} = (1 - \rho)\cdot \hat{\sigma}^2_k + \rho \cdot \sigma^2_k
 \end{align}
 $$
+
 where 
 + $\rho$ is the momentum term
 + $k$ denotes the training step
 
 the BN statistics over the $k$-th mini-batch $\{x_i\}^{B_s}_{i=1}$ are
+
 $$ 
 \begin{align}
    \mu_k = \frac{1}{B_s}\sum_i x_i, \sigma^2_k = \frac{1}{B_s} \sum_i (x_i - \mu_k)^2
 \end{align}
 $$
+
 where $B_s$ denotes the batch size at training time. During inference, the BN statistics estimated at training time are frozen for each test sample.
 ### VI.1.1 Batch Normalization in TTBA
 PredBN+ adopts the running averaging strategy for BN statistics during training and suggests mixing the BN statistics per batch with the training statistics $\{\mu_s, \sigma^2_s\}$ as,
+
 $$
 \begin{align}
    \bar{\mu}_t = (1 - \rho_t)\cdot \mu_t + \rho_t \cdot \mu_t, \bar{\sigma}^2_t = (1 - \rho_t)\cdot \sigma^2_s + \rho_t \cdot \sigma^2_t
 \end{align}
 $$
+
 where 
 + $\rho_t$ controls the trade-off between training and estimated test statistics
 
 Moreover, TTN presents an alternative solution that calibrates the
 estimation of the variance as follows,
+
 $$
 \begin{align}
    \bar{\sigma}^2_t = (1 - \rho_t)\cdot\sigma^2_s + \rho\cdot\sigma^2_t + \rho_t(1-\rho)(\mu_t - \mu_s)^2
 \end{align}
 $$
+
 Instead of using the same value for different BN layers, TTN optimizes the interpolating weight $\rho_t$ during the posttraining phase using labeled source data.
 
 Typically, methods that rectify BN statistics may suffer from limitations when the batch size B is small, particularly when $B = 1$.
@@ -479,6 +529,7 @@ Tent and RNCR propose replacing the fixed BN statistics (i.e., mean and variance
 Core calibrates the BN statistics by interpolating between the fixed source statistics and the estimated ones at test time, namely, $\mu_t = \rho \hat{\mu}_t + (1-\rho)\mu_s, \sigma_t = \rho  \hat{\sigma}_t + (1 - \rho)\sigma_s$, where $\rho \in [0,1]$ is a momentum hyper-parameter.
 
 Similar to the running average estimation of BN statistics during training, ONDA and two follow-up methods propose initializing the BN statistics $\{\mu_0, \sigma_0\}$ as $\{\mu_s, \sigma_s\}$ and updating them for the $t$-th test batch,
+
 $$
 \begin{align}
    \begin{aligned}
@@ -487,16 +538,19 @@ $$
    \end{aligned}
 \end{align}
 $$
+
 where 
 + $n_t$ denotes the number of samples in the batch, and the $\rho$ is a momentum hyperparameter. 
 + $\rho$ is a momentum hyperparameter. 
 
 To decouple the gradient backpropagation and the selection of BN statistics, GpreBN and DELTA adopt the following reformulation of batch re-normalization,
+
 $$
 \begin{align}
    \hat{x}_t = \gamma \cdot \frac{\frac{x_t - \hat{\mu}_t}{\hat{\sigma}_t} \cdot sg(\hat{\sigma}_t)+sg(\hat{\mu}_t) - \mu}{\sigma} + \beta
 \end{align}
 $$
+
 where 
 + $sg(\cdot)$ denotes the stop-gradient operation
 + $\{\gamma, \beta\}$ are the affine parameters in the BN layer
