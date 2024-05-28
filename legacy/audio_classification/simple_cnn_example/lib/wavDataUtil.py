@@ -28,6 +28,6 @@ class WavDataset(Dataset):
         audio = WavOps.pad_trunc(audio=audio, max_ms=self.duration)
         audio = WavOps.time_shift(audio=audio, shift_limit=self.shift_precentage)
         audio = WavOps.spectro_gram(audio=audio, n_mels=64, n_fft=1024, hop_len=None)
-        audio = WavOps.spectro_augment(spec=audio, max_mask_perctage=.1, freq_mask_num=2, time_mask_num=2)
+        audio = WavOps.spectro_augment(spec=audio, max_mask_perctage=.03, freq_mask_num=2, time_mask_num=2)
         
         return (audio, class_id)

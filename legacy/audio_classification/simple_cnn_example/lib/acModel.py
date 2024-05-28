@@ -95,4 +95,18 @@ class Processor():
 
     @staticmethod
     def inference(model: nn.Module, val_dl: DataLoader, device='cpu'):
-        pass
+        ttl_correct_pred = .0
+        ttl_pred = .0
+
+        model.eval()
+        with torch.no_grad():
+            for (feature, labels) in val_dl:
+                feature, labels = feature.to(device), labels.to(device)
+                outputs = model(feature)
+                _, pred = torch.max(outputs, dim=1)
+                _, class_id = torch.max(labels, dim=1)
+                ttl_correct_pred += (pred == class_id).sum().item()
+                ttl_pred += outputs.shape[0]
+        
+        accuracy = ttl_correct_pred / ttl_pred * 100
+        print(f'Validation accuracy: {accuracy:2f}%, Validation sample size is: {ttl_pred}')
