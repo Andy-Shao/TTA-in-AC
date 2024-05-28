@@ -2,6 +2,7 @@ from typing import Any
 from torch.utils.data import DataLoader, Dataset, random_split
 import torchaudio
 from .wavUtil import WavOps
+import torch
 
 class WavDataset(Dataset):
     def __init__(self, df, data_path) -> None:
@@ -19,6 +20,7 @@ class WavDataset(Dataset):
     def __getitem__(self, index) -> Any:
         absolute_audio_path = self.data_path + self.df.loc[index, 'path']
         class_id = self.df.loc[index, 'classID']
+        class_id = torch.eye(10)[class_id]
 
         audio = WavOps.open(absolute_audio_path)
         audio = WavOps.resampleRate(audio=audio, new_sample_rate=self.sample_rate)

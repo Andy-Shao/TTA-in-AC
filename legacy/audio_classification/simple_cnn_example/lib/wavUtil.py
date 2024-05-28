@@ -31,7 +31,7 @@ class WavOps():
         if(channel_num == 1):
             return ((signal[:1,:], sample_rate))
         else: 
-            return ((torch.cat[signal, signal], sample_rate))
+            return ((torch.cat([signal, signal]), sample_rate))
         
     @staticmethod
     def resampleRate(audio, new_sample_rate):
