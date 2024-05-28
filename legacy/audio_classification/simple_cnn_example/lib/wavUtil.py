@@ -69,7 +69,7 @@ class WavOps():
             head_pad = torch.zeros((channel_num, head_len))
             tail_pad = torch.zeros((channel_num, tail_len))
 
-            signal = torch.cat([head_pad, signal, tail_pad])
+            signal = torch.cat((head_pad, signal, tail_pad),1)
 
         return (signal, sample_rate)
 

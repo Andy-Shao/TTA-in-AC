@@ -1,6 +1,7 @@
 from typing import Any
 from torch.utils.data import DataLoader, Dataset, random_split
 import torchaudio
+from .wavUtil import WavOps
 
 class WavDataset(Dataset):
     def __init__(self, df, data_path) -> None:
@@ -16,7 +17,15 @@ class WavDataset(Dataset):
         return len(self.df)
     
     def __getitem__(self, index) -> Any:
-        absolute_audio_path = self.data_path + self.df.loc[index, 'relative_path']
+        absolute_audio_path = self.data_path + self.df.loc[index, 'path']
         class_id = self.df.loc[index, 'classID']
+
+        audio = WavOps.open(absolute_audio_path)
+        audio = WavOps.resampleRate(audio=audio, new_sample_rate=self.sample_rate)
+        audio = WavOps.rechannel(audio=audio, channel_num=self.channel)
+        audio = WavOps.pad_trunc(audio=audio, max_ms=self.duration)
+        audio = WavOps.time_shift(audio=audio, shift_limit=self.shift_precentage)
+        audio = WavOps.spectro_gram(audio=audio, n_mels=64, n_fft=1024, hop_len=None)
+        audio = WavOps.spectro_augment(spec=audio, max_mask_perctage=.1, freq_mask_num=2, time_mask_num=2)
         
-        pass
+        return (audio, class_id)
