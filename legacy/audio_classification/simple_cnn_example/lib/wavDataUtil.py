@@ -1,4 +1,5 @@
 from typing import Any
+import random
 from torch.utils.data import DataLoader, Dataset, random_split
 import torchaudio
 from .wavUtil import WavOps
@@ -31,3 +32,12 @@ class WavDataset(Dataset):
         audio = WavOps.spectro_augment(spec=audio, max_mask_perctage=.03, freq_mask_num=2, time_mask_num=2)
         
         return (audio, class_id)
+
+def formatAudio(audio, sample_rate, channel, duration, shift_precentage) :
+    audio = WavOps.resampleRate(audio=audio, new_sample_rate=sample_rate)
+    audio = WavOps.rechannel(audio=audio, channel_num=channel)
+    audio = WavOps.pad_trunc(audio=audio, max_ms=duration)
+    if random.random() < .5: audio = WavOps.time_shift(audio=audio, shift_limit=shift_precentage)
+    audio = WavOps.spectro_gram(audio=audio, n_mels=64, n_fft=1024, hop_len=None)
+    if random.random() >= .5 :audio = WavOps.spectro_augment(spec=audio, max_mask_perctage=.03, freq_mask_num=2, time_mask_num=2)
+    return audio

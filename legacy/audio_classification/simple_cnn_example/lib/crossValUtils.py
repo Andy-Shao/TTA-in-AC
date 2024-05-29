@@ -1,0 +1,117 @@
+from typing import Any
+import random
+import pandas as pd
+
+import torch 
+from torch.utils.data import Dataset
+
+class SubsetDs(Dataset):
+    def __init__(self, dataset: Dataset, indexes) -> None:
+        super().__init__()
+        self.dataset = dataset
+        self.indexes = indexes
+
+    def __len__(self):
+        return len(self.indexes)
+
+    def __getitem__(self, index) -> Any:
+        return self.dataset[self.indexes[index]]
+    
+def calIndexes(dataset: Dataset, n_flod: int) -> pd.DataFrame:
+    indexes = pd.DataFrame(columns=['index', 'fold'])
+    for index in range(len(dataset)):
+        fold = random.randrange(start=0, stop=n_flod)
+        indexes.loc[len(indexes)] = [index, fold]
+    return indexes
+
+def switchFold(val_fold: int, indexes: pd.DataFrame):
+    train_indexes = indexes[indexes['fold'] != val_fold]['index'].to_numpy()
+    val_indexes = indexes[indexes['fold'] == val_fold]['index'].to_numpy()
+    return (train_indexes, val_indexes)
+    
+class ValidationRecord():
+    def __init__(self, n_fold: int, label_size: int, n_iter=1) -> None:
+        self.records = pd.DataFrame(columns=['iteration','val_fold', 'label', 'accuracy', 'precision', 'recall', 'TP', 'FP', 'FN', 'TN'])
+        self.n_iter = n_iter
+        self.n_fold = n_fold
+        self.label_size = label_size
+        for iter in range(n_iter):
+            for fold_id in range(n_fold):
+                for label in range(label_size):
+                    self.records.loc[len(self.records)] = [iter, fold_id, label, 0.0, 0.0, 0.0, 0, 0, 0, 0]
+                self.records.loc[len(self.records)] = [iter, fold_id, -1 , 0.0, 0.0, 0.0, 0, 0, -1, -1] ## ttl line
+
+    def noteRecord(self, outputs: torch.Tensor, labels: torch.Tensor, val_fold: int, iter=0):
+        """
+        :param outputs: it is one-hot vector
+        :param labels: it is one-hot vector
+        """
+        _, preds = torch.max(input=outputs, dim=1)
+        _, class_ids = torch.max(input=labels, dim=1)
+        preds = preds.cpu().numpy()
+        class_ids = class_ids.cpu().numpy()
+        for i, class_id in enumerate(class_ids):
+            if preds[i] == class_ids[i]: 
+                rc = self.records[self.records['val_fold'] == val_fold]
+                rc = rc[rc['iteration'] == iter]
+                for k, row in rc.iterrows():
+                    if row['label'] == class_ids[i]:
+                        self.records.loc[k, 'TP'] += 1
+                    else:
+                        self.records.loc[k, 'TN'] += 1
+            else: 
+                rc = self.records[self.records['val_fold'] == val_fold]
+                rc = rc[rc['iteration'] == iter]
+                for k, row in rc.iterrows():
+                    if row['label'] == class_ids[i]:
+                        self.records.loc[k, 'FP'] += 1
+                    elif row['label'] == preds[i]:
+                        self.records.loc[k, 'FN'] += 1
+                    else:
+                        self.records.loc[k, 'TN'] += 1
+
+    def getRecord(self):
+        return self.records.copy(deep=True)
+
+    def calRecord(self):
+        # calculate each label
+        for i, row in self.records[self.records['label'] != -1].iterrows():
+            TP = row['TP']
+            FP = row['FP']
+            FN = row['FN']
+            TN = row['TN']
+            self.records.loc[i, 'accuracy'] = ValidationRecord.accuracy(TP, FP, FN, TN)
+            self.records.loc[i, 'precision'] = ValidationRecord.precision(TP, FP)
+            self.records.loc[i, 'recall'] = ValidationRecord.recall(TP, FN)         
+
+        # calculate ttl
+        for i, row in self.records[self.records['label'] == -1].iterrows():
+            val_fold = row['val_fold']
+            iteration = row['iteration']
+            TP = 0
+            FP = 0
+            TN = 0
+            FN = 0
+            rc = self.records[self.records['iteration'] == iteration]
+            rc = rc[rc['val_fold'] == val_fold]
+            rc = rc[rc['label'] != -1]
+            for k, innerow in rc.iterrows():
+                TP += innerow['TP']
+                FP += innerow['FP']
+                TN += innerow['TN']
+                FN += innerow['FN']
+            self.records.loc[i, 'precision'] = ValidationRecord.precision(TP, FP)
+            self.records.loc[i, 'recall'] = ValidationRecord.recall(TP, FN)
+            self.records.loc[i, 'accuracy'] = ValidationRecord.accuracy(TP, FP, FN, TN)
+
+    @staticmethod
+    def precision(TP: int, FP: int):
+        return TP / (TP + FP)
+    
+    @staticmethod
+    def recall(TP: int, FN: int):
+        return TP / (TP + FN)
+
+    @staticmethod
+    def accuracy(TP: int, FP: int, FN: int, TN: int):
+        return (TP + TN) / (TP + FP + FN + TN)
