@@ -39,7 +39,7 @@ class ValidationRecord():
             for fold_id in range(n_fold):
                 for label in range(label_size):
                     self.records.loc[len(self.records)] = [iter, fold_id, label, 0.0, 0.0, 0.0, 0, 0, 0, 0]
-                self.records.loc[len(self.records)] = [iter, fold_id, -1 , 0.0, 0.0, 0.0, 0, 0, -1, -1] ## ttl line
+                self.records.loc[len(self.records)] = [iter, fold_id, -1 , 0.0, 0.0, 0.0, 0, 0, 0, 0] ## ttl line
 
     def noteRecord(self, outputs: torch.Tensor, labels: torch.Tensor, val_fold: int, iter=0):
         """
@@ -64,9 +64,9 @@ class ValidationRecord():
                 rc = rc[rc['iteration'] == iter]
                 for k, row in rc.iterrows():
                     if row['label'] == class_ids[i]:
-                        self.records.loc[k, 'FP'] += 1
-                    elif row['label'] == preds[i]:
                         self.records.loc[k, 'FN'] += 1
+                    elif row['label'] == preds[i]:
+                        self.records.loc[k, 'FP'] += 1
                     else:
                         self.records.loc[k, 'TN'] += 1
 
@@ -80,7 +80,7 @@ class ValidationRecord():
             FP = row['FP']
             FN = row['FN']
             TN = row['TN']
-            self.records.loc[i, 'accuracy'] = ValidationRecord.accuracy(TP, FP, FN, TN)
+            self.records.loc[i, 'accuracy'] = TP / (TP + FP)
             self.records.loc[i, 'precision'] = ValidationRecord.precision(TP, FP)
             self.records.loc[i, 'recall'] = ValidationRecord.recall(TP, FN)         
 
@@ -90,7 +90,7 @@ class ValidationRecord():
             iteration = row['iteration']
             TP = 0
             FP = 0
-            TN = 0
+            TN = row['TN']
             FN = 0
             rc = self.records[self.records['iteration'] == iteration]
             rc = rc[rc['val_fold'] == val_fold]
@@ -98,11 +98,11 @@ class ValidationRecord():
             for k, innerow in rc.iterrows():
                 TP += innerow['TP']
                 FP += innerow['FP']
-                TN += innerow['TN']
                 FN += innerow['FN']
+                
             self.records.loc[i, 'precision'] = ValidationRecord.precision(TP, FP)
             self.records.loc[i, 'recall'] = ValidationRecord.recall(TP, FN)
-            self.records.loc[i, 'accuracy'] = ValidationRecord.accuracy(TP, FP, FN, TN)
+            self.records.loc[i, 'accuracy'] = TP / TN
 
     @staticmethod
     def precision(TP: int, FP: int):
@@ -111,7 +111,3 @@ class ValidationRecord():
     @staticmethod
     def recall(TP: int, FN: int):
         return TP / (TP + FN)
-
-    @staticmethod
-    def accuracy(TP: int, FP: int, FN: int, TN: int):
-        return (TP + TN) / (TP + FP + FN + TN)
