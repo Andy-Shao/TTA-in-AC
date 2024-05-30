@@ -34,6 +34,11 @@ def switchFold(val_fold: int, indexes: pd.DataFrame):
 class ValidationRecord():
     def __init__(self, n_fold: int, label_size: int, n_iter=1) -> None:
         self.records = pd.DataFrame(columns=['iteration','val_fold', 'label', 'accuracy', 'precision', 'recall', 'TP', 'FP', 'FN', 'TN'])
+        cols = [f'pred{i}' for i in range(label_size)]
+        cols.append('label')
+        cols.append('iteration')
+        cols.append('fold')
+        self.vLog = pd.DataFrame(columns=cols)
         self.n_iter = n_iter
         self.n_fold = n_fold
         self.label_size = label_size
@@ -48,8 +53,12 @@ class ValidationRecord():
         :param outputs: it is one-hot vector
         :param labels: it is one-hot vector
         """
+        
         _, preds = torch.max(input=outputs, dim=1)
         _, class_ids = torch.max(input=labels, dim=1)
+        logs = torch.cat((outputs.cpu(), class_ids.unsqueeze(1).cpu(), torch.ones((outputs.shape[0], 1)) * iter, torch.ones((outputs.shape[0], 1)) * val_fold), dim=1).numpy()
+        for log in logs:
+            self.vLog.loc[len(self.vLog)] = log
         preds = preds.cpu().numpy()
         class_ids = class_ids.cpu().numpy()
         for i, class_id in enumerate(class_ids):
@@ -74,6 +83,9 @@ class ValidationRecord():
 
     def getRecord(self):
         return self.records.copy(deep=True)
+
+    def getValidateLog(self):
+        return self.vLog
 
     def calRecord(self):
         # calculate each label
