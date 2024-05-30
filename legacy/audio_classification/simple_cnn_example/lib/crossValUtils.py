@@ -130,9 +130,9 @@ def corss_validation_analysis(
         dataset: Dataset, n_fold: int, label_size: int, tranFunc, inferFunc, 
         n_iter=1
     ) -> ValidationRecord:
-    indexes = calIndexes(dataset=dataset, n_flod=n_fold)
     records = ValidationRecord(n_fold=n_fold, n_iter=n_iter, label_size=label_size)
     for iter in range(n_iter):
+        indexes = calIndexes(dataset=dataset, n_flod=n_fold)
         for val_fold in range(n_fold):
             train_indexes, val_indexes = switchFold(val_fold=val_fold, indexes=indexes)
             model = tranFunc(dataset, train_indexes)
