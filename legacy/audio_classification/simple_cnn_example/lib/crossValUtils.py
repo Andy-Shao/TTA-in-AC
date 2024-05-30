@@ -2,6 +2,8 @@ from typing import Any
 import random
 import pandas as pd
 
+import matplotlib.pyplot as plt
+
 import torch 
 from torch.utils.data import Dataset
 
@@ -111,3 +113,35 @@ class ValidationRecord():
     @staticmethod
     def recall(TP: int, FN: int):
         return TP / (TP + FN)
+    
+def corss_validation_analysis(
+        dataset: Dataset, n_fold: int, label_size: int, tranFunc, inferFunc, 
+        n_iter=1
+    ) -> ValidationRecord:
+    indexes = calIndexes(dataset=dataset, n_flod=n_fold)
+    records = ValidationRecord(n_fold=n_fold, n_iter=n_iter, label_size=label_size)
+    for iter in range(n_iter):
+        for val_fold in range(n_fold):
+            train_indexes, val_indexes = switchFold(val_fold=val_fold, indexes=indexes)
+            model = tranFunc(dataset, train_indexes)
+            inferFunc(model, iter, val_fold, dataset, val_indexes, records)
+
+    return records
+
+def display_confidence_interval(label_id: int, input_vector, z_score=1.96, color='#2187bb', end_point_width=.25):
+    input_tensor = torch.Tensor(input_vector)
+    mean = input_tensor.mean().item()
+    std = input_tensor.std().item()
+    confidence_interval = z_score * std / torch.sqrt(torch.Tensor([input_tensor.shape[0]])).item()
+
+    left = label_id - end_point_width / 2
+    right = label_id + end_point_width / 2
+    top = mean + confidence_interval
+    bottom = mean - confidence_interval
+    
+    plt.plot([label_id, label_id], [bottom, top], color=color)
+    plt.plot([left, right], [bottom, bottom], color=color)
+    plt.plot([left, right], [top, top], color=color)
+    plt.plot(label_id, mean, 'ro')
+
+    return mean, confidence_interval
