@@ -1,6 +1,10 @@
 # ProSFDA: Prompt Learning based Source-free Domain Adaptation for Medical Image Segmentation
 [Paper link](https://arxiv.org/abs/2211.11514)
+
 [Code link](https://github.com/ShishuaiHu/ProSFDA)
+
+## Introduction
+This is a `Pseduo-Label`, `Consistency under data variation` training
 
 ## Environment
 
