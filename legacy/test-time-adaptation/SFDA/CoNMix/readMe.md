@@ -20,6 +20,7 @@ conda install -y matplotlib==3.6.2
 pip install ml-collections==0.1.1
 pip install tqdm==4.64.1
 pip install wandb==0.17.1
+pip install timm==0.6.12
 ```
 ```text
 datasets==2.9.0
