@@ -3,3 +3,6 @@
 ## Project Structure
 + **legacy**: it includes all previous research algorithm implements
 + **comparison**: it includes all previous research algorithms comparing analysis
+
+`Note`: the **legacy** and **comparison** prelude from this project's implement. 
+You can ignore them if you do not want to review the previous researches.
