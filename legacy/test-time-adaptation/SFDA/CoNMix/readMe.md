@@ -40,3 +40,15 @@ torch==1.13.1
 torchvision==0.14.1
 tqdm==4.64.1
 ```
+
+## Model Download
+```shell
+wget https://storage.googleapis.com/vit_models/imagenet21k/R50+ViT-B_16.npz
+mkdir -p model/vit_checkpoint/imagenet21k
+mv R50+ViT-B_16.npz model/vit_checkpoint/imagenet21k/R50+ViT-B_16.npz
+```
+
+## Dataset Download
+```shell
+gdown https://drive.google.com/uc?id=1kYKUqt8UCKgr4PiSN-j_-3p48yJAgnCF
+```
