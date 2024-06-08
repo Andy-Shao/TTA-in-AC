@@ -13,13 +13,13 @@
 ```shell
 conda create --name 'my' python=3.8
 conda install pytorch==1.13.1 torchvision==0.14.1 torchaudio==0.13.1 pytorch-cuda=11.7 -c pytorch -c nvidia
-conda install -y matplotlib
-conda install -y -c anaconda scipy
-pip install wandb
-conda install -y -c anaconda scikit-learn
-conda install -y -c anaconda seaborn
-pip install ml-collections
-pip install tqdm
+conda install -y -c anaconda scipy==1.7.3
+conda install -y -c anaconda scikit-learn==1.2.1
+conda install -y -c anaconda seaborn==0.11.2
+conda install -y matplotlib==3.6.2
+pip install ml-collections==0.1.1
+pip install tqdm==4.64.1
+pip install wandb==0.17.1
 ```
 ```text
 datasets==2.9.0
