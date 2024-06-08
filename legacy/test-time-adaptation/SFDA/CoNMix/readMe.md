@@ -3,7 +3,7 @@
 
 
 ## Introduction
-+ Source-free Single and Multi-target Domain Adapation
++ Source-free Single and Multi-target Domain Adaptation
 + Pseudo labels
 + Consistency Training
 
@@ -11,6 +11,31 @@
 ## Running Environment
 ### Origin Paper
 ```shell
+conda create --name 'my' python=3.8
 conda install pytorch==1.13.1 torchvision==0.14.1 torchaudio==0.13.1 pytorch-cuda=11.7 -c pytorch -c nvidia
-
+conda install -y matplotlib
+conda install -y -c anaconda scipy
+pip install wandb
+conda install -y -c anaconda scikit-learn
+conda install -y -c anaconda seaborn
+pip install ml-collections
+pip install tqdm
+```
+```text
+datasets==2.9.0
+matplotlib==3.6.2
+medpy==0.4.0
+ml_collections==0.1.1
+numpy==1.23.5
+pandas==1.5.2
+Pillow==9.4.0
+scikit_learn==1.2.1
+scipy==1.7.3
+seaborn==0.11.2
+SimpleITK==2.2.1
+tensorboardX==2.5.1
+timm==0.6.12
+torch==1.13.1
+torchvision==0.14.1
+tqdm==4.64.1
 ```
