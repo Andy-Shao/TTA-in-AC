@@ -40,6 +40,11 @@ torch==1.13.1
 torchvision==0.14.1
 tqdm==4.64.1
 ```
+### This Project
+```shell
+conda create --name 'my' python=3.9 -y
+conda install pytorch==2.1.0 torchvision==0.16.0 torchaudio==2.1.0 pytorch-cuda=11.8 -c pytorch -c nvidia
+```
 
 ## Model Download
 ```shell
