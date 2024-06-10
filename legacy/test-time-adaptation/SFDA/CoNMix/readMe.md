@@ -11,8 +11,8 @@
 ## Running Environment
 ### Origin Paper
 ```shell
-conda create --name 'my' python=3.8
-conda install pytorch==1.13.1 torchvision==0.14.1 torchaudio==0.13.1 pytorch-cuda=11.7 -c pytorch -c nvidia
+conda create --name 'my' python=3.8 -y
+conda install pytorch==1.13.1 torchvision==0.14.1 torchaudio==0.13.1 pytorch-cuda=11.7 -c pytorch -c nvidia -y
 conda install -y -c anaconda scipy==1.7.3
 conda install -y -c anaconda scikit-learn==1.2.1
 conda install -y -c anaconda seaborn==0.11.2
