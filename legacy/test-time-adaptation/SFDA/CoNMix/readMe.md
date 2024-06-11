@@ -49,7 +49,9 @@ conda install pytorch==2.1.0 torchvision==0.16.0 torchaudio==2.1.0 pytorch-cuda=
 conda install -y -c anaconda scipy==1.11.3
 conda install -y -c anaconda seaborn==0.12.2
 conda install -y matplotlib==3.8.0
-conda install conda-forge::ml-collections==0.1.1
+conda install conda-forge::ml-collections==0.1.1 -y
+conda install -c conda-forge tqdm==4.66.4 -y
+conda install -y -c anaconda scikit-learn==1.3.0
 pip install wandb==0.17.1
 ```
 

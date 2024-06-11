@@ -2,25 +2,175 @@ import argparse
 import os
 import numpy as np
 import random
+from typing import Dict
+import wandb
+from tqdm import tqdm
+from sklearn.metrics import confusion_matrix
+from sklearn.cluster import KMeans
 
 import torch
 import torch.nn as nn
 import torch.optim as optim
+from torch.utils.data import DataLoader
+from torchvision import transforms
 
-import wandb
 from lib import models
-from lib.loss import CrossEntropyLabelSmooth
+from lib.loss import CrossEntropyLabelSmooth, Entropy
+from helper.data_list import ImageList, ImageList_idx
 
-def cal_acc(loader, netF: nn.Module, netB: nn.Module, netC: nn.Module, flag=False):
-    pass
+def cal_acc_oda(loader: Dict, modelF: nn.Module, modelB: nn.Module, modelC: nn.Module):
+    start_test = True
+    with torch.no_grad():
+        iter_test = iter(loader)
+        for i in range(len(loader)):
+            data = next(iter_test)
+            inputs = data[0].cuda()
+            labels = data[1]
+            outputs = modelC(modelB(modelF(inputs)))
+            if start_test:
+                all_output = outputs.float().cpu()
+                all_label = labels.float()
+                start_test = False
+            else:
+                all_output = torch.cat(tensors=(all_output, outputs.float().cpu()), dim=0)
+                all_label = torch.cat(tensors=(all_label, labels.float()), dim=0)
+    all_output = nn.Softmax(dim=1)(all_output)
+    _, predict = torch.max(input=all_output, dim=1)
+    ent = torch.sum(-all_output * torch.log(all_output + args.epsilon), dim=1) / np.log(args.class_num)
+    ent = ent.float().cpu()
+    initc = np.array([[0], [1]])
+    kmeans = KMeans(n_clusters=2, random_state=0, init=initc, n_init=1).fit(ent.reshape(-1, 1))
+    threshold = (kmeans.cluster_centers_).mean()
+    
+    predict[ent > threshold] = args.class_num
+    matrix = confusion_matrix(y_true=all_label, y_pred=torch.squeeze(predict).float())
+    matrix = matrix[np.unique(all_label).astype(int),:]
 
-def lr_scheduler(optimizer: torch.optim.Optimizer, iter_num: int, max_iter: int, gamma=10, power=0.75):
-    pass
+    acc = matrix.diagonal()/matrix.sum(axis=1) * 100
+    unknown_acc = acc[-1:].item()
+
+    return np.mean(acc[:-1]), np.mean(acc), unknown_acc
+
+def cal_acc(loader: Dict, modelF: nn.Module, modelB: nn.Module, modelC: nn.Module, flag=False):
+    start_test = True
+    with torch.no_grad():
+        iter_test = iter(loader)
+        for i in tqdm(range(len(loader))):
+            data = next(iter_test)
+            inputs = data[0].cuda()
+            labels = data[1]
+            outputs = modelC(modelB(modelF(inputs)))
+            if start_test:
+                all_output = outputs.float().cpu()
+                all_label = labels.float()
+                start_test = False
+            else: 
+                all_output = torch.cat(tensors=(all_output, outputs.float().cpu()), dim=0)
+                all_label = labels.float()
+            
+    all_output = nn.Softmax(dim=1)(all_output)
+    _, predict = torch.max(input=all_output, dim=1)
+    accuracy = torch.sum(torch.squeeze(predict).float() == all_label).item() / float(all_label.size()[0])
+    mean_ent = torch.mean(Entropy(all_output)).cpu().data.item()
+
+    if flag:
+        matrix = confusion_matrix(y_true=all_label, y_pred=torch.squeeze(predict).float())
+        acc = matrix.diagonal() / matrix.sum(axis=1) * 100
+        aacc = acc.mean()
+        aa = [str(np.round(i,decimals=2)) for i in acc]
+        acc = ' '.join(aa)
+        return aacc, acc
+    else:
+        return accuracy * 100, mean_ent
+
+def lr_scheduler(optimizer: torch.optim.Optimizer, iter_num: int, max_iter: int, gamma=10, power=0.75) -> optim.Optimizer:
+    decay = (1 + gamma * iter_num / max_iter) ** (-power)
+    for param_group in optimizer.param_groups:
+        param_group['lr'] = param_group['lr0'] * decay
+        param_group['weight_decay'] = 1e-3
+        param_group['momentum'] = .9
+        param_group['nestenv'] = True
+        wandb.log({'MISC/LR': param_group['lr']})
+    return optimizer
 
 def test_target(args: argparse.Namespace):
-    pass
+    dataset_loaders = load_data(args=args)
+    ## set base model
+    if args.model[0:3] == 'res':
+        modelF = models.ResBase(res_name=args.model,se=args.se,nl=args.nl).cuda()
+    elif args.model[0:3] == 'vgg':
+        modelF = models.VGGBase(vgg_name=args.model).cuda()
+    elif args.model == 'vit':
+        modelF = models.ViT().cuda()
+    elif args.model[0:4] == 'deit':
+        if args.model == 'deit_s':
+            modelF = torch.hub.load('facebookresearch/deit:main', 'deit_small_patch16_224', pretrained=True).cuda()
+        elif args.model == 'deit_b':
+            modelF = torch.hub.load('facebookresearch/deit:main', 'deit_base_patch16_224', pretrained=True).cuda()
+        modelF.in_features = 1000
 
-def load_data(args: argparse.Namespace):
+    modelB = models.feat_bootleneck(type=args.classifier, feature_dim=modelF.in_features, bottleneck_dim=args.bottleneck).cuda()
+    modelC = models.feat_classifier(type=args.layer, class_num = args.class_num, bottleneck_dim=args.bottleneck).cuda
+
+    gpu_list = [i for i in range(torch.cuda.device_count())]
+    print(f"Let's use {len(gpu_list)} GPUs")
+    modelF = nn.DataParallel(module=modelF, device_ids=gpu_list)
+    modelB = nn.DataParallel(module=modelB, device_ids=gpu_list)
+    modelC = nn.DataParallel(module=modelC, device_ids=gpu_list)
+
+    args.modelpath = args.output_dir_src + '/source_F.pt'
+    modelF.load_state_dict(torch.load(args.modelpath))
+    args.modelpath = args.output_dir_src + '/source_B.pt'
+    modelB.load_state_dict(torch.load(args.modelpath))
+    args.modelpath = args.output_dir_src + '/source_C.pt'
+    modelC.load_state_dict(torch.load(args.modelpath))
+    modelF.eval()
+    modelB.eval()
+    modelC.eval()
+
+    if args.da == 'oda':
+        accuracy_os1, accuracy_os2, accuracy_unknown = cal_acc_oda(dataset_loaders['test'], modelF, modelB, modelC)
+        log_str = '\nTraining: {}, Task: {}, Accuracy = {:.2f}% / {:.2f}% / {:.2f}%'.format(args.trte, args.name, accuracy_os1, accuracy_os2, accuracy_unknown)
+    else: 
+        if args.dataset == 'visda-2017':
+            accuracy, accuracy_list = cal_acc(dataset_loaders['test'], modelF, modelB, modelC)
+            log_str = '\nTraining: {}, Task: {}, Accuracy = {:.2f}%'.format(args.trte, args.name, accuracy) + '\n' + accuracy_list
+        else:
+            accuracy, _ = cal_acc(dataset_loaders['eval_dn'], modelF, modelB, modelC, False)
+            log_str = '\nTraining: {}, Task: {}, Accuracy = {:.2f}%'.format(args.trte, args.name, accuracy)
+    
+    args.out_file.write(log_str)
+    args.out_file.flush()
+    print(log_str)
+
+def image_train(resize_size=256, crop_size=224, alexnet=False) -> nn.Module:
+    if not alexnet:
+        normalize = transforms.Normalize(mean=[.485, .456, .406], std=[.229, .224, .225])
+    else: 
+        assert False, 'No Support Operation!'
+    return transforms.Compose(transforms=[
+        transforms.Resize((resize_size, resize_size)),
+        transforms.RandomCrop(crop_size),
+        transforms.RandomHorizontalFlip(),
+        transforms.ToTensor(),
+        normalize
+    ])
+
+def image_test(resize_size=256, crop_size=224, alexnet=False) -> nn.Module:
+    if not alexnet:
+        normalize = transforms.Normalize(mean=[.485, .456, .406], std=[.229,.224,.225])
+    else:
+        # normalize = 
+        assert False, 'No Support Operation!'
+    return transforms.Compose(transforms=[
+        transforms.Resize((resize_size, resize_size)),
+        transforms.RandomCrop(crop_size),
+        transforms.RandomHorizontalFlip(),
+        transforms.ToTensor(),
+        normalize
+    ])
+
+def load_data(args: argparse.Namespace) -> Dict:
     ## prepare data
     datasets = {}
     dataset_loaders = {}
@@ -70,11 +220,26 @@ def load_data(args: argparse.Namespace):
         _, te_text = torch.utils.data.random_split(text_source, [tr_size, data_size - tr_size])
         tr_text = text_source
 
-    # datasets['source_tr'] = 
-    #TODO
+    datasets['source_tr'] = ImageList(tr_text, transform=image_train())
+    dataset_loaders['source_tr'] = DataLoader(dataset=datasets['source_tr'], batch_size=train_batch_size, shuffle=True, num_workers=args.worker, drop_last=False)
+    datasets['source_te'] = ImageList(te_text, transform=image_test())
+    dataset_loaders['source_te'] = DataLoader(dataset=datasets['source_tr'], batch_size=train_batch_size, shuffle=False, num_workers=args.worker, drop_last=False)
 
-def op_copy(optimizer: optim.Optimizer):
-    pass
+    datasets['test'] = ImageList(text_test, transform=image_test())
+    dataset_loaders['test'] = DataLoader(dataset=datasets['eval_dn'], batch_size=train_batch_size, shuffle=False, num_workers=args.worker, drop_last=False)
+
+    if args.dataset == 'domain_net':
+        datasets['eval_dn'] = ImageList_idx(txt_eval_dn, transform=image_train())
+        dataset_loaders['eval_dn'] = DataLoader(dataset=datasets['eval_dn'], batch_size=train_batch_size, shuffle=False, num_workers=args.worker, drop_last=False)
+    else: 
+        dataset_loaders['eval_dn'] = dataset_loaders['test']
+    
+    return dataset_loaders
+
+def op_copy(optimizer: optim.Optimizer) -> optim.Optimizer:
+    for param_group in optimizer.param_groups:
+        param_group['lr0'] = param_group['lr']
+    return optimizer
 
 def train_source(args: argparse.Namespace):
     dataset_loaders = load_data(args)
@@ -106,7 +271,7 @@ def train_source(args: argparse.Namespace):
     optimizer = optim.SGD(param_group)
     optimizer = op_copy(optimizer=optimizer)
 
-    acc_init = 0
+    accuracy_init = 0
     max_iter = args.max_epoch * len(dataset_loaders['source_tr'])
     interval_iter = max_iter // args.interval
     iter_num = 0
@@ -120,7 +285,7 @@ def train_source(args: argparse.Namespace):
             inputs_source, labels_source = next(iter_source)
         except: 
             iter_source = iter(dataset_loaders['source_tr'])
-            input_source, label_source = next(iter_source)
+            input_source, labels_source = next(iter_source)
         
         if inputs_source.size(0) == 1:
             continue
@@ -147,10 +312,29 @@ def train_source(args: argparse.Namespace):
             else:
                 accuracy_s_te, _ = cal_acc(dataset_loaders['source_te'], modelF, modelB, modelC, False)
                 log_str = 'Task: {}, Iter:{}/{}; Accuracy = {:.2f}%'.format(args.name_src, iter_num, max_iter, accuracy_s_te)
-        wandb.log({'SRC TRAIN: Acc' : accuracy_s_te})
-        args.out_file.write(log_str + '\n')
+            wandb.log({'SRC TRAIN: Acc' : accuracy_s_te})
+            args.out_file.write(log_str + '\n')
+            args.out_file.flush()
+            print(log_str + '\n')
 
-def print_args(args: argparse.Namespace):
+            if accuracy_s_te >= accuracy_init:
+                accuracy_init = accuracy_s_te
+                best_modelF = modelF.state_dict()
+                best_modelB = modelB.state_dict()
+                best_modelC = modelC.state_dict()
+
+                torch.save(best_modelF, os.path.join(args.output_dir_src, 'source_F.pt'))
+                torch.save(best_modelB, os.path.join(args.output_dir_src, 'source_B.pt'))
+                torch.save(best_modelC, os.path.join(args.output_dir_src, 'source_C.pt'))
+                print('Model Saved!!')
+        
+            modelF.train()
+            modelB.train()
+            modelC.train()
+        iter_num += 1
+    return modelF, modelB, modelC
+
+def print_args(args: argparse.Namespace) -> str:
     s = "==========================================\n"
     for arg, content in args.__dict__.items():
         s += f'{arg}:{content}\n'
