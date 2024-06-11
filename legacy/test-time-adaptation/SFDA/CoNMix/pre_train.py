@@ -9,18 +9,75 @@ import torch.optim as optim
 
 import wandb
 from lib import models
+from lib.loss import CrossEntropyLabelSmooth
+
+def cal_acc(loader, netF: nn.Module, netB: nn.Module, netC: nn.Module, flag=False):
+    pass
+
+def lr_scheduler(optimizer: torch.optim.Optimizer, iter_num: int, max_iter: int, gamma=10, power=0.75):
+    pass
 
 def test_target(args: argparse.Namespace):
     pass
 
 def load_data(args: argparse.Namespace):
-    pass
+    ## prepare data
+    datasets = {}
+    dataset_loaders = {}
+    train_batch_size = args.batch_size
+    
+    text_source = open(args.source_dataset_path).readlines()
+    text_test = open(args.test_dataset_path).readlines()
+
+    if args.dataset == 'domain_net':
+        txt_eval_dn = open(args.txt_eval_dn).readlines()
+        print(f'Data samples: {len(txt_eval_dn)}')
+
+    if not args.da == 'uda':
+        label_map_s = {}
+        for i in range(len(args.src_classes)):
+            label_map_s[args.source_classes[i]] = i 
+
+        new_source = []
+        for i in range(len(text_source)):
+            rec = text_source[i].strip().split(' ')
+            feature_path, label = rec[0], rec[1]
+            if int(label) in args.srouce_classes:
+                line = feature_path + ' ' + str(label_map_s[int(label)]) + '\n'
+                new_source.append(line)
+        text_source = new_source.copy()
+
+        new_target = []
+        for i in range(len(text_test)):
+            rec = text_test.strip().split(' ')
+            feature_path, label = rec[0], rec[1]
+            if int(label) in args.target_classes:
+                if int(label) in args.source_classes:
+                    line = feature_path + ' ' + str(label_map_s[int(label)]) + '\n'
+                    new_target.append(line)
+                else:
+                    line = feature_path + ' ' + str(len(label_map_s)) + '\n'
+                    new_target.append(line)
+        text_test = new_target.copy()
+    
+    if args.trte == 'val':
+        data_size = len(text_source)
+        tr_size = int(.9 * data_size)
+        tr_text, te_text = torch.utils.data.random_split(text_source, [tr_size, data_size - tr_size])
+    else: 
+        data_size = len(text_source)
+        tr_size = int(.9 * data_size)
+        _, te_text = torch.utils.data.random_split(text_source, [tr_size, data_size - tr_size])
+        tr_text = text_source
+
+    # datasets['source_tr'] = 
+    #TODO
 
 def op_copy(optimizer: optim.Optimizer):
     pass
 
 def train_source(args: argparse.Namespace):
-    dataset_loader = load_data(args)
+    dataset_loaders = load_data(args)
     # set base network
     if args.model[0:3] == 'res':
         modelF = models.ResBase(res_name=args.net,se=args.se,nl=args.nl).cuda()
@@ -48,6 +105,50 @@ def train_source(args: argparse.Namespace):
         param_group += [{'params':v, 'lr':learning_rate}]
     optimizer = optim.SGD(param_group)
     optimizer = op_copy(optimizer=optimizer)
+
+    acc_init = 0
+    max_iter = args.max_epoch * len(dataset_loaders['source_tr'])
+    interval_iter = max_iter // args.interval
+    iter_num = 0
+
+    modelF.train()
+    modelB.train()
+    modelC.train()
+
+    while iter_num < max_iter:
+        try:
+            inputs_source, labels_source = next(iter_source)
+        except: 
+            iter_source = iter(dataset_loaders['source_tr'])
+            input_source, label_source = next(iter_source)
+        
+        if inputs_source.size(0) == 1:
+            continue
+        
+        inputs_source, labels_source = inputs_source.cuda(), labels_source.cuda()
+        outputs_source = modelC(modelB(modelF(input_source)))
+
+        classifier_loss = CrossEntropyLabelSmooth(num_classes=args.class_num, epsilon=args.smooth)(outputs_source, labels_source)
+        wandb.log({'SRC Train: train_classifier_loss': classifier_loss.item()})
+
+        optimizer.zero_grad()
+        classifier_loss.backward()
+        optimizer.step()
+
+        if iter_num % interval_iter == 0 or iter_num == max_iter:
+            lr_scheduler(optimizer=optimizer, iter_num=iter_num, max_iter=max_iter)
+
+            modelF.eval()
+            modelB.eval()
+            modelC.eval()
+            if args.dataset == 'visda-2017':
+                accuracy_s_te, accuracy_list = cal_acc(dataset_loaders['source_te'], modelF, modelB, modelC, True)
+                log_str = 'Task: {}, Iter:{}/{}; Accuracy = {:.2f}%'.format(args.name_src, iter_num, max_iter, accuracy_s_te) + '\n' + accuracy_list
+            else:
+                accuracy_s_te, _ = cal_acc(dataset_loaders['source_te'], modelF, modelB, modelC, False)
+                log_str = 'Task: {}, Iter:{}/{}; Accuracy = {:.2f}%'.format(args.name_src, iter_num, max_iter, accuracy_s_te)
+        wandb.log({'SRC TRAIN: Acc' : accuracy_s_te})
+        args.out_file.write(log_str + '\n')
 
 def print_args(args: argparse.Namespace):
     s = "==========================================\n"
@@ -104,7 +205,7 @@ if __name__ == '__main__':
     random.seed(SEED)
 
     folder = args.source_path
-    args.training_dataset_path = folder + args.dataset + '/' + names[args.source] + '.txt'
+    args.source_dataset_path = folder + args.dataset + '/' + names[args.source] + '.txt'
     args.test_dataset_path = folder + args.dataset + '/' + names[args.target] + '.txt'
 
     wandb.init(
