@@ -12,6 +12,7 @@
 ### Origin Paper
 ```shell
 conda create --name 'my' python=3.8 -y
+conda activate my
 conda install pytorch==1.13.1 torchvision==0.14.1 torchaudio==0.13.1 pytorch-cuda=11.7 -c pytorch -c nvidia -y
 conda install -y -c anaconda scipy==1.7.3
 conda install -y -c anaconda scikit-learn==1.2.1
@@ -43,6 +44,7 @@ tqdm==4.64.1
 ### This Project
 ```shell
 conda create --name 'my' python=3.9 -y
+conda activate my
 conda install pytorch==2.1.0 torchvision==0.16.0 torchaudio==2.1.0 pytorch-cuda=11.8 -c pytorch -c nvidia -y
 conda install -y -c anaconda scipy==1.11.3
 conda install -y -c anaconda seaborn==0.12.2
