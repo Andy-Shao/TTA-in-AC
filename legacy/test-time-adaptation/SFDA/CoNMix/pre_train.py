@@ -22,7 +22,7 @@ def op_copy(optimizer: optim.Optimizer):
 def train_source(args: argparse.Namespace):
     dataset_loader = load_data(args)
     # set base network
-    if args.models[0:3] == 'res':
+    if args.model[0:3] == 'res':
         modelF = models.ResBase(res_name=args.net,se=args.se,nl=args.nl).cuda()
     elif args.model[0:3] == 'vgg':
         modelF = models.VGGBase(vgg_name=args.net).cuda()
@@ -93,7 +93,7 @@ if __name__ == '__main__':
         args.class_num = 31
 
     gpu_id = ''
-    for i in torch.cuda.device_count():
+    for i in range(torch.cuda.device_count()):
         gpu_id += str(i) + ','
     gpu_id.removesuffix(',')
     os.environ['CUDA_VISIBLE_DEVICES'] = gpu_id
