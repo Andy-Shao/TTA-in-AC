@@ -40,3 +40,14 @@ def Entropy(input_: torch.Tensor):
     entropy = -input_ * torch.log(input_ + epsilon)
     entropy = torch.sum(entropy, dim=1)
     return entropy
+
+class KnowledgeDistillationLoss(nn.Module):
+    def __init__(self, reduction='mean', alpha=-1.0):
+        super().__init__()
+        #TODO
+
+def SoftCrossEntropyLoss(logit: torch.Tensor, soft_pseudo_label: torch.Tensor) -> torch.Tensor:   # Checked and is correct
+    pass
+
+def soft_CE(softout: torch.Tensor, soft_label: torch.Tensor) -> torch.Tensor:
+    pass

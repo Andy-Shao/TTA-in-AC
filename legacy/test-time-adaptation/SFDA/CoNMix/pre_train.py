@@ -165,7 +165,6 @@ def image_test(resize_size=256, crop_size=224, alexnet=False) -> nn.Module:
     return transforms.Compose(transforms=[
         transforms.Resize((resize_size, resize_size)),
         transforms.RandomCrop(crop_size),
-        transforms.RandomHorizontalFlip(),
         transforms.ToTensor(),
         normalize
     ])

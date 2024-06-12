@@ -52,6 +52,7 @@ conda install -y matplotlib==3.8.0
 conda install conda-forge::ml-collections==0.1.1 -y
 conda install -c conda-forge tqdm==4.66.4 -y
 conda install -y -c anaconda scikit-learn==1.3.0
+pip install timm==1.0.3
 pip install wandb==0.17.1
 ```
 
@@ -76,3 +77,9 @@ sh pre_train.sh
 ```
 
 ## Testing
+
+
+## Code Reference
+[TransUNet](https://github.com/Beckschen/TransUNet)<br/>
+[SHOT](https://github.com/tim-learn/SHOT)<br/>
+[CoNMix](https://github.com/vcl-iisc/CoNMix)
