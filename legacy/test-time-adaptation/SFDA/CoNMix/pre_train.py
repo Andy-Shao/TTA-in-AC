@@ -65,8 +65,8 @@ def cal_acc(loader: Dict, modelF: nn.Module, modelB: nn.Module, modelC: nn.Modul
                 all_label = labels.float()
                 start_test = False
             else: 
-                all_output = torch.cat(tensors=(all_output, outputs.float().cpu()), dim=0)
-                all_label = labels.float()
+                all_output = torch.cat((all_output, outputs.float().cpu()), dim=0)
+                all_label = torch.cat((all_label, labels.float()), dim=0)
             
     all_output = nn.Softmax(dim=1)(all_output)
     _, predict = torch.max(input=all_output, dim=1)
@@ -110,13 +110,13 @@ def test_target(args: argparse.Namespace):
         modelF.in_features = 1000
 
     modelB = models.feat_bootleneck(type=args.classifier, feature_dim=modelF.in_features, bottleneck_dim=args.bottleneck).cuda()
-    modelC = models.feat_classifier(type=args.layer, class_num = args.class_num, bottleneck_dim=args.bottleneck).cuda
+    modelC = models.feat_classifier(type=args.layer, class_num=args.class_num, bottleneck_dim=args.bottleneck).cuda()
 
     gpu_list = [i for i in range(torch.cuda.device_count())]
-    print(f"Let's use {len(gpu_list)} GPUs")
-    modelF = nn.DataParallel(module=modelF, device_ids=gpu_list)
-    modelB = nn.DataParallel(module=modelB, device_ids=gpu_list)
-    modelC = nn.DataParallel(module=modelC, device_ids=gpu_list)
+    print(f"Let's use {len(gpu_list)} GPUs for test")
+    modelF = nn.DataParallel(modelF, device_ids=gpu_list)
+    modelB = nn.DataParallel(modelB, device_ids=gpu_list)
+    modelC = nn.DataParallel(modelC, device_ids=gpu_list)
 
     args.modelpath = args.output_dir_src + '/source_F.pt'
     modelF.load_state_dict(torch.load(args.modelpath))
@@ -226,7 +226,7 @@ def load_data(args: argparse.Namespace) -> Dict:
     dataset_loaders['source_te'] = DataLoader(dataset=datasets['source_tr'], batch_size=train_batch_size, shuffle=False, num_workers=args.worker, drop_last=False)
 
     datasets['test'] = ImageList(text_test, transform=image_test())
-    dataset_loaders['test'] = DataLoader(dataset=datasets['eval_dn'], batch_size=train_batch_size, shuffle=False, num_workers=args.worker, drop_last=False)
+    dataset_loaders['test'] = DataLoader(dataset=datasets['test'], batch_size=train_batch_size, shuffle=False, num_workers=args.worker, drop_last=False)
 
     if args.dataset == 'domain_net':
         datasets['eval_dn'] = ImageList_idx(txt_eval_dn, transform=image_train())
@@ -285,13 +285,13 @@ def train_source(args: argparse.Namespace):
             inputs_source, labels_source = next(iter_source)
         except: 
             iter_source = iter(dataset_loaders['source_tr'])
-            input_source, labels_source = next(iter_source)
+            inputs_source, labels_source = next(iter_source)
         
         if inputs_source.size(0) == 1:
             continue
         
         inputs_source, labels_source = inputs_source.cuda(), labels_source.cuda()
-        outputs_source = modelC(modelB(modelF(input_source)))
+        outputs_source = modelC(modelB(modelF(inputs_source)))
 
         classifier_loss = CrossEntropyLabelSmooth(num_classes=args.class_num, epsilon=args.smooth)(outputs_source, labels_source)
         wandb.log({'SRC Train: train_classifier_loss': classifier_loss.item()})
@@ -389,8 +389,8 @@ if __name__ == '__main__':
     random.seed(SEED)
 
     folder = args.source_path
-    args.source_dataset_path = folder + args.dataset + '/' + names[args.source] + '.txt'
-    args.test_dataset_path = folder + args.dataset + '/' + names[args.target] + '.txt'
+    args.source_dataset_path = folder + '/' + args.dataset + '/' + names[args.source] + '.txt'
+    args.test_dataset_path = folder + '/' + args.dataset + '/' + names[args.target] + '.txt'
 
     wandb.init(
         project='ConNMix ECCV', name=f'SRC {names[args.source]}', mode='online' if args.wandb else 'disabled',
@@ -429,10 +429,10 @@ if __name__ == '__main__':
         args.name = names[args.source][0].upper() + names[args.target][0].upper()
 
         folder = args.source_path
-        args.source_dataset_path = folder + args.dataset + '/' + names[args.source] + '.txt'
-        args.test_dataset_path = folder + args.dataset + '/' + names[args.target] + '.txt'
+        args.source_dataset_path = folder + '/' + args.dataset + '/' + names[args.source] + '.txt'
+        args.test_dataset_path = folder + '/' + args.dataset + '/' + names[args.target] + '.txt'
         if args.dataset == 'domain_net':
-            args.txt_eval_dn = folder + args.dataset + '/' + names[args.target] + '_test.txt'
+            args.txt_eval_dn = folder + '/' + args.dataset + '/' + names[args.target] + '_test.txt'
         else:
             args.txt_eval_dn = args.test_dataset_path
 

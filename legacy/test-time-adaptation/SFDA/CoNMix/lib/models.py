@@ -32,7 +32,7 @@ class ViT(nn.Module):
         config_vit.n_classes = 100
         config_vit.n_skip = 3
         config_vit.patches.grid = (int(224 / 16), int(224 / 16))
-        self.feature_extractor = ViT_seg(config=config_vit, img_size=[224, 224], num_classes=config_vit.n_classes)
+        self.feature_extractor = ViT_seg(config_vit, img_size=[224, 224], num_classes=config_vit.n_classes)
         self.feature_extractor.load_from(weights=np.load(config_vit.pretrained_path))
         self.in_features = 2048
     
@@ -61,13 +61,13 @@ class feat_classifier(nn.Module):
         super(feat_classifier, self).__init__()
         self.type = type
         if type == 'wn':
-            self.fc = nn.utils.weight_norm(nn.Linear(in_features=bottleneck_dim, out_features=class_num), name='weight')
+            # self.fc = nn.utils.weight_norm(nn.Linear(in_features=bottleneck_dim, out_features=class_num), name='weight')
+            self.fc = nn.utils.parametrizations.weight_norm(module=nn.Linear(in_features=bottleneck_dim, out_features=class_num), name='weight')
             self.fc.apply(init_weights)
         else: 
             self.fc = nn.Linear(in_features=bottleneck_dim, out_features=class_num)
             self.fc.apply(init_weights)
     
     def forward(self, x: torch.Tensor):
-        x = self.fc0(x)
-        x = self.fc1(x)
+        x = self.fc(x)
         return x

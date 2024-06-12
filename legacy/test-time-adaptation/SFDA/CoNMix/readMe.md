@@ -64,5 +64,15 @@ mv R50+ViT-B_16.npz model/vit_checkpoint/imagenet21k/R50+ViT-B_16.npz
 
 ## Dataset Download
 ```shell
+mkdir data
+cd data
 gdown https://drive.google.com/uc?id=1kYKUqt8UCKgr4PiSN-j_-3p48yJAgnCF
 ```
+
+## Training
+### Step 1: Pre-Training with the tranining dataset
+```shell
+sh pre_train.sh
+```
+
+## Testing
