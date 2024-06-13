@@ -78,3 +78,6 @@ class ImageList_idx(Dataset):
         if self.target_transform is not None:
             target = self.target_transform(target)
         return img, target, index
+    
+class ImageList_MixUp(Dataset):
+    pass
