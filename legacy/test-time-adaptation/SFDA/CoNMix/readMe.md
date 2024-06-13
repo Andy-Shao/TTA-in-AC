@@ -80,6 +80,12 @@ sh pre_train.sh
 sh STDA.sh
 ```
 
+### Step 3: MTDA Training
+```shell
+sh bridge_MTDA.sh
+sh MTDA.sh
+```
+
 ## Testing
 
 
