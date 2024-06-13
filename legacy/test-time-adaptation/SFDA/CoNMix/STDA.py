@@ -149,7 +149,7 @@ def obtain_label(loader: DataLoader, modelF: nn.Module, modelB: nn.Module, model
         pred_label = labelset[pred_label]
     
     acc = np.sum(pred_label == all_label.float().numpy()) / len(all_feature)
-    wandb.log({"Pseudo_Label_Accuracy": acc*100})
+    wandb.log({"ACCURACY/Pseudo_Label_Accuracy": acc*100})
     log_str = 'Pseudo Label Accuracy = {:.2f}% -> {:.2f}%'.format(accuracy * 100, acc * 100)
 
     args.out_file.write(log_str + '\n')
@@ -343,7 +343,8 @@ def train_target(args: argparse.Namespace) -> Tuple[nn.Module, nn.Module, nn.Mod
             consistency_loss = torch.tensor(.0).cuda()
         total_loss = classifier_loss + fbnm_loss + consistency_loss
 
-        wandb.log({"total loss":total_loss.item(),"Pseudo-label cross-entorpy loss":classifier_loss.item(), "im_loss":im_loss.item(),"consistency loss":consistency_loss.item(), "Nuclear-norm Maximization loss":fbnm_loss.item()})
+        #wandb.log({"total loss":total_loss.item(),"Pseudo-label cross-entorpy loss":classifier_loss.item(), "im_loss":im_loss.item(),"consistency loss":consistency_loss.item(), "Nuclear-norm Maximization loss":fbnm_loss.item()})
+        wandb.log({"LOSS/total loss":total_loss.item(),"LOSS/Pseudo-label cross-entorpy loss":classifier_loss.item(), "LOSS/consistency loss":consistency_loss.item(), "LOSS/Nuclear-norm Maximization loss":fbnm_loss.item()})
 
         optimizer.zero_grad()
         total_loss.backward()
@@ -365,7 +366,7 @@ def train_target(args: argparse.Namespace) -> Tuple[nn.Module, nn.Module, nn.Mod
                 torch.save(modelB.state_dict(), os.path.join(args.output_dir, 'target_B.pt'))
                 torch.save(modelC.state_dict(), os.path.join(args.output_dir, 'target_C.pt'))
                 print('Model Saved!!!')
-            wandb.log({"STDA_Test_Accuracy":accuracy_eval_dn, "Max_Acc": max_accuracy})
+            wandb.log({"ACCURACY/STDA_Test_Accuracy":accuracy_eval_dn, "ACCURACY/Max_Acc": max_accuracy})
             log_str = '\nTask: {}, Iter:{}/{}; Final Eval test = {:.2f}%'.format(args.name, iter_num, max_iter, accuracy_eval_dn)
 
             args.out_file.write(log_str + '\n')
@@ -483,7 +484,7 @@ if __name__ == "__main__":
             args.txt_eval_dn = args.target_dataset_path
 
         mode = 'online' if args.wandb else 'disabled'
-        wandb.init(project='CoNMix ECCV', name=f'STDA {names[args.source]} to {names[i]} '+args.suffix, reinit=True,mode=mode, config=args, tags=[args.dataset, args.net, 'STDA'])
+        wandb.init(project='CoNMix ECCV STDA', name=f'STDA {names[args.source]} to {names[i]} '+args.suffix, reinit=True,mode=mode, config=args, tags=[args.dataset, args.net, 'STDA'])
 
         args.output_dir_source = os.path.join(args.input_source, args.da, args.dataset, names[args.source][0].upper())
         args.output_dir = os.path.join(args.output, 'STDA', args.dataset, names[args.source][0].upper() + names[i][0].upper())

@@ -90,7 +90,7 @@ def lr_scheduler(optimizer: torch.optim.Optimizer, iter_num: int, max_iter: int,
         param_group['weight_decay'] = 1e-3
         param_group['momentum'] = .9
         param_group['nestenv'] = True
-        wandb.log({'MISC/LR': param_group['lr']})
+        wandb.log({'MISC/Learning rate': param_group['lr']})
     return optimizer
 
 def test_target(args: argparse.Namespace):
@@ -293,7 +293,7 @@ def train_source(args: argparse.Namespace):
         outputs_source = modelC(modelB(modelF(inputs_source)))
 
         classifier_loss = CrossEntropyLabelSmooth(num_classes=args.class_num, epsilon=args.smooth)(outputs_source, labels_source)
-        wandb.log({'SRC Train: train_classifier_loss': classifier_loss.item()})
+        wandb.log({'SRC Train/train_classifier_loss': classifier_loss.item()})
 
         optimizer.zero_grad()
         classifier_loss.backward()
@@ -311,7 +311,7 @@ def train_source(args: argparse.Namespace):
             else:
                 accuracy_s_te, _ = cal_acc(dataset_loaders['source_te'], modelF, modelB, modelC, False)
                 log_str = 'Task: {}, Iter:{}/{}; Accuracy = {:.2f}%'.format(args.name_src, iter_num, max_iter, accuracy_s_te)
-            wandb.log({'SRC TRAIN: Acc' : accuracy_s_te})
+            wandb.log({'SRC Train/Accuracy' : accuracy_s_te})
             args.out_file.write(log_str + '\n')
             args.out_file.flush()
             print(log_str + '\n')
@@ -394,7 +394,7 @@ if __name__ == '__main__':
     args.test_dataset_path = folder + '/' + args.dataset + '/' + names[args.target] + '.txt'
 
     wandb.init(
-        project='ConNMix ECCV', name=f'SRC {names[args.source]}', mode='online' if args.wandb else 'disabled',
+        project='CoNMix ECCV SRC Training', name=f'SRC {names[args.source]}', mode='online' if args.wandb else 'disabled',
         config=args, tags=['SRC', args.dataset, args.model]
     )
 
