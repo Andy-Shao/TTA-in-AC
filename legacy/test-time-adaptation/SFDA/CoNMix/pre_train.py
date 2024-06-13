@@ -381,6 +381,8 @@ if __name__ == '__main__':
         gpu_id += str(i) + ','
     gpu_id.removesuffix(',')
     os.environ['CUDA_VISIBLE_DEVICES'] = gpu_id
+    args.batch_size = args.batch_size * torch.cuda.device_count()
+    
     SEED = args.seed
     torch.manual_seed(SEED)
     torch.cuda.manual_seed(SEED)

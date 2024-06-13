@@ -1,5 +1,6 @@
 import torch 
 import torch.nn as nn
+import torch.nn.functional as F
 
 class CrossEntropyLabelSmooth(nn.Module):
     """Cross entropy loss with label smoothing regularizer.
@@ -33,7 +34,6 @@ class CrossEntropyLabelSmooth(nn.Module):
             return loss.mean()
         else:
             return loss
-        return losss
 
 def Entropy(input_: torch.Tensor):
     epsilon = 1e-5
@@ -41,13 +41,14 @@ def Entropy(input_: torch.Tensor):
     entropy = torch.sum(entropy, dim=1)
     return entropy
 
-class KnowledgeDistillationLoss(nn.Module):
-    def __init__(self, reduction='mean', alpha=-1.0):
-        super().__init__()
-        #TODO
-
 def SoftCrossEntropyLoss(logit: torch.Tensor, soft_pseudo_label: torch.Tensor) -> torch.Tensor:   # Checked and is correct
-    pass
+    """Pseudo-label cross-entropy loss uses this loss function"""
+    percentage = F.log_softmax(logit, dim=1)
+    return -(soft_pseudo_label * percentage).sum(dim=1)
 
 def soft_CE(softout: torch.Tensor, soft_label: torch.Tensor) -> torch.Tensor:
-    pass
+    """(Consist loss -> soft cross-entropy loss) uses this loss function"""
+    epsilon = 1e-5
+    loss = -soft_label * torch.log(softout + epsilon)
+    total_loss = torch.sum(loss, dim=1)
+    return total_loss

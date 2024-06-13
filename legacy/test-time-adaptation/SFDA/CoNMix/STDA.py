@@ -16,8 +16,8 @@ from torchvision import transforms
 
 from lib import models
 from helper.plr import plr
-from lib.loss import SoftCrossEntropyLoss, KnowledgeDistillationLoss, Entropy, soft_CE
-from helper.data_list import ImageList_idx, ImageList
+from lib.loss import SoftCrossEntropyLoss, Entropy, soft_CE
+from helper.data_list import ImageList_idx
 
 def strong_augment(resize_size=256, crop_size=224, alexnet=False) -> nn.Module:
     if not alexnet:
@@ -412,12 +412,12 @@ if __name__ == "__main__":
     parser.add_argument('--fbnm', type=bool, default=True)
 
     parser.add_argument('--threshold', type=int, default=0)
-    parser.add_argument('--cls_par', type=float, default=0.2)
+    parser.add_argument('--cls_par', type=float, default=0.2, help='lambda 2')
     parser.add_argument('--alpha', type=float, default=0.9)
 
-    parser.add_argument('--const_par', type=float, default=0.2)
+    parser.add_argument('--const_par', type=float, default=0.2, help='lambda 3')
     parser.add_argument('--ent_par', type=float, default=1.3)
-    parser.add_argument('--fbnm_par', type=float, default=4.0)
+    parser.add_argument('--fbnm_par', type=float, default=4.0, help='lambda 1')
 
     parser.add_argument('--lr_decay1', type=float, default=0.1)
     parser.add_argument('--lr_decay2', type=float, default=1.0)
@@ -456,6 +456,9 @@ if __name__ == "__main__":
         gpu_id += str(i) + ','
     gpu_id.removesuffix(',')
     os.environ['CUDA_VISIBLE_DEVICES'] = gpu_id
+    args.batch_size = args.batch_size * torch.cuda.device_count()
+    args.test_batch_size = args.test_batch_size * torch.cuda.device_count()
+
     SEED = args.seed
     torch.manual_seed(SEED)
     torch.cuda.manual_seed(SEED)

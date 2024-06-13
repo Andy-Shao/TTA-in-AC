@@ -1,9 +1,9 @@
-#python pre_train.py --dataset office-home --model vit --max_epoch 20 --interval 20 --batch_size 64 --source 0 --wandb 0 --output pre_train --trte full
-#python pre_train.py --dataset office-home --model vit --max_epoch 20 --interval 20 --batch_size 64 --source 1 --wandb 0 --output pre_train --trte full
-#python pre_train.py --dataset office-home --model vit --max_epoch 20 --interval 20 --batch_size 64 --source 2 --wandb 0 --output pre_train --trte full
-#python pre_train.py --dataset office-home --model vit --max_epoch 20 --interval 20 --batch_size 64 --source 3 --wandb 0 --output pre_train --trte full
+#python pre_train.py --dataset office-home --model vit --max_epoch 20 --interval 20 --batch_size 64 --source 0 --wandb 1 --output pre_train --trte full
+#python pre_train.py --dataset office-home --model vit --max_epoch 20 --interval 20 --batch_size 64 --source 1 --wandb 1 --output pre_train --trte full
+#python pre_train.py --dataset office-home --model vit --max_epoch 20 --interval 20 --batch_size 64 --source 2 --wandb 1 --output pre_train --trte full
+#python pre_train.py --dataset office-home --model vit --max_epoch 20 --interval 20 --batch_size 64 --source 3 --wandb 1 --output pre_train --trte full
 
-python pre_train.py --dataset office-home --model vit --max_epoch 2 --interval 5 --batch_size 64 --source 0 --wandb 0 --output pre_train --trte full
-python pre_train.py --dataset office-home --model vit --max_epoch 2 --interval 5 --batch_size 64 --source 1 --wandb 0 --output pre_train --trte full
-python pre_train.py --dataset office-home --model vit --max_epoch 2 --interval 5 --batch_size 64 --source 2 --wandb 0 --output pre_train --trte full
-python pre_train.py --dataset office-home --model vit --max_epoch 2 --interval 5 --batch_size 64 --source 3 --wandb 0 --output pre_train --trte full
+python pre_train.py --dataset office-home --model vit --max_epoch 2 --interval 5 --batch_size 64 --source 0 --wandb 1 --output pre_train --trte full
+python pre_train.py --dataset office-home --model vit --max_epoch 2 --interval 5 --batch_size 64 --source 1 --wandb 1 --output pre_train --trte full
+python pre_train.py --dataset office-home --model vit --max_epoch 2 --interval 5 --batch_size 64 --source 2 --wandb 1 --output pre_train --trte full
+python pre_train.py --dataset office-home --model vit --max_epoch 2 --interval 5 --batch_size 64 --source 3 --wandb 1 --output pre_train --trte full
