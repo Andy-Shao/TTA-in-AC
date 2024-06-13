@@ -10,3 +10,6 @@
 # python3 MTDA.py --dset office-home --s 2 --batch_size 64 --epoch 100 --interval 5 --net deit_s --gpu_id 0
 
 python3 bridge_MTDA.py --source 0 --dataset office-home --net vit --batch_size 64
+python3 bridge_MTDA.py --source 1 --dataset office-home --net vit --batch_size 64
+python3 bridge_MTDA.py --source 2 --dataset office-home --net vit --batch_size 64
+python3 bridge_MTDA.py --source 3 --dataset office-home --net vit --batch_size 64

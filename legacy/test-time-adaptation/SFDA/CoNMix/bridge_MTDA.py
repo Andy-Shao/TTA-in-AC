@@ -19,7 +19,7 @@ from helper.data_list import ImageList_idx
 from lib.loss import Entropy
 
 def image_test(resize_size=256, crop_size=224, alexnet=False) -> nn.Module:
-    if alexnet:
+    if not alexnet:
         normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
     else:
         assert False, 'no support'
@@ -182,7 +182,7 @@ def test_target(args: argparse.Namespace) -> Tuple:
         acc_os1, acc_os2, acc_unknown = cal_acc_oda(dataset_loaders['test'], modelF, modelB, modelC)
         log_str = '\nTraining: {}, Task: {}, Accuracy = {:.2f}% / {:.2f}% / {:.2f}%'.format(args.trte, args.name, acc_os2, acc_os1, acc_unknown)
     else:
-        if args.dset=='visda-2017':
+        if args.dataset=='visda-2017':
             acc, acc_list = cal_acc(dataset_loaders['test'], modelF, modelB, modelC, True)
             log_str = '\nTraining: {}, Task: {}, Accuracy = {:.2f}%'.format(args.trte, args.name, acc) + '\n' + acc_list
         else:
@@ -224,13 +224,13 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    if args.dset == 'office-home':
+    if args.dataset == 'office-home':
         names = ['Art', 'Clipart', 'Product', 'RealWorld']
         args.class_num = 65 
-    if args.dset == 'office':
+    if args.dataset == 'office':
         names = ['amazon', 'dslr', 'webcam']
         args.class_num = 31
-    if args.dset =='domain_net':
+    if args.dataset =='domain_net':
         names = ['clipart', 'infograph', 'painting', 'quickdraw', 'sketch', 'real']
         args.class_num = 345
 
@@ -252,7 +252,7 @@ if __name__ == "__main__":
     args.test_dataset_path = folder + args.dataset + '/' + names[args.target] + '.txt'
 
     print(print_args(args))
-    if args.dset == 'office-home':
+    if args.dataset == 'office-home':
         if args.da == 'pda':
             args.class_num = 65
             args.source_classes = [i for i in range(65)]
@@ -274,7 +274,7 @@ if __name__ == "__main__":
         args.target = i
         args.name = names[args.source][0].upper() + names[args.target][0].upper()
 
-        args.output_dir_source = os.path.join(args.output, 'SDTA', args.dataset, args.name.upper())
+        args.output_dir_source = os.path.join(args.output, 'STDA', args.dataset, args.name.upper())
         args.source_dataset_path = folder + args.dataset + '/' + names[args.source] + '.txt'
         args.test_dataset_path = folder + args.dataset + '/' + names[args.target] + '.txt'
 
