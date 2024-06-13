@@ -75,6 +75,10 @@ gdown https://drive.google.com/uc?id=1kYKUqt8UCKgr4PiSN-j_-3p48yJAgnCF
 ```shell
 sh pre_train.sh
 ```
+### Step 2: STDA Training
+```shell
+sh STDA.sh
+```
 
 ## Testing
 
