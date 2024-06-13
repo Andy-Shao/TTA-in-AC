@@ -67,7 +67,7 @@ def cal_acc(loader: DataLoader, modelF: nn.Module, modelB: nn.Module, modelC: nn
             labels = data[1]
             outputs = modelC(modelB(modelF(inputs)))
             if start_test:
-                all_output = outputs.float().numpy()
+                all_output = outputs.float().cpu()
                 all_label = labels.float()
                 start_test = False
             else:
@@ -150,7 +150,7 @@ def obtain_label(loader: DataLoader, modelF: nn.Module, modelB: nn.Module, model
     
     acc = np.sum(pred_label == all_label.float().numpy()) / len(all_feature)
     wandb.log({"Pseudo_Label_Accuracy": acc*100})
-    log_str = 'Accuracy = {:.2f}% -> {:.2f}%'.format(accuracy * 100, acc * 100)
+    log_str = 'Pseudo Label Accuracy = {:.2f}% -> {:.2f}%'.format(accuracy * 100, acc * 100)
 
     args.out_file.write(log_str + '\n')
     args.out_file.flush()
@@ -160,7 +160,7 @@ def obtain_label(loader: DataLoader, modelF: nn.Module, modelB: nn.Module, model
     return pred_label, all_output.cpu().numpy(), dd.numpy().astype('float32'), mean_all_output, all_label.cpu().numpy().astype(np.uint16)
 
 def get_strong_aug(dataset: Dataset, idx: torch.Tensor) -> torch.Tensor:
-    augment_img = torch.cat([dataset[i][0] for i in idx], dim=0)
+    augment_img = torch.cat([dataset[i][0].unsqueeze(dim=0) for i in idx],dim=0)
     return augment_img
 
 def op_copy(optimizer: optim.Optimizer) -> optim.Optimizer:
@@ -209,11 +209,11 @@ def train_target(args: argparse.Namespace) -> Tuple[nn.Module, nn.Module, nn.Mod
     modelB = nn.DataParallel(modelB, device_ids=gpu_list)
     modelC = nn.DataParallel(modelC, device_ids=gpu_list)
 
-    modelpath = args.output_dir_src + '/source_F.pt'
+    modelpath = args.output_dir_source + '/source_F.pt'
     modelF.load_state_dict(torch.load(modelpath))
-    modelpath = args.output_dir_src + '/source_B.pt'
+    modelpath = args.output_dir_source + '/source_B.pt'
     modelB.load_state_dict(torch.load(modelpath))
-    modelpath = args.output_dir_srd + '/source_C.pt'
+    modelpath = args.output_dir_source + '/source_C.pt'
     modelC.load_state_dict(torch.load(modelpath))
     print('Model loaded!')
 
@@ -441,13 +441,13 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    if args.dset == 'office-home':
+    if args.dataset == 'office-home':
         names = ['Art', 'Clipart', 'Product', 'RealWorld']
         args.class_num = 65
-    if args.dset == 'office':
+    if args.dataset == 'office':
         names = ['amazon', 'dslr', 'webcam']
         args.class_num = 31
-    if args.dset =='domain_net':
+    if args.dataset =='domain_net':
         names = ['clipart', 'infograph', 'painting', 'quickdraw','sketch', 'real']
         args.class_num = 345
 
@@ -482,11 +482,11 @@ if __name__ == "__main__":
         else:
             args.txt_eval_dn = args.target_dataset_path
 
-        mode = 'online' if args.wandb else 'disable'
+        mode = 'online' if args.wandb else 'disabled'
         wandb.init(project='CoNMix ECCV', name=f'STDA {names[args.source]} to {names[i]} '+args.suffix, reinit=True,mode=mode, config=args, tags=[args.dataset, args.net, 'STDA'])
 
-        args.output_dir_source = os.path.join(args.input_srouce, args.da, args.dataset, names[args.source][0].upper())
-        args.output_dir = os.path.join(args.output, 'STDA', args.dataset, names[args.source][0].upper() + names[args.target][0].upper())
+        args.output_dir_source = os.path.join(args.input_source, args.da, args.dataset, names[args.source][0].upper())
+        args.output_dir = os.path.join(args.output, 'STDA', args.dataset, names[args.source][0].upper() + names[i][0].upper())
         args.name = names[args.source][0].upper() + names[i][0].upper()
 
         if not os.path.exists(args.output_dir):
@@ -494,7 +494,7 @@ if __name__ == "__main__":
         if not os.path.exists(args.output_dir):
             os.mkdir(args.output_dir)
 
-        args.out_file = open(os.path(args.output_dir, 'log.txt'), 'w')
+        args.out_file = open(os.path.join(args.output_dir, 'log.txt'), 'w')
         args.out_file.write(print_args(args) + '\n')
         args.out_file.flush()
         train_target(args)
