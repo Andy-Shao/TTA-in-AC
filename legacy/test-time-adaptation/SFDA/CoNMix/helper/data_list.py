@@ -1,4 +1,4 @@
-from typing import Any, List
+from typing import Any, List, Tuple
 import os
 import os.path
 import numpy as np
@@ -78,6 +78,38 @@ class ImageList_idx(Dataset):
         if self.target_transform is not None:
             target = self.target_transform(target)
         return img, target, index
+
+def make_dataset_MixUp(image_list: List[str], labels) -> List[Tuple[str, str, str, str]]:
+    ## Image_path, Actual_lbl, pseudo_label, domain
+    if labels:
+      len_ = len(image_list)
+      images = [(image_list[i].strip(), labels[i, :]) for i in range(len_)]
+    else:
+        images = [(val.split(',')[1], int(val.split(',')[3]), int(val.split(',')[2]), int(val.split(',')[0])) for val in image_list]
+    return images
     
 class ImageList_MixUp(Dataset):
-    pass
+    def __init__(self, image_list, labels=None, transform=None, target_transform=None, mode='RGB'):
+        imgs = make_dataset_MixUp(image_list, labels)
+        if len(imgs) == 0:
+            raise(RuntimeError('Without data'))
+        self.imgs = imgs
+        self.transform = transform
+        self.target_transform = target_transform
+        if mode == 'RGB':
+            self.loader = rgb_loader
+        elif mode == 'L':
+            self.loader = l_loader
+
+    def __len__(self) -> int:
+        return len(self.imgs)
+    
+    def __getitem__(self, index) -> Tuple:
+        path, pseudo_label, target, domain = self.imgs[index]
+        img = self.loader(path=path)
+        if self.transform is not None:
+            img = self.transform(img)
+        if self.target_transform is not None:
+            target = self.target_transform(target)
+        
+        return img, pseudo_label, target, domain

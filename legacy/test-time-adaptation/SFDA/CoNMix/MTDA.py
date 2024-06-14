@@ -18,9 +18,9 @@ from lib import models
 from helper.mixup_utils import progress_bar
 
 def mixup_criterion(criterion: nn.Module, pred: torch.Tensor, y_a: torch.Tensor, y_b: torch.Tensor, lambda_: float) -> torch.Tensor:
-    pass
+    return lambda_ * criterion(pred, y_a) + (1 - lambda_) * criterion(pred, y_b)
 
-def mixup_data(x: torch.Tensor, y: torch.Tensor, alpha=1.0, use_cuda=True) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, float]:
+def mixup_data(x: torch.Tensor, y: torch.Tensor, alpha=1.0) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, float]:
     '''Returns mixed inputs, pairs of targets, and lambda'''
     if alpha > 0:
         lambda_ = np.random.beta(alpha, alpha)
@@ -88,8 +88,8 @@ def checkpoint(args, modelF, modelB, modelC):
     if not os.path.exists(save_path):
         os.makedirs(save_path)
     torch.save(modelF.state_dict(), os.path.join(save_path, "target_F.pt"))
-    torch.save(modelF.state_dict(), os.path.join(save_path, "target_B.pt"))
-    torch.save(modelF.state_dict(), os.path.join(save_path, "target_C.pt"))
+    torch.save(modelB.state_dict(), os.path.join(save_path, "target_B.pt"))
+    torch.save(modelC.state_dict(), os.path.join(save_path, "target_C.pt"))
     print('Model saved to ', save_path )
 
 def train(args: argparse.Namespace, epoch: int, all_loader: DataLoader, optimizer: optim.Optimizer, models: Tuple[nn.Module, nn.Module, nn.Module], criterion: nn.Module) -> Tuple[float, float, float]:
@@ -261,8 +261,7 @@ if __name__ == '__main__':
     if not os.path.exists(log_name):
         with open(log_name, 'w') as log_file:
             log_writer = csv.writer(log_file, delimiter=',')
-            log_writer.writerow(['epoch', 'train loss', 'reg loss', 'train acc',
-                                'test loss', 'test acc'])
+            log_writer.writerow(['epoch', 'train loss', 'reg loss', 'train acc', 'test loss', 'test acc'])
     
     mode = 'online' if args.wandb else 'disabled'
     wandb.init(project='CoNMix ECCV MTDA', entity='vclab', name=f'MTDA {names[args.source]} to Others '+ args.suffix, reinit=True, mode=mode, config=args, tags=[args.dataset, args.net, 'MTDA'])
