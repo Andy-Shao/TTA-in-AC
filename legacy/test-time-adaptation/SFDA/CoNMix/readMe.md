@@ -86,9 +86,6 @@ sh bridge_MTDA.sh
 sh MTDA.sh
 ```
 
-## Testing
-
-
 ## Code Reference
 [TransUNet](https://github.com/Beckschen/TransUNet)<br/>
 [SHOT](https://github.com/tim-learn/SHOT)<br/>
