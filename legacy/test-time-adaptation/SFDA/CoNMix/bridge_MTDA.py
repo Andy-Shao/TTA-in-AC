@@ -285,7 +285,7 @@ if __name__ == "__main__":
         for i in list(idx):
             image_path, label = txt_test[i].split(' ')
             img_pathes.append(image_path)
-            labels.append(label)
+            labels.append(int(label))
         dict = {'Domain': args.target, 'Image Path': img_pathes, 'Actual Label': labels, 'Pseudo Label': pseudo_label}
         df = pd.DataFrame(dict)
         df.to_csv(os.path.join(args.save_dir, names[args.source]+'.csv'), mode='a', header=False, index=False)

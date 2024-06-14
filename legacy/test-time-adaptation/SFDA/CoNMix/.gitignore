@@ -4,3 +4,5 @@ model
 STDA_weights
 wandb
 csv
+MTDA_weights
+results

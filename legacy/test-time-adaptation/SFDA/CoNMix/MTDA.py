@@ -205,13 +205,13 @@ if __name__ == '__main__':
     if args.seed != 0:
         torch.manual_seed(args.seed)
     
-    if args.dset == 'office-home':
+    if args.dataset == 'office-home':
         names = ['Art', 'Clipart', 'Product', 'RealWorld']
         args.class_num = 65
-    if args.dset == 'office':
+    if args.dataset == 'office':
         names = ['amazon', 'dslr', 'webcam']
         args.class_num = 31
-    if args.dset =='domain_net':
+    if args.dataset =='domain_net':
         names = ['clipart', 'infograph', 'painting', 'quickdraw','sketch', 'real']
         args.class_num = 345
 
@@ -264,7 +264,7 @@ if __name__ == '__main__':
             log_writer.writerow(['epoch', 'train loss', 'reg loss', 'train acc', 'test loss', 'test acc'])
     
     mode = 'online' if args.wandb else 'disabled'
-    wandb.init(project='CoNMix ECCV MTDA', entity='vclab', name=f'MTDA {names[args.source]} to Others '+ args.suffix, reinit=True, mode=mode, config=args, tags=[args.dataset, args.net, 'MTDA'])
+    wandb.init(project='CoNMix ECCV MTDA', name=f'MTDA {names[args.source]} to Others '+args.suffix, reinit=True,mode=mode, config=args, tags=[args.dataset, args.net, 'MTDA'])
 
     print(f'\nStarting training {names[args.source]} to others.')
     train_len = len(all_dataset['train'])
