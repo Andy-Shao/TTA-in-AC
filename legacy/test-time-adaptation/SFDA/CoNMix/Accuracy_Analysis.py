@@ -175,4 +175,4 @@ if __name__ == '__main__':
 
         df.loc[len(df)] = [names[args.source], names[i], args.net, ttl_num, origin_accuracy, shifted_accuracy]
         print(f'Source: {names[args.source]}, Target: {names[i]}, Model: {args.net}, TTL NUM: {ttl_num}, Original Accuracy: {origin_accuracy}, Adapted Accuracy: {shifted_accuracy}')
-    wandb.log({'Test/accuracy', wandb.Table(dataframe=df)})
+    wandb.log({'Test/accuracy': wandb.Table(dataframe=df)})
