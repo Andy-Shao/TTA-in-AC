@@ -14,5 +14,12 @@ Important software version list
 + tensorflow-estimator==2.6.0
 + tensorflow-gpu==2.4.1
 
+### Original paper softeware version
+```txt
+tensorflow-gpu==1.13.1
+numpy==1.16.2
+pillow==6.0.0
+```
+
 ## Code Reference
 [MLSR](https://github.com/parkseobin/MLSR)
