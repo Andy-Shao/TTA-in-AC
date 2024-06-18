@@ -14,6 +14,11 @@ Important software version list
 + tensorflow-estimator==1.13.0
 + tensorflow-gpu==1.13.1
 
+Check the GPU usage command:
+```python
+tf.test.gpu_device_name()
+```
+
 ### Original paper softeware version
 ```txt
 tensorflow-gpu==1.13.1
