@@ -3,6 +3,8 @@
 
 ## Software environment
 ```shell
+conda create --name my-tf tensorflow python=3.9
+# Or
 conda create --name my-tf tensorflow-gpu=2.4.1 python=3.9
 conda activate my-tf
 ```
