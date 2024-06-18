@@ -13,10 +13,5 @@ The original paper's software version description is very unclear.
 [CIFAR-10-C](https://zenodo.org/records/2535967#.Xaf8uedKj-Y)<br/>
 [CIFAR-10.1](https://github.com/modestyachts/CIFAR-10.1/tree/master)
 
-CIFAR-10-C dataset backup address:
-```shell
-gdown https://drive.google.com/uc?id=1kYKUqt8UCKgr4PiSN-j_-3p48yJAgnCF
-```
-
 ## Code Reference
 [TTT](https://github.com/yueatsprograms/ttt_cifar_release/tree/master)
