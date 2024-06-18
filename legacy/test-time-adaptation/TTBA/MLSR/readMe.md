@@ -3,16 +3,21 @@
 
 ## Software environment
 ```shell
-conda create --name my-tf tensorflow-gpu=2.4.1 python=3.9
+conda create --name my-tf tensorflow-gpu=1.13.1
 conda activate my-tf
 ```
 Important software version list
-+ python==3.9.19
-+ cudatoolkit==10.1.243
++ python==3.7.16
++ cudatoolkit==9.0
 + tensorflow==2.4.1
-+ tensorflow-base==2.4.1
-+ tensorflow-estimator==2.6.0
-+ tensorflow-gpu==2.4.1
++ tensorflow-base==1.13.1
++ tensorflow-estimator==1.13.0
++ tensorflow-gpu==1.13.1
+
+Check the GPU usage command:
+```python
+tf.test.gpu_device_name()
+```
 
 ### Original paper softeware version
 ```txt
