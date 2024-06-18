@@ -9,5 +9,9 @@ The original paper's software version description is very unclear.
 + tqdm (unknown)
 + colorama (unknown)
 
+## Dataset
+[CIFAR-10-C](https://zenodo.org/records/2535967#.Xaf8uedKj-Y)<br/>
+[CIFAR-10.1](https://github.com/modestyachts/CIFAR-10.1/tree/master)
+
 ## Code Reference
 [TTT](https://github.com/yueatsprograms/ttt_cifar_release/tree/master)
