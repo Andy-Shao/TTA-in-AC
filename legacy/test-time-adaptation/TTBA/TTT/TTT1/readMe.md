@@ -20,6 +20,17 @@ conda install colorama==0.4.6
 conda install matplotlib==3.8.4
 ```
 
+### This Software Version
+```shell
+conda create --name my-ttt python=3.9
+conda activate my-ttt
+# CUDA 11.8
+conda install pytorch==2.1.0 torchvision==0.16.0 torchaudio==2.1.0 pytorch-cuda=11.8 -c pytorch -c nvidia
+conda install tqdm==4.66.4
+conda install colorama==0.4.6
+conda install matplotlib==3.8.4
+```
+
 ## Dataset
 [CIFAR-10-C](https://zenodo.org/records/2535967#.Xaf8uedKj-Y)<br/>
 [CIFAR-10.1](https://github.com/modestyachts/CIFAR-10.1/tree/master)
