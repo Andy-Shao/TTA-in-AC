@@ -22,13 +22,13 @@ conda install matplotlib==3.8.4
 
 ### This Software Version
 ```shell
-conda create --name my-ttt python=3.9
+conda create --name my-ttt python=3.9 -y 
 conda activate my-ttt
 # CUDA 11.8
-conda install pytorch==2.1.0 torchvision==0.16.0 torchaudio==2.1.0 pytorch-cuda=11.8 -c pytorch -c nvidia
-conda install tqdm==4.66.4
-conda install colorama==0.4.6
-conda install matplotlib==3.8.4
+conda install pytorch==2.1.0 torchvision==0.16.0 torchaudio==2.1.0 pytorch-cuda=11.8 -c pytorch -c nvidia -y
+conda install tqdm==4.66.4 -y
+conda install colorama==0.4.6 -y
+conda install matplotlib==3.8.4 -y
 ```
 
 ## Dataset
