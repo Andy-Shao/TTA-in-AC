@@ -16,7 +16,7 @@ class ResNetCifar(nn.Module):
         self.layer1 = self._make_layer(norm_layer=norm_layer, planes=16 * width)
         self.layer2 = self._make_layer(norm_layer=norm_layer, planes=32 * width, stride=2)
         self.layer3 = self._make_layer(norm_layer=norm_layer, planes=64 * width, stride=2)
-        self.bn = norm_layer(63 * width)
+        self.bn = norm_layer(64 * width)
         self.relu = nn.ReLU(inplace=True)
         self.avgpool = nn.AvgPool2d(kernel_size=8)
         self.fc = nn.Linear(64 * width, class_num)
@@ -30,11 +30,11 @@ class ResNetCifar(nn.Module):
     def _make_layer(self, norm_layer: int, planes: int, stride=1) -> nn.Module:
         downsample = None
         if stride != 1 or self.inplanes != planes:
-            downsample = Downsample(nIn=self.inplanes, nOut=planes, stride=stride)
-        layers = [BasicBlock(inplanes=self.inplanes, planes=planes, norm_layer=norm_layer, stride=stride, downsample=downsample)]
+            downsample = Downsample(self.inplanes, planes, stride)
+        layers = [BasicBlock(self.inplanes, planes, norm_layer, stride, downsample)]
         self.inplanes = planes
         for i in range(self.N - 1):
-            layers.append(BasicBlock(inplanes=self.inplanes, planes=planes, norm_layer=norm_layer))
+            layers.append(BasicBlock(self.inplanes, planes, norm_layer))
         return nn.Sequential(*layers)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:

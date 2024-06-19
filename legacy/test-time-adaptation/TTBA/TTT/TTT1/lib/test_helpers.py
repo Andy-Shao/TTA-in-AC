@@ -19,11 +19,11 @@ def build_model(args: argparse.Namespace) -> tuple[nn.Module, nn.Module, nn.Modu
         else:
             class_num = 10
     
-    if args.group_num == 0:
+    if args.group_norm == 0:
         norm_layer = nn.BatchNorm2d
     else:
         def gn_helper(planes):
-            return nn.GroupNorm(num_groups=args.group_num, num_channels=planes)
+            return nn.GroupNorm(num_groups=args.group_norm, num_channels=planes)
         norm_layer = gn_helper
     net = ResNet(depth=args.depth, width=args.width, channels=3, class_num=class_num, norm_layer=norm_layer).cuda()
     if args.shared == 'none':

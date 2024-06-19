@@ -13,7 +13,7 @@ from lib.rotation import rotate_batch
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--dataset', default='cifar10')
-    parser.add_argument('--dataroot', default='./datasets/')
+    parser.add_argument('--dataroot', default='./data/')
     parser.add_argument('--shared', default=None)
     ########################################################################
     parser.add_argument('--depth', default=26, type=int)
