@@ -4,7 +4,7 @@ def rotate_batch(batch: torch.Tensor, label: str) -> tuple[torch.Tensor, torch.T
     if label == 'rand':
         labels = torch.randint(high=4, size=(len(batch),), dtype=torch.long)
     elif label == 'expand':
-        labels == torch.cat(tensors=[
+        labels = torch.cat(tensors=[
             torch.zeros(len(batch), dtype=torch.long),
             torch.zeros(len(batch), dtype=torch.long) + 1,
             torch.zeros(len(batch), dtype=torch.long) + 2,

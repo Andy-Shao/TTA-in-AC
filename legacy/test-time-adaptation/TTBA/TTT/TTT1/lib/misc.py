@@ -2,6 +2,6 @@ import os
 
 def my_makedir(name: str):
     try:
-        os.mkdir(name)
+        os.makedirs(name=name)
     except OSError:
         pass

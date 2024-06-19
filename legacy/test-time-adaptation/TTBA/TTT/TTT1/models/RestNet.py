@@ -30,11 +30,11 @@ class ResNetCifar(nn.Module):
     def _make_layer(self, norm_layer: int, planes: int, stride=1) -> nn.Module:
         downsample = None
         if stride != 1 or self.inplanes != planes:
-            downsample = Downsample(self.inplanes, planes, stride)
-        layers = [BasicBlock(self.inplanes, planes, norm_layer, stride, downsample)]
+            downsample = Downsample(nIn=self.inplanes, nOut=planes, stride=stride)
+        layers = [BasicBlock(inplanes=self.inplanes, planes=planes, norm_layer=norm_layer, stride=stride, downsample=downsample)]
         self.inplanes = planes
         for i in range(self.N - 1):
-            layers.append(BasicBlock(self.inplanes, planes, norm_layer))
+            layers.append(BasicBlock(inplanes=self.inplanes, planes=planes, norm_layer=norm_layer))
         return nn.Sequential(*layers)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -52,7 +52,7 @@ class ResNetCifar(nn.Module):
 class Downsample(nn.Module):
     def __init__(self, nIn: int, nOut: int, stride: int):
         super(Downsample, self).__init__()
-        self.avg = nn.AvgPool2d(stride=stride)
+        self.avg = nn.AvgPool2d(kernel_size=stride)
         assert nOut % nIn == 0
         self.expand_ratio = nOut // nIn
 
@@ -65,14 +65,14 @@ class BasicBlock(nn.Module):
         super(BasicBlock, self).__init__()
         self.downsample = downsample
         self.stride = stride
-
+        
         self.bn1 = norm_layer(inplanes)
         self.relu1 = nn.ReLU(inplace=True)
-        self.conv1 = conv3x3(in_planes=inplanes, out_planes=planes, stride=stride)
-
-        self.bn2 = norm_layer(inplanes)
+        self.conv1 = conv3x3(inplanes, planes, stride)
+        
+        self.bn2 = norm_layer(planes)
         self.relu2 = nn.ReLU(inplace=True)
-        self.conv2 = conv3x3(in_planes=planes, out_planes=planes)
+        self.conv2 = conv3x3(planes, planes)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         residual = x

@@ -30,5 +30,5 @@ class ViewFlatten(nn.Module):
     def __init__(self):
         super(ViewFlatten, self).__init__()
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return x.view(x.size(0), 1)
+    def forward(self, x):
+        return x.view(x.size(0), -1)
