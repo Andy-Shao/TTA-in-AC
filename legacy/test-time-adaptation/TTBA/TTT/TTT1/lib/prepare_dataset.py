@@ -28,16 +28,16 @@ def prepare_test_data(args: argparse.Namespace) -> tuple[Dataset, DataLoader]:
         if not hasattr(args, 'corruption') or args.corruption == 'original':
             print('Test on the original test set')
             test_set = torchvision.datasets.CIFAR10(root=args.dataroot, train=False, download=True, transform=test_transforms)
-        elif args.corrupion in common_corruptions:
+        elif args.corruption in common_corruptions:
             print('Test on %s level %d' %(args.corruption, args.level))
             test_set_raw = np.load(file=f'{args.dataroot}/CIFAR-10-C/{args.corruption}.npy')
-            test_set_raw = test_set_raw[(args.level-1)*test_size: (args.level-1)*test_size]
+            test_set_raw = test_set_raw[(args.level-1)*test_size: args.level*test_size]
             test_set = torchvision.datasets.CIFAR10(root=args.dataroot, train=False, download=True, transform=test_transforms)
             test_set.data = test_set_raw
         elif args.corruption == 'cifar_new':
             from lib.cifar_new import CIFAR_New
             print('Test on CIFAR-10.1')
-            test = CIFAR_New(root=args.dataroot + 'CIFAR-10.1/datasets/', transform=test_transforms)
+            test_set = CIFAR_New(root=args.dataroot + 'CIFAR-10.1/datasets/', transform=test_transforms)
             permute = False
         else:
             raise Exception('Corruption not found!')

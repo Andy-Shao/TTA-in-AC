@@ -6,6 +6,8 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 
 from lib.rotation import rotate_batch
+from lib.misc import flat_grad
+from lib.rotation import rotate_batch
 
 def build_model(args: argparse.Namespace) -> tuple[nn.Module, nn.Module, nn.Module, nn.Module]:
     from models.RestNet import ResNetCifar as ResNet
@@ -58,7 +60,7 @@ def test(dataloader: DataLoader, model: nn.Module, sslabel=None) -> tuple[float,
             loss = criterion(outputs, labels)
             losses.append(loss.cpu())
             _, predicted = torch.max(input=outputs, dim=1)
-            correct.append(torch.eq(input=predicted, other=labels).cpu())
+            correct.append(predicted.eq(other=labels).cpu())
     correct = torch.cat(correct).numpy()
     losses = torch.cat(losses).numpy()
     model.train()
@@ -76,3 +78,30 @@ def plot_epochs(all_err_cls: list, all_err_ssh: list, fname: str, use_agg=True) 
     plt.legend()
     plt.savefig(fname)
     plt.close()
+
+def test_grad_corr(dataloader: DataLoader, net: nn.Module, ssh: nn.Module, ext: nn.Module) -> list:
+    criterion = nn.CrossEntropyLoss().cuda()
+    net.eval()
+    ssh.eval()
+    corr = []
+    for batch_idx, (features, labels) in enumerate(dataloader):
+        net.zero_grad()
+        ssh.zero_grad()
+        features_cls, labels_cls = features.cuda(), labels.cuda()
+        outputs_cls = net(features_cls)
+        loss_cls = criterion(outputs_cls, labels_cls)
+        grad_cls = torch.autograd.grad(outputs=loss_cls, inputs=ext.parameters())
+        grad_cls = flat_grad(grad_cls)
+
+        ext.zero_grad()
+        features, labels = rotate_batch(batch=features, label='expand')
+        features_ssh, labels_ssh = features.cuda(), labels.cuda()
+        outputs_ssh = ssh(features_ssh)
+        loss_ssh = criterion(outputs_ssh, labels_ssh)
+        grad_ssh = torch.autograd.grad(outputs=loss_ssh, inputs=ext.parameters())
+        grad_ssh = flat_grad(grad_ssh)
+
+        corr.append(torch.dot(grad_cls, grad_ssh).item())
+    net.train()
+    ssh.train()
+    return corr
