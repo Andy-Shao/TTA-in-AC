@@ -35,5 +35,11 @@ conda install matplotlib==3.8.4 -y
 [CIFAR-10-C](https://zenodo.org/records/2535967#.Xaf8uedKj-Y)<br/>
 [CIFAR-10.1](https://github.com/modestyachts/CIFAR-10.1/tree/master)
 
+System data structure:
+```shell
+./data/CIFAR-10-C
+./data/CIFAR-10.1/datasets
+```
+
 ## Code Reference
 [TTT](https://github.com/yueatsprograms/ttt_cifar_release/tree/master)
