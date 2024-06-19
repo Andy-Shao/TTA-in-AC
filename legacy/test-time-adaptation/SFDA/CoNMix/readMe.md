@@ -86,6 +86,14 @@ sh bridge_MTDA.sh
 sh MTDA.sh
 ```
 
+## Testing
+```shell
+python Accuracy_Analysis.py --source 0
+python Accuracy_Analysis.py --source 1
+python Accuracy_Analysis.py --source 2
+python Accuracy_Analysis.py --source 3
+```
+
 ## Code Reference
 [TransUNet](https://github.com/Beckschen/TransUNet)<br/>
 [SHOT](https://github.com/tim-learn/SHOT)<br/>
