@@ -96,3 +96,19 @@ if __name__ == '__main__':
 			'--outf 		results/C10C_%s_%s_%s%s/' %(shared, setting, name, fix_str),
             '--silent %s' % (str(args.silent))])
         call(args=args_str, shell=True)
+
+        args_str = ' '.join([
+            'python', 'test_calls/test_adapt.py',
+			dataroot,
+			gpnorm_tag,
+			online_tag,
+			fix_tag,
+			'--level 		%d' %(level),
+			'--corruption	%s' %(corruption),
+			'--shared 		%s' %(shared),
+			'--batch_size	%d'	%(batch_size_test),
+			'--lr 			%f' %(lr),
+			'--niter		%d' %(niter),
+			'--resume 		results/cifar10_%s_%s/' %(shared, name),
+			'--outf 		results/C10C_%s_%s_%s%s/' %(shared, setting, name, fix_str)])
+        call(args=args_str, shell=True)

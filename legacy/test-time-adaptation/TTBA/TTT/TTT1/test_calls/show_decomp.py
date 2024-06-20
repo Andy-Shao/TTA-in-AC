@@ -3,6 +3,8 @@ import numpy as np
 
 import torch
 
+printed_head = 'show_decomp:'
+
 def plot_losses(cls_losses: np.ndarray, ssh_losses: list[np.ndarray], fname: str, use_agg=True) -> None:
     from lib.misc import normalize
     import matplotlib.pyplot as plt
@@ -30,11 +32,11 @@ def show_decomp(cls_initial: float, cls_correct: np.ndarray, all_ssh_initial: li
 
     labels = range(4)
     for ssh_initial, ssh_correct, label in zip(all_ssh_initial, all_ssh_correct, labels):
-        print('Direction %d error %.2f' %(label, ssh_initial*100))
+        print('%s Direction %d error %.2f' %(printed_head, label, ssh_initial*100))
 
         dtrue = count_each(pair_buckets(cls_correct, ssh_correct))
         torch.save(dtrue, '%s_dec_%d.pth' %(fname, label))
-        print('Error decoposition:', *dtrue)
+        print(printed_head + ' Error decoposition:', *dtrue)
 
         if args.silent:
             continue
@@ -51,7 +53,14 @@ def show_decomp(cls_initial: float, cls_correct: np.ndarray, all_ssh_initial: li
         plt.close()
 
 def decomp_rand(clse: float, sshe: float, total: float) -> tuple[int, int, int, int]:
-    pass
+    clsw = total * clse
+    clsr = total - clsw
+
+    crr = clsr * (1-sshe)
+    crw = clsr * sshe
+    cwr = clsw * (1-sshe)
+    cww = clsw * sshe
+    return int(crr), int(crw), int(cwr), int(cww)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

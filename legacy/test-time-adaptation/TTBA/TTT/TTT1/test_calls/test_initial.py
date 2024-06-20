@@ -31,21 +31,22 @@ if __name__ == '__main__':
     cudnn.benchmark = True
     net, ext, head, ssh = build_model(args)
     test_set, test_loader = prepare_test_data(args)
+    head_printed_str = 'test_initial:'
 
-    print('Resuming from %s...' %(args.resume))
+    print('%s Resuming from %s...' %(head_printed_str, args.resume))
     ckpt = torch.load(args.resume + '/ckpt.pth')
     net.load_state_dict(ckpt['net'])
     cls_initial, cls_correct, cls_losses = test(dataloader=test_loader, model=net)
 
-    print('Old test error cls %.2f' %(ckpt['err_cls']*100))
-    print('New test error cls %.2f' %(cls_initial*100))
+    print('%s Old test error cls %.2f' %(head_printed_str, ckpt['err_cls']*100))
+    print('%s New test error cls %.2f' %(head_printed_str, cls_initial*100))
 
     if args.none:
         rdict = {'cls_initial': cls_initial, 'cls_correct': cls_correct, 'cls_losses': cls_losses}
         torch.save(rdict, args.outf + '/%s_%d_none.pth' %(args.corruption, args.level))
         quit()
 
-    print('Old test error ssh %.2f' %(ckpt['err_ssh']*100))
+    print('%s Old test error ssh %.2f' %(head_printed_str, ckpt['err_ssh']*100))
     head.load_state_dict(ckpt['head'])
     ssh_initial, ssh_correct, ssh_losses = [], [], []
 
@@ -61,5 +62,5 @@ if __name__ == '__main__':
 
     if args.grad_corr:
         corr = test_grad_corr(dataloader=test_loader, net=net, ssh=ssh, ext=ext)
-        print('Average gradient inner product: %.2f' %(mean(corr)))
+        print('%s Average gradient inner product: %.2f' %(head_printed_str, mean(corr)))
         torch.save(corr, args.outf + '/%s_%d_grc.pth' %(args.corruption, args.level))
