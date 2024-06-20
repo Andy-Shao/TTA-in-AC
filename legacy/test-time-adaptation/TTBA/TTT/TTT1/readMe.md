@@ -41,5 +41,15 @@ System data structure:
 ./data/CIFAR-10.1/datasets
 ```
 
+## Training Steps
+### Main Results
+```shell
+sh script.sh
+```
+### Baseline Results
+```shell
+sh script_baseline.sh
+```
+
 ## Code Reference
 [TTT](https://github.com/yueatsprograms/ttt_cifar_release/tree/master)

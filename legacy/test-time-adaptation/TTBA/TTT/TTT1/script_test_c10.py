@@ -12,7 +12,8 @@ if __name__ == '__main__':
     parser.add_argument('--batch_size_main', type=int, default=128)
     parser.add_argument('--batch_size_test', type=int, default=32)
     parser.add_argument('--corruption', type=str)
-
+    parser.add_argument('--silent', type=bool, default=False)
+    parser.add_argument('--processing', type=bool, default=True)
 
     args = parser.parse_args()
     level = args.level
@@ -83,6 +84,15 @@ if __name__ == '__main__':
             '--resume 		results/cifar10_%s_%s/' %(shared, name),
             '--outf 		results/C10C_%s_%s_%s%s/' %(shared, setting, name, fix_str)
         ])
-        call(args=args_str, shell=True)
+        if args.processing: 
+            call(args=args_str, shell=True)
         if shared == 'none':
             continue
+        
+        args_str = ' '.join([
+            'python', 'test_calls/show_decomp.py',
+			'--level 		%d' %(level),
+			'--corruption	%s' %(corruption),
+			'--outf 		results/C10C_%s_%s_%s%s/' %(shared, setting, name, fix_str),
+            '--silent %s' % (str(args.silent))])
+        call(args=args_str, shell=True)

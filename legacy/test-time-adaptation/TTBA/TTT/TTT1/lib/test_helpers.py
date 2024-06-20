@@ -105,3 +105,13 @@ def test_grad_corr(dataloader: DataLoader, net: nn.Module, ssh: nn.Module, ext: 
     net.train()
     ssh.train()
     return corr
+
+def count_each(tuple_: tuple) -> list:
+	return [item.sum() for item in tuple_]
+
+def pair_buckets(o1: np.ndarray, o2: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+	crr = np.logical_and( o1, o2 )
+	crw = np.logical_and( o1, np.logical_not(o2) )
+	cwr = np.logical_and( np.logical_not(o1), o2 )
+	cww = np.logical_and( np.logical_not(o1), np.logical_not(o2) )
+	return crr, crw, cwr, cww

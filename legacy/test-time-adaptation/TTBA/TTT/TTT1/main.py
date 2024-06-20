@@ -81,8 +81,9 @@ if __name__ == '__main__':
 
         print(('Epoch %d/%d:' %(epoch, args.nepoch)).ljust(24) +
                     '%.2f\t\t%.2f' %(err_cls*100, err_ssh*100))
-        torch.save((all_err_cls, all_err_ssh), args.outf + '/loss.pth')
-        plot_epochs(all_err_cls=all_err_cls, all_err_ssh=all_err_ssh, fname=args.outf + '/loss.pdf')
+        
+    torch.save((all_err_cls, all_err_ssh), args.outf + '/loss.pth')
+    plot_epochs(all_err_cls=all_err_cls, all_err_ssh=all_err_ssh, fname=args.outf + '/loss.pdf')
     
     state = {
         'err_cls': err_cls, 'err_ssh': err_ssh,

@@ -13,3 +13,6 @@ def mean(ls: list) -> float:
 
 def flat_grad(grad_tuple: torch.Tensor) -> torch.Tensor:
     return torch.cat([p.view(-1) for p in grad_tuple])
+
+def normalize(v: torch.Tensor) -> torch.Tensor:
+	return (v - v.mean()) / v.std()
