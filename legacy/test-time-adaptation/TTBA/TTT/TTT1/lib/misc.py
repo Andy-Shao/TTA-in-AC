@@ -1,4 +1,5 @@
 import os
+from colorama import Fore
 
 import torch
 
@@ -16,3 +17,6 @@ def flat_grad(grad_tuple: torch.Tensor) -> torch.Tensor:
 
 def normalize(v: torch.Tensor) -> torch.Tensor:
 	return (v - v.mean()) / v.std()
+
+def print_color(color: str, string: str):
+	print(getattr(Fore, color) + string + Fore.RESET)
