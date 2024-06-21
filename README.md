@@ -16,3 +16,9 @@ conda install tqdm==4.66.4 -y
 conda install jupyter
 conda install matplotlib==3.8.4
 ```
+
+## Dataset
+### Audio MNIST
++ sample size: 30000
++ sample rate: 48000
++ sample data shape: [1, 14073 - 47998]
