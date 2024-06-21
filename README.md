@@ -14,9 +14,9 @@ conda activate my-audio
 # CUDA 11.8
 conda install pytorch==2.1.0 torchvision==0.16.0 torchaudio==2.1.0 pytorch-cuda=11.8 -c pytorch -c nvidia -y
 conda install tqdm==4.66.4 -y
-conda install jupyter
-conda install matplotlib==3.8.4
-pip install wandb==0.17.2
+conda install jupyter -y
+conda install matplotlib==3.8.4 -y
+pip install wandb==0.17.2 -y
 ```
 
 ## Dataset
