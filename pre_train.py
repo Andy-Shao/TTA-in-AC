@@ -1,6 +1,7 @@
 import argparse
-import wandb
 import os
+from tqdm import tqdm
+import pandas as pd
 
 import torch 
 import torchaudio.transforms as transforms
@@ -18,7 +19,7 @@ if __name__ == '__main__':
     ap.add_argument('--batch_size', type=int, default=64)
     ap.add_argument('--max_epoch', type=int, default=50)
     ap.add_argument('--lr', type=float, default=1e-3)
-    ap.add_argument('--wandb', type=bool, default=False)
+    ap.add_argument('--wandb', action='store_true')
     ap.add_argument('--dataset_root_path', type=str)
     ap.add_argument('--model', type=str, default='cnn', choices=['cnn', 'rnn', 'restnet'])
     ap.add_argument('--output_path', type=str)
@@ -26,7 +27,6 @@ if __name__ == '__main__':
     args = ap.parse_args()
     if not os.path.exists(f'{args.output_path}/pre_train'):
         os.makedirs(f'{args.output_path}/pre_train')
-    wandb.init(project='TTA Audio Classification Pre Train', name=f'{args.dataset}', mode= 'online' if args.wandb else 'disabled', config=args, tags=['Pre Train', args.dataset, args.model])
 
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
@@ -44,8 +44,9 @@ if __name__ == '__main__':
         transforms.FrequencyMasking(freq_mask_param=.1),
         transforms.TimeMasking(time_mask_param=.1)
     ])
-    dataset = AudioMINST(data_paths=data_pathes, data_trainsforms=data_transforms)
-    train_dataset, val_dataset = random_split(dataset=dataset, lengths=[int(len(dataset)*.7), len(dataset) - int(len(dataset)*.7)])
+    dataset = AudioMINST(data_paths=data_pathes, data_trainsforms=data_transforms, include_rate=False)
+    train_dataset, val_dataset = random_split(dataset=dataset, lengths=[.7, .3])
+    print(f'train dataset size: {len(train_dataset)}, validation dataset size: {len(val_dataset)}')
     train_loader = DataLoader(dataset=train_dataset, batch_size=args.batch_size, shuffle=True, drop_last=False)
     val_loader = DataLoader(dataset=val_dataset, batch_size=args.batch_size, shuffle=False, drop_last=False)
 
@@ -56,11 +57,10 @@ if __name__ == '__main__':
     loss_fn = nn.CrossEntropyLoss().to(device=device)
     optimizer = optim.Adam(params=model.parameters(), lr=args.lr)
 
-    for epoch in range(args.max_epoch):
-        train_loss = 0.
-        val_loss = 0.
-        train_accu = 0.
-        val_accu = 0.
+    train_step = 0
+    val_step = 0
+    record = pd.DataFrame(columns=['type', 'step', 'accuracy', 'loss'])
+    for epoch in tqdm(range(args.max_epoch)):
 
         # training
         model.train()
@@ -72,8 +72,9 @@ if __name__ == '__main__':
             loss = loss_fn(outputs, labels)
             loss.backward()
             optimizer.step()
-            train_loss += loss
-            train_accu += (preds == labels).sum().cpu().item()
+            train_accu = (preds == labels).sum().cpu().item()
+            record.loc[len(record)] = ['train', train_step, train_accu/labels.shape[0] * 100., loss.cpu().item()]
+            train_step += 1 
 
         # validation
         model.eval()
@@ -83,13 +84,8 @@ if __name__ == '__main__':
                 outputs = model(inputs)
                 _, preds = torch.max(outputs, dim=1)
                 loss = loss_fn(outputs, labels)
-                val_loss += loss
-                val_accu += (preds == labels).sum().cpu().item()
-
-        train_loss = train_loss / len(train_loader)
-        val_loss = val_loss / len(val_loader)
-        train_accu = train_accu / len(train_loader)
-        val_accu = val_accu / len(val_loader)
-        print(f'Epoch: [{epoch}] val_loss: {val_accu:.2f}, val_accu: {val_accu:.2f}')
-        wandb.log({'Loss/train_loss': train_loss, 'Loss/val_loss': val_loss, 'Accuracy/train_accu': train_accu, 'Accuracy/val_accu': val_accu})
+            val_accu = (preds == labels).sum().cpu().item()
+            record.loc[len(record)] = ['validation', val_step, val_accu/labels.shape[0] * 100., loss.cpu().item()]
+            val_step += 1 
         torch.save(model.state_dict(), f'{args.output_path}/pre_train/{args.model}_{args.dataset}.pt')
+    record.to_csv(f'{args.output_path}/pre_train/{args.model}_{args.dataset}_record.csv')

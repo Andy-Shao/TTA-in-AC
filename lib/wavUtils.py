@@ -3,6 +3,17 @@ import random
 import torch 
 import torch.nn as nn
 
+class GuassianNoise(nn.Module):
+    def __init__(self, noise_level=.05):
+        super().__init__()
+        self.noise_level = noise_level
+    
+    def forward(self, wavform: torch.Tensor) -> torch.Tensor:
+        ## Guassian Noise
+        noise = torch.rand_like(wavform) * self.noise_level
+        noise_wavform = wavform + noise
+        return noise_wavform
+
 class pad_trunc(nn.Module):
     """
     Pad (or truncate) the signal to a fixed length 'max_ms' in milliseconds

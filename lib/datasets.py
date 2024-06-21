@@ -3,9 +3,6 @@ import json
 
 from torch.utils.data import Dataset
 import torchaudio
-import torch.nn as nn
-
-from lib.wavUtils import pad_trunc
 
 class AudioMINST(Dataset):
     def __init__(self, data_paths: list[str], data_trainsforms=None, include_rate=True):
@@ -23,9 +20,9 @@ class AudioMINST(Dataset):
         if self.data_trainsforms is not None:
             wavform = self.data_trainsforms(wavform)
         if self.include_rate:
-            return (wavform, sample_rate), float(label)
+            return (wavform, sample_rate), int(label)
         else:
-            return wavform, float(label)
+            return wavform, int(label)
     
 def load_datapath(root_path: str, filter_fn) -> list[str]:
     dataset_list = []

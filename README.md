@@ -16,7 +16,7 @@ conda install pytorch==2.1.0 torchvision==0.16.0 torchaudio==2.1.0 pytorch-cuda=
 conda install tqdm==4.66.4 -y
 conda install jupyter -y
 conda install matplotlib==3.8.4 -y
-pip install wandb==0.17.2 -y
+conda install pandas==2.2.2 -y 
 ```
 
 ## Dataset
