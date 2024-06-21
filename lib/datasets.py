@@ -3,19 +3,29 @@ import json
 
 from torch.utils.data import Dataset
 import torchaudio
+import torch.nn as nn
+
+from lib.wavUtils import pad_trunc
 
 class AudioMINST(Dataset):
-    def __init__(self, data_paths: list[str]):
+    def __init__(self, data_paths: list[str], data_trainsforms=None, include_rate=True):
         super(AudioMINST, self).__init__()
         self.data_paths = data_paths
+        self.data_trainsforms = data_trainsforms
+        self.include_rate = include_rate
 
     def __len__(self):
         return len(self.data_paths)
     
     def __getitem__(self, index) -> tuple[tuple, float]:
-        audio = torchaudio.load(self.data_paths[index])
+        (wavform, sample_rate) = torchaudio.load(self.data_paths[index])
         label = self.data_paths[index].split('/')[-1].split('_')[0]
-        return audio, float(label)
+        if self.data_trainsforms is not None:
+            wavform = self.data_trainsforms(wavform)
+        if self.include_rate:
+            return (wavform, sample_rate), float(label)
+        else:
+            return wavform, float(label)
     
 def load_datapath(root_path: str, filter_fn) -> list[str]:
     dataset_list = []

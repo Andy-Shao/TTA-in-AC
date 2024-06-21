@@ -1,0 +1,1 @@
+python pre_train.py --dataset_root_path
