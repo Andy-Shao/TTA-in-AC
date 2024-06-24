@@ -19,15 +19,21 @@ conda install matplotlib==3.8.4 -y
 conda install pandas==2.2.2 -y 
 ```
 
-## Test & Training
+## Training
 ### Tent & Norm Adaptation
 ```shell
 sh pre_train.sh
 ```
-After that open and runing the `analysis.ipynb` for demonstrate the different.
+`Note`: try to modify the ```shell --dataset_root_path ``` for your dataset location.
+
+## Test
+After that open and runing the `analysis.ipynb` for demonstrate the different. 
+Most importantly, modify the ```python test_data_root_path ``` to your dataset location.
 
 ## Dataset
 ### Audio MNIST
 + sample size: 30000
 + sample rate: 48000
 + sample data shape: [1, 14073 - 47998]
+  
+[Audio MNIST Link](https://github.com/soerenab/AudioMNIST/tree/master)
