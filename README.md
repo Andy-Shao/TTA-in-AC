@@ -19,6 +19,13 @@ conda install matplotlib==3.8.4 -y
 conda install pandas==2.2.2 -y 
 ```
 
+## Test & Training
+### Tent & Norm Adaptation
+```shell
+sh pre_train.sh
+```
+After that open and runing the `analysis.ipynb` for demonstrate the different.
+
 ## Dataset
 ### Audio MNIST
 + sample size: 30000
