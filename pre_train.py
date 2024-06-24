@@ -30,11 +30,13 @@ if __name__ == '__main__':
 
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     print(f'The device is: {device}')
+    import torch.backends.cudnn as cudnn
+    cudnn.benchmark = True
 
     if args.dataset == 'audio-mnist':
         data_pathes = load_datapath(root_path=args.dataset_root_path, filter_fn=lambda x: x['accent'] == 'German')
         sample_rate = 48000
-        n_mels = 40
+        n_mels = 64
     else: 
         raise Exception('configure cannot be satisfied')
     
@@ -62,11 +64,14 @@ if __name__ == '__main__':
     train_step = 0
     val_step = 0
     record = pd.DataFrame(columns=['type', 'step', 'accuracy', 'loss'])
-    for epoch in tqdm(range(args.max_epoch)):
+    for epoch in range(args.max_epoch):
+        print(f'Epoch {epoch}')
 
-        # training
+        print('training...')
         model.train()
-        for inputs, labels in train_loader:
+        train_loader_iter = iter(train_loader)
+        for i in tqdm(range(len(train_loader))):
+            inputs, labels = next(train_loader_iter)
             inputs, labels = inputs.to(device), labels.to(device)
             optimizer.zero_grad()
             outputs = model(inputs)
@@ -77,10 +82,13 @@ if __name__ == '__main__':
             train_accu = (preds == labels).sum().cpu().item()
             record.loc[len(record)] = ['train', train_step, train_accu/labels.shape[0] * 100., loss.cpu().item()]
             train_step += 1 
+        print(f'train accuracy: {record.iloc[-1, 2]:.2f}%, train loss: {record.iloc[-1, 3]:.2f}')
 
-        # validation
+        print('validation')
         model.eval()
-        for inputs, labels in val_loader:
+        val_loader_iter = iter(val_loader)
+        for i in tqdm(range(len(val_loader))):
+            inputs, labels = next(val_loader_iter)
             inputs, labels = inputs.to(device), labels.to(device)
             with torch.no_grad():
                 outputs = model(inputs)
@@ -89,5 +97,6 @@ if __name__ == '__main__':
             val_accu = (preds == labels).sum().cpu().item()
             record.loc[len(record)] = ['validation', val_step, val_accu/labels.shape[0] * 100., loss.cpu().item()]
             val_step += 1 
+        print(f'validation accuracy: {record.iloc[-1, 2]:.2f}%, validation loss: {record.iloc[-1, 3]:.2f}')
         torch.save(model.state_dict(), f'{args.output_path}/pre_train/{args.model}_{args.dataset}.pt')
     record.to_csv(f'{args.output_path}/pre_train/{args.model}_{args.dataset}_record.csv')
