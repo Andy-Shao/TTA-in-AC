@@ -33,13 +33,14 @@ if __name__ == '__main__':
     if args.dataset == 'audio-mnist':
         data_pathes = load_datapath(root_path=args.dataset_root_path, filter_fn=lambda x: x['accent'] == 'German')
         sample_rate = 48000
+        n_mels = 40
     else: 
         raise Exception('configure cannot be satisfied')
     
     data_transforms = Components(transforms=[
         pad_trunc(max_ms=1000, sample_rate=sample_rate),
         time_shift(shift_limit=.1),
-        transforms.MelSpectrogram(sample_rate=sample_rate, n_fft=1024, n_mels=64),
+        transforms.MelSpectrogram(sample_rate=sample_rate, n_fft=1024, n_mels=n_mels),
         transforms.AmplitudeToDB(top_db=80),
         transforms.FrequencyMasking(freq_mask_param=.1),
         transforms.TimeMasking(time_mask_param=.1)
