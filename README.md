@@ -24,11 +24,11 @@ conda install pandas==2.2.2 -y
 ```shell
 sh pre_train.sh
 ```
-`Note`: try to modify the ```shell --dataset_root_path ``` for your dataset location.
+`Note`: try to modify the `--dataset_root_path ` for your dataset location.
 
 ## Test
 After that open and run the `analysis.ipynb` to demonstrate the analysis feedback. 
-Most importantly, modify the ```python test_data_root_path ``` to your dataset location.
+Most importantly, modify the `test_data_root_path` to your dataset location.
 
 ## Dataset
 ### Audio MNIST
