@@ -37,3 +37,6 @@ Most importantly, modify the `test_data_root_path` to your dataset location.
 + sample data shape: [1, 14073 - 47998]
   
 [Audio MNIST Link](https://github.com/soerenab/AudioMNIST/tree/master)
+
+## Code Reference
+[Tent](https://github.com/DequanWang/tent)
