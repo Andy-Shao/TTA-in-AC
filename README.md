@@ -27,7 +27,7 @@ sh pre_train.sh
 `Note`: try to modify the ```shell --dataset_root_path ``` for your dataset location.
 
 ## Test
-After that open and runing the `analysis.ipynb` for demonstrate the different. 
+After that open and run the `analysis.ipynb` to demonstrate the analysis feedback. 
 Most importantly, modify the ```python test_data_root_path ``` to your dataset location.
 
 ## Dataset
