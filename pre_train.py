@@ -29,6 +29,7 @@ if __name__ == '__main__':
         os.makedirs(f'{args.output_path}/pre_train')
 
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    print(f'The device is: {device}')
 
     if args.dataset == 'audio-mnist':
         data_pathes = load_datapath(root_path=args.dataset_root_path, filter_fn=lambda x: x['accent'] == 'German')
