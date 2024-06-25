@@ -22,3 +22,6 @@ class BatchTransform(object):
                 tmp = torch.unsqueeze(self.transforms(ls[i]), dim=0)
                 ret = torch.cat((ret, tmp), dim=0)
         return ret
+    
+    def tran_one(self, x: torch.Tensor) -> torch.Tensor:
+        return torch.unsqueeze(self.transforms(x), dim=0)

@@ -25,6 +25,6 @@ def build_mnist_model(args: argparse.Namespace) -> tuple[nn.Module, nn.Module, n
     elif args.shared == 'layer2':
         from ttt.models.SSHead import extractor_from_layer2, head_on_layer2
         ext = extractor_from_layer2(net)
-        head = head_on_layer2(net=net, width=args.width, class_num=3)
+        head = head_on_layer2(net=net, width=args.width, class_num=3, fc_in=args.final_full_line_in)
     ssh = ExtractorHead(ext=ext, head=head).to(device=args.device)
     return net, ext, head, ssh

@@ -8,6 +8,7 @@ import torch.nn as nn
 from lib.toolkit import print_argparse
 from ttt.lib.test_helpers import build_mnist_model
 from ttt.lib.prepare_dataset import prepare_test_data, prepare_train_data, train_transforms, TimeShiftOps
+from ttt.lib.rotation import rotate_batch
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='SHOT')
@@ -74,9 +75,16 @@ if __name__ == '__main__':
 
         for batch_idx, (features, labels) in enumerate(train_loader):
             optimizer.zero_grad()
-            features = tran_transfs[TimeShiftOps.ORIGIN].transf(features).cuda()
-            print(f'input shape: {features.shape}')
-            outputs = net(features)
-            print(f'output shape: {outputs.shape}')
+            features_cls = tran_transfs[TimeShiftOps.ORIGIN].transf(features).to(args.device)
+            labels_cls = labels.to(args.device)
+            outputs_cls = net(features_cls)
+            loss = criterion(outputs_cls, labels_cls)
+
+            if args.shared is not None:
+                features_ssh, labels_ssh = rotate_batch(features, args.rotation_type, data_transforms=tran_transfs)
+                print(f'input shape: {features.shape} -> {features_ssh.shape}')
+                features_ssh, labels_ssh = features_ssh.to(args.device), labels_ssh.to(args.device)
+                outputs_ssh = ssh(features_ssh)
+                print(f'output shape: {outputs_ssh.shape}')
             break
         break

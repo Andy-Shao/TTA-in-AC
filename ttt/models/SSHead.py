@@ -20,10 +20,10 @@ def extractor_from_layer2(net: nn.Module) -> nn.Module:
     layers = [net.conv1, net.layer1, net.layer2]
     return nn.Sequential(*layers)
 
-def head_on_layer2(net: nn.Module, width: int, class_num: int) -> nn.Module:
+def head_on_layer2(net: nn.Module, width: int, class_num: int, fc_in: int) -> nn.Module:
     head = copy.deepcopy([net.layer3, net.bn, net.relu, net.avgpool])
     head.append(ViewFlatten())
-    head.append(nn.Linear(in_features=64 * width, out_features=class_num))
+    head.append(nn.Linear(in_features=fc_in, out_features=class_num))
     return nn.Sequential(*head)
 
 class ViewFlatten(nn.Module):

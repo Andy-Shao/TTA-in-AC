@@ -1,7 +1,5 @@
 import argparse
 
-import torch
-import torch.nn as nn
 import torchaudio.transforms as transforms
 from torch.utils.data import Dataset, DataLoader
 
