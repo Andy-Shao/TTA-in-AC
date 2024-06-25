@@ -1,0 +1,1 @@
+python analysis.py --model_weight_file_path './result/audio-mnist/cnn/pre_train/model_weights.pt' --dataset_root_path '/root/data/AudioMNIST/data'

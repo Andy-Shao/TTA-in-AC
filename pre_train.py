@@ -12,6 +12,7 @@ import torch.optim as optim
 from lib.datasets import AudioMINST, load_datapath
 from lib.wavUtils import Components, pad_trunc, time_shift
 from lib.models import WavClassifier
+from lib.toolkit import print_argparse
 
 if __name__ == '__main__':
     ap = argparse.ArgumentParser(description='SHOT')
@@ -22,12 +23,16 @@ if __name__ == '__main__':
     ap.add_argument('--wandb', action='store_true')
     ap.add_argument('--dataset_root_path', type=str)
     ap.add_argument('--model', type=str, default='cnn', choices=['cnn', 'rnn', 'restnet'])
-    ap.add_argument('--output_path', type=str)
+    ap.add_argument('--output_path', type=str, default='./result')
 
     args = ap.parse_args()
-    if not os.path.exists(f'{args.output_path}/pre_train'):
-        os.makedirs(f'{args.output_path}/pre_train')
-
+    print_argparse(args=args)
+    args.output_full_path = os.path.join(args.output_path, args.dataset, args.model, 'pre_train')
+    try:
+        os.makedirs(args.output_full_path)
+    except:
+        pass
+        
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     print(f'The device is: {device}')
     import torch.backends.cudnn as cudnn
@@ -98,5 +103,5 @@ if __name__ == '__main__':
             record.loc[len(record)] = ['validation', val_step, val_accu/labels.shape[0] * 100., loss.cpu().item()]
             val_step += 1 
         print(f'validation accuracy: {record.iloc[-1, 2]:.2f}%, validation loss: {record.iloc[-1, 3]:.2f}')
-        torch.save(model.state_dict(), f'{args.output_path}/pre_train/{args.model}_{args.dataset}.pt')
-    record.to_csv(f'{args.output_path}/pre_train/{args.model}_{args.dataset}_record.csv')
+        torch.save(model.state_dict(), os.path.join(args.output_full_path, 'model_weights.pt'))
+    record.to_csv(os.path.join(args.output_full_path, 'training_records.csv'))

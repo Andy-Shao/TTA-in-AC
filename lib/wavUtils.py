@@ -54,7 +54,7 @@ class Components(nn.Module):
         return wavform
 
 class time_shift(nn.Module):
-    def __init__(self, shift_limit: float) -> None:
+    def __init__(self, shift_limit: float, is_random=True) -> None:
         """
         Time shift data augmentation
 
@@ -62,9 +62,13 @@ class time_shift(nn.Module):
         """
         super().__init__()
         self.shift_limit = shift_limit
+        self.is_random = is_random
 
     def forward(self, wavform: torch.Tensor) -> torch.Tensor:
-        shift_arg = int(random.random() * self.shift_limit * wavform.shape[1])
+        if self.is_random:
+            shift_arg = int(random.random() * self.shift_limit * wavform.shape[1])
+        else:
+            shift_arg = int(self.shift_limit * wavform.shape[1])
         return wavform.roll(shifts=shift_arg)
     
 def display_wavform(waveform: torch.Tensor):
