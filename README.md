@@ -3,6 +3,7 @@
 ## Project Structure
 + **legacy**: it includes all previous research algorithm implements
 + **lib**: the library code for this project.
++ **TTT**: the TTBA test-time training algorithm implement.
 
 `Note`: the **legacy** is `excluded from this project's implementation`. 
 You can ignore them if you do not want to review the previous research.
@@ -22,13 +23,16 @@ conda install pandas==2.2.2 -y
 ## Training
 ### Tent & Norm Adaptation
 ```shell
-sh pre_train.sh
+sh script/pre_train.sh
 ```
 `Note`: try to modify the `--dataset_root_path ` for your dataset location.
 
-## Test
-After that open and run the `analysis.ipynb` to demonstrate the analysis feedback. 
-Most importantly, modify the `test_data_root_path` to your dataset location.
+## Analysis
+```shell
+sh script/analysis.sh
+```
+`Note`: try to modify the `--dataset_root_path ` for your dataset location.
+After that open and run the `analysis_exhibition.ipynb` to demonstrate the analysis feedback. 
 
 ## Dataset
 ### Audio MNIST
@@ -39,4 +43,5 @@ Most importantly, modify the `test_data_root_path` to your dataset location.
 [Audio MNIST Link](https://github.com/soerenab/AudioMNIST/tree/master)
 
 ## Code Reference
-[Tent](https://github.com/DequanWang/tent)
+[tent](https://github.com/DequanWang/tent)<br/>
+[ttt_cifar_release](https://github.com/yueatsprograms/ttt_cifar_release/tree/master)
