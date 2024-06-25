@@ -5,7 +5,7 @@ import torch.nn as nn
 from torchvision.models.resnet import conv3x3
 
 class ResNetMNIST(nn.Module):
-    def __init__(self, depth: int, width=1, class_num=10, channels=1, norm_layer=nn.BatchNorm2d):
+    def __init__(self, depth: int, width=1, class_num=10, channels=1, norm_layer=nn.BatchNorm2d, fc_in=384):
         assert (depth - 2) % 6 == 0         # depth is 6N+2
         self.N = (depth - 2) // 6
         super(ResNetMNIST, self).__init__()
@@ -19,7 +19,7 @@ class ResNetMNIST(nn.Module):
         self.bn = norm_layer(64 * width)
         self.relu = nn.ReLU(inplace=True)
         self.avgpool = nn.AvgPool2d(kernel_size=8)
-        self.fc = nn.Linear(64 * width, class_num)
+        self.fc = nn.Linear(in_features=fc_in, out_features=class_num)
 
         # Initialization
         for m in self.modules():
