@@ -13,15 +13,14 @@ class BatchTransform(object):
         self.transforms = transforms
     
     def transf(self, ls: torch.Tensor) -> torch.Tensor:
-        ret = torch.ones(2,3)
+        ret = []
         for i in range(ls.size(0)):
-            if i == 0:
-                ret = self.transforms(ls[i])
-                ret = torch.unsqueeze(ret, dim=0)
-            else:
-                tmp = torch.unsqueeze(self.transforms(ls[i]), dim=0)
-                ret = torch.cat((ret, tmp), dim=0)
-        return ret
+            tmp = torch.unsqueeze(self.transforms(ls[i]), dim=0)
+            ret.append(tmp)
+        return torch.cat(ret, dim=0)
     
     def tran_one(self, x: torch.Tensor) -> torch.Tensor:
         return torch.unsqueeze(self.transforms(x), dim=0)
+    
+    def inner_transforms(self) -> nn.Module:
+        return self.transforms

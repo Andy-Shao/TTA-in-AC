@@ -1,3 +1,3 @@
 export PYTHONPATH=$PYTHONPATH:$(pwd)
 
-python ttt/pre_train.py --dataset_root_path '/root/data/AudioMNIST/data'
+python ttt/pre_time_shift_train.py --dataset_root_path '/root/data/AudioMNIST/data' --max_epoch 2
