@@ -46,6 +46,8 @@ if __name__ == '__main__':
     ap.add_argument('--dataset_root_path', type=str)
 
     args = ap.parse_args()
+    args.severity_level = .0025
+    args.corruption = 'gaussian_noise'
     print_argparse(args=args)
     args.output_full_path = os.path.join(args.output_path, args.dataset, args.model, 'analysis')
     try:
@@ -53,7 +55,7 @@ if __name__ == '__main__':
     except:
         pass
 
-    accu_record = pd.DataFrame(columns=['dataset', 'algorithm', 'tta-operation', 'corruption', 'accuracy', 'error'])
+    accu_record = pd.DataFrame(columns=['dataset', 'algorithm', 'tta-operation', 'corruption', 'accuracy', 'error', 'severity level'])
     running_device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
     print('Original test')
@@ -76,13 +78,13 @@ if __name__ == '__main__':
     model.eval()
     original_test_accuracy = inference(model=model, loader=test_loader, device=running_device)
     print(f'original test data size: {len(test_dataset)}, original test accuracy: {original_test_accuracy:.2f}%')
-    accu_record.loc[len(accu_record)] = ['Audio MNIST', 'cnn', 'N/A', 'N/A', original_test_accuracy, 100. - original_test_accuracy]
+    accu_record.loc[len(accu_record)] = [args.dataset, args.model, 'N/A', 'N/A', original_test_accuracy, 100. - original_test_accuracy, 0.]
 
     print('Corruption test')
     if args.dataset == 'audio-mnist':
         corrupted_data_transforms = Components(transforms=[
             pad_trunc(max_ms=1000, sample_rate=sample_rate),
-            GuassianNoise(noise_level=.0025), # .025
+            GuassianNoise(noise_level=args.severity_level), # .025
             transforms.MelSpectrogram(sample_rate=sample_rate, n_fft=1024, n_mels=n_mel),
             transforms.AmplitudeToDB(top_db=80)
         ])
@@ -94,7 +96,7 @@ if __name__ == '__main__':
     model.eval()
     corrupted_test_accuracy = inference(model=model, loader=corrupted_test_loader, device=running_device)
     print(f'corrupted test data size: {len(corrupted_test_dataset)}, corrupted test accuracy: {corrupted_test_accuracy:.2f}%')
-    accu_record.loc[len(accu_record)] = ['Audio MNIST', 'cnn', 'N/A', 'Guassian Noise', corrupted_test_accuracy, 100. - corrupted_test_accuracy]
+    accu_record.loc[len(accu_record)] = [args.dataset, args.model, 'N/A', args.corruption, corrupted_test_accuracy, 100. - corrupted_test_accuracy, args.severity_level]
 
     print('Tent Adaptation')
     if args.dataset == 'audio-mnist':
@@ -106,14 +108,14 @@ if __name__ == '__main__':
     tent_optimizer = optim.Adam(params=tent_params, lr=1e-3, betas=(.9,.99), weight_decay=0.)
     tent_model = TentAdapt(model=model, optimizer=tent_optimizer, steps=1, resetable=False).to(device=running_device)
     tent_accu = inference(model=tent_model, loader=tent_test_loader, device=running_device)
-    accu_record.loc[len(accu_record)] = ['Audio MNIST', 'cnn', 'Tent Adaptation', 'Guassian Noise', tent_accu, 100. - tent_accu]
+    accu_record.loc[len(accu_record)] = [args.dataset, args.model, 'Tent Adaptation', args.corruption, tent_accu, 100. - tent_accu, args.severity_level]
     print(f'tent test data size: {len(corrupted_test_dataset)}, tent test accuracy:{tent_accu:.2f}%')
 
     print('Norm Adaptation')
     model = load_model(args, running_device)
     norm_model = NormAdapt(model=model).to(device=running_device)
     norm_accu = inference(model=norm_model, loader=tent_test_loader, device=running_device)
-    accu_record.loc[len(accu_record)] = ['Audio MNIST', 'cnn', 'Norm Adaptation', 'Guassian Noise', norm_accu, 100. - norm_accu]
+    accu_record.loc[len(accu_record)] = [args.dataset, args.model, 'Norm Adaptation', args.corruption, norm_accu, 100. - norm_accu, args.severity_level]
     print(f'norm test data size: {len(corrupted_test_dataset)}, norm test accuracy: {norm_accu:.2f}%')
 
     # Stroe the record

@@ -1,5 +1,5 @@
-,dataset,algorithm,tta-operation,corruption,accuracy,error
-0,Audio MNIST,cnn,N/A,N/A,94.92,5.079999999999998
-1,Audio MNIST,cnn,N/A,Guassian Noise,33.300000000000004,66.69999999999999
-2,Audio MNIST,cnn,Tent Adaptation,Guassian Noise,84.13000000000001,15.86999999999999
-3,Audio MNIST,cnn,Norm Adaptation,Guassian Noise,83.42,16.58
+,dataset,algorithm,tta-operation,corruption,accuracy,error,severity level
+0,audio-mnist,cnn,N/A,N/A,94.78,5.219999999999999,0.0
+1,audio-mnist,cnn,N/A,gaussian_noise,33.410000000000004,66.59,0.0025
+2,audio-mnist,cnn,Tent Adaptation,gaussian_noise,84.41,15.590000000000003,0.0025
+3,audio-mnist,cnn,Norm Adaptation,gaussian_noise,83.38,16.620000000000005,0.0025

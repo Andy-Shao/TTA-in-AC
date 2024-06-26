@@ -22,8 +22,8 @@ def fill_default_args(args: argparse.Namespace) -> argparse.Namespace:
         args.shift_limit = .25
     elif args.shift_limit <= 0.:
         raise Exception('shift_limit should be greater than zero')
-    if not hasattr(args, 'serverity_level'):
-        args.serverity_level = .0025
+    if not hasattr(args, 'severity_level'):
+        args.severity_level = .0025
     return args
 
 def train_transforms(args: argparse.Namespace) -> dict[str, BatchTransform]:
@@ -65,42 +65,42 @@ def test_transforms(args: argparse.Namespace) -> dict[str, BatchTransform]:
             ret[TimeShiftOps.LEFT] = BatchTransform(transforms=Components(transforms=[
                     pad_trunc(max_ms=1000, sample_rate=args.sample_rate),
                     time_shift(shift_limit=-args.shift_limit, is_random=False),
-                    transforms.MelSpectrogram(sample_rate=args.sample_rate, n_fft=1024, n_mels=args.n_mel, hop_length=args.hop_length),
+                    transforms.MelSpectrogram(sample_rate=args.sample_rate, n_fft=1024, n_mels=args.n_mels, hop_length=args.hop_length),
                     transforms.AmplitudeToDB(top_db=80)
                 ]))
             ret[TimeShiftOps.RIGHT] = BatchTransform(transforms=Components(transforms=[
                     pad_trunc(max_ms=1000, sample_rate=args.sample_rate),
                     time_shift(shift_limit=args.shift_limit, is_random=False),
-                    transforms.MelSpectrogram(sample_rate=args.sample_rate, n_fft=1024, n_mels=args.n_mel, hop_length=args.hop_length),
+                    transforms.MelSpectrogram(sample_rate=args.sample_rate, n_fft=1024, n_mels=args.n_mels, hop_length=args.hop_length),
                     transforms.AmplitudeToDB(top_db=80)
                 ]))
             ret[TimeShiftOps.ORIGIN] = BatchTransform(transforms=Components(transforms=[
                 pad_trunc(max_ms=1000, sample_rate=args.sample_rate),
-                transforms.MelSpectrogram(sample_rate=args.sample_rate, n_fft=1024, n_mels=args.n_mel, hop_length=args.hop_length),
+                transforms.MelSpectrogram(sample_rate=args.sample_rate, n_fft=1024, n_mels=args.n_mels, hop_length=args.hop_length),
                 transforms.AmplitudeToDB(top_db=80)
             ]))
             return ret
         elif args.corruption in common_corruptions:
-            print('Test on %s serverity_level %d' %(args.corruption, args.serverity_level))
+            print('Test on %s severity_level %f' %(args.corruption, args.severity_level))
             ret = dict()
             ret[TimeShiftOps.LEFT] = BatchTransform(transforms=Components(transforms=[
                     pad_trunc(max_ms=1000, sample_rate=args.sample_rate),
                     time_shift(shift_limit=-args.shift_limit, is_random=False),
                     GuassianNoise(noise_level=args.severity_level), # .025
-                    transforms.MelSpectrogram(sample_rate=args.sample_rate, n_fft=1024, n_mels=args.n_mel, hop_length=args.hop_length),
+                    transforms.MelSpectrogram(sample_rate=args.sample_rate, n_fft=1024, n_mels=args.n_mels, hop_length=args.hop_length),
                     transforms.AmplitudeToDB(top_db=80)
                 ]))
             ret[TimeShiftOps.RIGHT] = BatchTransform(transforms=Components(transforms=[
                     pad_trunc(max_ms=1000, sample_rate=args.sample_rate),
                     time_shift(shift_limit=args.shift_limit, is_random=False),
                     GuassianNoise(noise_level=args.severity_level), # .025
-                    transforms.MelSpectrogram(sample_rate=args.sample_rate, n_fft=1024, n_mels=args.n_mel, hop_length=args.hop_length),
+                    transforms.MelSpectrogram(sample_rate=args.sample_rate, n_fft=1024, n_mels=args.n_mels, hop_length=args.hop_length),
                     transforms.AmplitudeToDB(top_db=80)
                 ]))
             ret[TimeShiftOps.ORIGIN] = BatchTransform(transforms=Components(transforms=[
                 pad_trunc(max_ms=1000, sample_rate=args.sample_rate),
                 GuassianNoise(noise_level=args.severity_level), # .025
-                transforms.MelSpectrogram(sample_rate=args.sample_rate, n_fft=1024, n_mels=args.n_mel, hop_length=args.hop_length),
+                transforms.MelSpectrogram(sample_rate=args.sample_rate, n_fft=1024, n_mels=args.n_mels, hop_length=args.hop_length),
                 transforms.AmplitudeToDB(top_db=80)
             ]))
             return ret
