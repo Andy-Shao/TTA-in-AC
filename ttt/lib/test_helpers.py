@@ -1,6 +1,12 @@
 import argparse
+from tqdm import tqdm
 
+import torch
 import torch.nn as nn
+from torch.utils.data import DataLoader
+
+from lib.toolkit import BatchTransform
+from ttt.lib.prepare_dataset import TimeShiftOps
 
 def build_mnist_model(args: argparse.Namespace) -> tuple[nn.Module, nn.Module, nn.Module, nn.Module]:
     from ttt.models.RestNet import ResNetMNIST as ResNet
@@ -28,3 +34,17 @@ def build_mnist_model(args: argparse.Namespace) -> tuple[nn.Module, nn.Module, n
         head = head_on_layer2(net=net, width=args.width, class_num=args.ssh_class_num, fc_in=args.final_full_line_in)
     ssh = ExtractorHead(ext=ext, head=head).to(device=args.device)
     return net, ext, head, ssh
+
+def time_shift_inference(model: nn.Module, loader: DataLoader, test_transf: dict[str, BatchTransform], device: str) -> float:
+    test_corr = 0.
+    test_size = 0.
+    model.eval()
+    for inputs, labels in tqdm(loader):
+        inputs = test_transf[TimeShiftOps.ORIGIN].transf(inputs)
+        inputs, labels = inputs.to(device), labels.to(device)
+        with torch.no_grad():
+            outputs = model(inputs)
+        _, preds = torch.max(outputs, dim=1)
+        test_corr += (preds == labels).sum().cpu().item()
+        test_size += labels.shape[0]
+    return test_corr / test_size * 100.

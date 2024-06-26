@@ -1,29 +1,13 @@
 import argparse
 import os
 import pandas as pd
-from tqdm import tqdm
 
 import torch 
 import torch.nn as nn
-from torch.utils.data import DataLoader
 
-from lib.toolkit import print_argparse, BatchTransform
-from ttt.lib.test_helpers import build_mnist_model
-from ttt.lib.prepare_dataset import prepare_test_data, test_transforms, TimeShiftOps
-
-def inference(model: nn.Module, loader: DataLoader, test_transf: dict[str, BatchTransform]) -> float:
-    test_corr = 0.
-    test_size = 0.
-    model.eval()
-    for inputs, labels in tqdm(loader):
-        inputs = test_transf[TimeShiftOps.ORIGIN].transf(inputs)
-        inputs, labels = inputs.to(args.device), labels.to(args.device)
-        with torch.no_grad():
-            outputs = model(inputs)
-        _, preds = torch.max(outputs, dim=1)
-        test_corr += (preds == labels).sum().cpu().item()
-        test_size += labels.shape[0]
-    return test_corr / test_size * 100.
+from lib.toolkit import print_argparse
+from ttt.lib.test_helpers import build_mnist_model, time_shift_inference as inference
+from ttt.lib.prepare_dataset import prepare_test_data, test_transforms
 
 def load_model(args: argparse.Namespace, mode:str) -> tuple[nn.Module, nn.Module, nn.Module, nn.Module]:
     assert mode in ['origin', 'adapted']
@@ -79,14 +63,14 @@ if __name__ == '__main__':
     args.corruption = 'original'
     test_dataset, test_loader = prepare_test_data(args=args)
     test_transf = test_transforms(args)
-    original_test_accu = inference(model=net, loader=test_loader, test_transf=test_transf)
+    original_test_accu = inference(model=net, loader=test_loader, test_transf=test_transf, device=args.device)
     accu_record.loc[len(accu_record)] = [args.dataset, 'RestNet', 'N/A', 'N/A', original_test_accu, 100. - original_test_accu, 0.]
     print(f'original data size: {len(test_dataset)}, original accuracy: {original_test_accu:.2f}%')
 
     print('Corruption test')
     args.corruption = 'gaussian_noise'
     corrupted_test_transf = test_transforms(args)
-    corrupted_test_accu = inference(model=net, loader=test_loader, test_transf=corrupted_test_transf)
+    corrupted_test_accu = inference(model=net, loader=test_loader, test_transf=corrupted_test_transf, device=args.device)
     accu_record.loc[len(accu_record)] = [args.dataset, 'RestNet', 'N/A', args.corruption, corrupted_test_accu, 100. - corrupted_test_accu, args.severity_level]
     print(f'corrupted data size: {len(test_dataset)}, corrupted accuracy: {corrupted_test_accu:.2f}%')
 
