@@ -30,54 +30,21 @@ def train_transforms(args: argparse.Namespace) -> dict[str, BatchTransform]:
     fill_default_args(args=args)
     if args.dataset == 'audio-mnist':
         ret = dict()
-        if not hasattr(args, 'corruption') or args.corruption == 'original':
-            print('Train on the original train transform')
-            ret[TimeShiftOps.LEFT] = BatchTransform(transforms=Components(transforms=[
-                pad_trunc(max_ms=1000, sample_rate=args.sample_rate),
+        ret[TimeShiftOps.LEFT] = BatchTransform(transforms=Components(transforms=[
                 time_shift(shift_limit=-args.shift_limit, is_random=False),
                 transforms.MelSpectrogram(sample_rate=args.sample_rate, n_fft=1024, n_mels=args.n_mels, hop_length=args.hop_length),
                 transforms.AmplitudeToDB(top_db=80),
                 transforms.FrequencyMasking(freq_mask_param=.1),
                 transforms.TimeMasking(time_mask_param=.1)
             ]))
-            ret[TimeShiftOps.RIGHT] = BatchTransform(transforms=Components(transforms=[
-                pad_trunc(max_ms=1000, sample_rate=args.sample_rate),
+        ret[TimeShiftOps.RIGHT] = BatchTransform(transforms=Components(transforms=[
                 time_shift(shift_limit=args.shift_limit, is_random=False),
                 transforms.MelSpectrogram(sample_rate=args.sample_rate, n_fft=1024, n_mels=args.n_mels, hop_length=args.hop_length),
                 transforms.AmplitudeToDB(top_db=80),
                 transforms.FrequencyMasking(freq_mask_param=.1),
                 transforms.TimeMasking(time_mask_param=.1)
             ]))
-            ret[TimeShiftOps.ORIGIN] = BatchTransform(transforms=Components(transforms=[
-                pad_trunc(max_ms=1000, sample_rate=args.sample_rate),
-                transforms.MelSpectrogram(sample_rate=args.sample_rate, n_fft=1024, n_mels=args.n_mels, hop_length=args.hop_length),
-                transforms.AmplitudeToDB(top_db=80),
-                transforms.FrequencyMasking(freq_mask_param=.1),
-                transforms.TimeMasking(time_mask_param=.1)
-            ]))
-        elif args.corruption in common_corruptions:
-            print('Train on %s severity_level %f' %(args.corruption, args.severity_level))
-            ret[TimeShiftOps.LEFT] = BatchTransform(transforms=Components(transforms=[
-                pad_trunc(max_ms=1000, sample_rate=args.sample_rate),
-                time_shift(shift_limit=-args.shift_limit, is_random=False),
-                GuassianNoise(noise_level=args.severity_level), # .025
-                transforms.MelSpectrogram(sample_rate=args.sample_rate, n_fft=1024, n_mels=args.n_mels, hop_length=args.hop_length),
-                transforms.AmplitudeToDB(top_db=80),
-                transforms.FrequencyMasking(freq_mask_param=.1),
-                transforms.TimeMasking(time_mask_param=.1)
-            ]))
-            ret[TimeShiftOps.RIGHT] = BatchTransform(transforms=Components(transforms=[
-                pad_trunc(max_ms=1000, sample_rate=args.sample_rate),
-                time_shift(shift_limit=args.shift_limit, is_random=False),
-                GuassianNoise(noise_level=args.severity_level), # .025
-                transforms.MelSpectrogram(sample_rate=args.sample_rate, n_fft=1024, n_mels=args.n_mels, hop_length=args.hop_length),
-                transforms.AmplitudeToDB(top_db=80),
-                transforms.FrequencyMasking(freq_mask_param=.1),
-                transforms.TimeMasking(time_mask_param=.1)
-            ]))
-            ret[TimeShiftOps.ORIGIN] = BatchTransform(transforms=Components(transforms=[
-                pad_trunc(max_ms=1000, sample_rate=args.sample_rate),
-                GuassianNoise(noise_level=args.severity_level), # .025
+        ret[TimeShiftOps.ORIGIN] = BatchTransform(transforms=Components(transforms=[
                 transforms.MelSpectrogram(sample_rate=args.sample_rate, n_fft=1024, n_mels=args.n_mels, hop_length=args.hop_length),
                 transforms.AmplitudeToDB(top_db=80),
                 transforms.FrequencyMasking(freq_mask_param=.1),
@@ -89,51 +56,22 @@ def train_transforms(args: argparse.Namespace) -> dict[str, BatchTransform]:
 def test_transforms(args: argparse.Namespace) -> dict[str, BatchTransform]:
     fill_default_args(args=args)
     if args.dataset == 'audio-mnist':
-        if not hasattr(args, 'corruption') or args.corruption == 'original':
-            print('Test on the original test transform')
-            ret = dict()
-            ret[TimeShiftOps.LEFT] = BatchTransform(transforms=Components(transforms=[
-                    pad_trunc(max_ms=1000, sample_rate=args.sample_rate),
+        ret = dict()
+        ret[TimeShiftOps.LEFT] = BatchTransform(transforms=Components(transforms=[
                     time_shift(shift_limit=-args.shift_limit, is_random=False),
                     transforms.MelSpectrogram(sample_rate=args.sample_rate, n_fft=1024, n_mels=args.n_mels, hop_length=args.hop_length),
                     transforms.AmplitudeToDB(top_db=80)
                 ]))
-            ret[TimeShiftOps.RIGHT] = BatchTransform(transforms=Components(transforms=[
-                    pad_trunc(max_ms=1000, sample_rate=args.sample_rate),
+        ret[TimeShiftOps.RIGHT] = BatchTransform(transforms=Components(transforms=[
                     time_shift(shift_limit=args.shift_limit, is_random=False),
                     transforms.MelSpectrogram(sample_rate=args.sample_rate, n_fft=1024, n_mels=args.n_mels, hop_length=args.hop_length),
                     transforms.AmplitudeToDB(top_db=80)
                 ]))
-            ret[TimeShiftOps.ORIGIN] = BatchTransform(transforms=Components(transforms=[
-                pad_trunc(max_ms=1000, sample_rate=args.sample_rate),
+        ret[TimeShiftOps.ORIGIN] = BatchTransform(transforms=Components(transforms=[
                 transforms.MelSpectrogram(sample_rate=args.sample_rate, n_fft=1024, n_mels=args.n_mels, hop_length=args.hop_length),
                 transforms.AmplitudeToDB(top_db=80)
             ]))
-            return ret
-        elif args.corruption in common_corruptions:
-            print('Test on %s severity_level %f' %(args.corruption, args.severity_level))
-            ret = dict()
-            ret[TimeShiftOps.LEFT] = BatchTransform(transforms=Components(transforms=[
-                    pad_trunc(max_ms=1000, sample_rate=args.sample_rate),
-                    time_shift(shift_limit=-args.shift_limit, is_random=False),
-                    GuassianNoise(noise_level=args.severity_level), # .025
-                    transforms.MelSpectrogram(sample_rate=args.sample_rate, n_fft=1024, n_mels=args.n_mels, hop_length=args.hop_length),
-                    transforms.AmplitudeToDB(top_db=80)
-                ]))
-            ret[TimeShiftOps.RIGHT] = BatchTransform(transforms=Components(transforms=[
-                    pad_trunc(max_ms=1000, sample_rate=args.sample_rate),
-                    time_shift(shift_limit=args.shift_limit, is_random=False),
-                    GuassianNoise(noise_level=args.severity_level), # .025
-                    transforms.MelSpectrogram(sample_rate=args.sample_rate, n_fft=1024, n_mels=args.n_mels, hop_length=args.hop_length),
-                    transforms.AmplitudeToDB(top_db=80)
-                ]))
-            ret[TimeShiftOps.ORIGIN] = BatchTransform(transforms=Components(transforms=[
-                pad_trunc(max_ms=1000, sample_rate=args.sample_rate),
-                GuassianNoise(noise_level=args.severity_level), # .025
-                transforms.MelSpectrogram(sample_rate=args.sample_rate, n_fft=1024, n_mels=args.n_mels, hop_length=args.hop_length),
-                transforms.AmplitudeToDB(top_db=80)
-            ]))
-            return ret
+        return ret
     raise Exception('No support')
 
 def prepare_train_data(args: argparse.Namespace, data_transforms=None) -> tuple[Dataset, DataLoader]:

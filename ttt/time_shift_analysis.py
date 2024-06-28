@@ -9,7 +9,7 @@ import torch.optim as optim
 
 from lib.toolkit import print_argparse
 from ttt.lib.test_helpers import build_mnist_model, time_shift_inference as inference
-from ttt.lib.prepare_dataset import prepare_test_data, test_transforms, TimeShiftOps, train_transforms
+from ttt.lib.prepare_dataset import prepare_test_data, test_transforms, TimeShiftOps, train_transforms, Components, GuassianNoise, pad_trunc
 from ttt.lib.time_shift_rotation import rotate_batch
 
 def test_one(feature: torch.Tensor, model: nn.Module, data_transf: nn.Module) -> tuple[int, int]:
@@ -78,7 +78,7 @@ if __name__ == '__main__':
     parser.add_argument('--shift_limit', default=.25, type=float)
 
     args = parser.parse_args()
-    args.output_full_path = os.path.join(args.output_path, args.dataset, 'ttt', 'analysis')
+    args.output_full_path = os.path.join(args.output_path, args.dataset, 'ttt', 'time_shift_analysis')
     try:
         os.makedirs(args.output_full_path)
     except:
@@ -97,6 +97,9 @@ if __name__ == '__main__':
         net, ext, head, ssh = load_model(args, mode='origin')
     else:
         raise Exception('No support')
+    
+    import torch.backends.cudnn as cudnn
+    cudnn.benchmark = True
     print_argparse(args)
     # Finish args prepare
     
@@ -104,22 +107,22 @@ if __name__ == '__main__':
     args.corruption = 'original'
     test_dataset, test_loader = prepare_test_data(args=args)
     test_transf = test_transforms(args)
-    # original_test_accu = inference(model=net, loader=test_loader, test_transf=test_transf, device=args.device)
-    # accu_record.loc[len(accu_record)] = [args.dataset, 'RestNet', 'N/A', 'N/A', original_test_accu, 100. - original_test_accu, 0.]
-    # print(f'original data size: {len(test_dataset)}, original accuracy: {original_test_accu:.2f}%')
+    original_test_accu = inference(model=net, loader=test_loader, test_transf=test_transf, device=args.device)
+    accu_record.loc[len(accu_record)] = [args.dataset, 'RestNet', 'N/A', 'N/A', original_test_accu, 100. - original_test_accu, 0.]
+    print(f'original data size: {len(test_dataset)}, original accuracy: {original_test_accu:.2f}%')
 
     print('Corruption test')
     args.corruption = 'gaussian_noise'
+    corrupted_test_dataset, corrupted_test_loader = prepare_test_data(args=args, data_transforms=Components(transforms=[
+        pad_trunc(max_ms=1000, sample_rate=args.sample_rate),
+        GuassianNoise(noise_level=args.severity_level),
+    ]))
     corrupted_test_transf = test_transforms(args)
-    corrupted_test_accu = inference(model=net, loader=test_loader, test_transf=corrupted_test_transf, device=args.device)
+    corrupted_test_accu = inference(model=net, loader=corrupted_test_loader, test_transf=corrupted_test_transf, device=args.device)
     accu_record.loc[len(accu_record)] = [args.dataset, 'RestNet', 'N/A', args.corruption, corrupted_test_accu, 100. - corrupted_test_accu, args.severity_level]
     print(f'corrupted data size: {len(test_dataset)}, corrupted accuracy: {corrupted_test_accu:.2f}%')
 
     print('Online ttt adaptation')
-    import torch.backends.cudnn as cudnn
-    cudnn.benchmark = True
-    args.threshold += 0.001		# to correct for numeric errors
-    args.corruption = 'gaussian_noise'
     args.batch_size = args.batch_size // 3
     train_transfs = train_transforms(args)
     if args.dataset == 'audio-mnist':
@@ -128,16 +131,17 @@ if __name__ == '__main__':
         raise Exception('No support')
     criterion_ssh = nn.CrossEntropyLoss().to(device=args.device)
     optimizer_ssh = optim.SGD(params=ssh.parameters(), lr=args.lr)
-    ttl_corr = 0
-    for feature, label in tqdm(test_dataset):
+    ttt_corr = 0
+    for feature, label in tqdm(corrupted_test_dataset):
         input = corrupted_test_transf[TimeShiftOps.ORIGIN].tran_one(feature)
         input = input.to(args.device)
         _, confidence = measure_one(model=ssh, audio=input, label=0)
         if confidence < args.threshold:
             adapt_one(feature=feature, ssh=ssh, ext=ext, args=args, criterion=criterion_ssh, data_transf=train_transfs, optimizer=optimizer_ssh)
         correctness, confidence = measure_one(model=net, audio=input, label=label)
-        ttl_corr += correctness
-    ttl_accu = ttl_corr / len(test_dataset) * 100.
-    print(f'TTT adaptation data size: {len(test_dataset)}, accuracy: {ttl_accu}%')
+        ttt_corr += correctness
+    ttt_accu = ttt_corr / len(test_dataset) * 100.
+    print(f'Online TTT adaptation data size: {len(test_dataset)}, accuracy: {ttt_accu}%')
+    accu_record.loc[len(accu_record)] = [args.dataset, 'RestNet', 'TTT time-shift', args.corruption, ttt_accu, 100. - ttt_accu, args.severity_level]
 
-    # accu_record.to_csv(os.path.join(args.output_full_path, 'accuracy_record.csv'))
+    accu_record.to_csv(os.path.join(args.output_full_path, 'accuracy_record.csv'))

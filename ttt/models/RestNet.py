@@ -27,7 +27,7 @@ class ResNetMNIST(nn.Module):
                 n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
                 m.weight.data.normal_(mean=0, std=math.sqrt(2. / n))
     
-    def _make_layer(self, norm_layer: int, planes: int, stride=1) -> nn.Module:
+    def _make_layer(self, planes: int, norm_layer=nn.BatchNorm2d, stride=1) -> nn.Module:
         downsample = None
         if stride != 1 or self.inplanes != planes:
             downsample = Downsample(nIn=self.inplanes, nOut=planes, stride=stride)
