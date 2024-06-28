@@ -29,6 +29,7 @@ if __name__ == '__main__':
     parser.add_argument('--depth', default=26, type=int)
     parser.add_argument('--width', default=1, type=int)
     parser.add_argument('--severity_level', default=.0025, type=float)
+    parser.add_argument('--shift_limit', default=.25, type=float)
 
     args = parser.parse_args()
     print('TTT pre-train')
@@ -46,7 +47,6 @@ if __name__ == '__main__':
         args.n_mels = 64
         args.final_full_line_in = 384
         args.hop_length = 505
-        args.shift_limit = .25
         args.ssh_class_num = 3
     else:
         raise Exception('No support')

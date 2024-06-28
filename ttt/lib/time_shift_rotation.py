@@ -12,7 +12,7 @@ def rotate_batch(batch: torch.Tensor, label: str, data_transforms: dict[str, Bat
             torch.zeros(len(batch), dtype=torch.long) + 1,
             torch.zeros(len(batch), dtype=torch.long) + 2
         ])
-        batch = batch.repeat((3, 1, 1, 1))
+        batch = batch.repeat((3, 1, 1))
     else:
         raise Exception('No support')
     return rotate_batch_with_labels(batch=batch, labels=labels, data_transforms=data_transforms), labels

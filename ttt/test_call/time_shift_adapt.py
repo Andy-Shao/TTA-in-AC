@@ -3,6 +3,7 @@ import os
 
 import torch 
 import torch.nn as nn
+import torch.optim as optim
 
 from lib.toolkit import print_argparse
 from ttt.lib.test_helpers import build_mnist_model
@@ -66,3 +67,9 @@ if __name__ == '__main__':
         head.load_state_dict(stat['head'])
     
     criterion_ssh = nn.CrossEntropyLoss().to(args.device)
+    if args.fix_ssh: 
+        optimizer_ssh = optim.SGD(params=ext.parameters(), lr=args.lr)
+    else:
+        optimizer_ssh = optim.SGD(params=ssh.parameters(), lr=args.lr)
+
+    
