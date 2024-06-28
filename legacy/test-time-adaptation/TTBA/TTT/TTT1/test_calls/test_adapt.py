@@ -31,7 +31,7 @@ def adapt_single(image: Image, ssh: nn.Module, ext: nn.Module, args: argparse.Na
         ext.eval()
     else:
         ssh.train()
-    for it in range(args.batch_size):
+    for it in range(args.niter):
         inputs = [train_transforms(image) for _ in range(args.batch_size)]
         inputs = torch.stack(inputs)
         inputs_ssh, labels_ssh = rotate_batch(batch=inputs, label='rand')
