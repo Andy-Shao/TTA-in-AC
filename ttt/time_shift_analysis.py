@@ -63,6 +63,7 @@ if __name__ == '__main__':
     parser.add_argument('--origin_model_weight_file_path', type=str)
     parser.add_argument('--adapted_model_weight_file_path', type=str)
     parser.add_argument('--output_path', type=str, default='./result')
+    parser.add_argument('--output_csv_name', type=str, default='accuracy_record.csv')
     parser.add_argument('--dataset_root_path', type=str)
     parser.add_argument('--rotation_type', default='rand')
     parser.add_argument('--group_norm', default=0, type=int)
@@ -142,7 +143,7 @@ if __name__ == '__main__':
         correctness, confidence = measure_one(model=net, audio=input, label=label)
         ttt_corr += correctness
     ttt_accu = ttt_corr / len(test_dataset) * 100.
-    print(f'Online TTT adaptation data size: {len(test_dataset)}, accuracy: {ttt_accu}%')
+    print(f'Online TTT adaptation data size: {len(test_dataset)}, accuracy: {ttt_accu:.2f}%')
     accu_record.loc[len(accu_record)] = [args.dataset, 'RestNet', 'TTT time-shift', args.corruption, ttt_accu, 100. - ttt_accu, args.severity_level]
 
-    accu_record.to_csv(os.path.join(args.output_full_path, 'accuracy_record.csv'))
+    accu_record.to_csv(os.path.join(args.output_full_path, args.output_csv_name))
