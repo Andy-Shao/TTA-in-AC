@@ -52,6 +52,7 @@ if __name__ == '__main__':
     else:
         raise Exception('No support')
     args.device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    args.severity = 'high' if args.severity_level >= .01 else 'low'
     print_argparse(args=args)
     # finish args prepare
 
@@ -116,4 +117,4 @@ if __name__ == '__main__':
         print(('Epoch %d/%d:' %(epoch, args.max_epoch)).ljust(24) + 'cls_accu: %.2f\t\t ssh_accu: %.2f' %(ttl_cls_corr/ttl_cls_size*100., ttl_ssh_corr/ttl_ssh_size*100.))
     accu_records.to_csv(os.path.join(args.output_full_path, 'accu_record.csv'))
     state = {'net': net.state_dict(), 'head': head.state_dict(), 'optimizer': optimizer.state_dict()}
-    torch.save(state, os.path.join(args.output_full_path, 'ckpt.pth'))
+    torch.save(state, os.path.join(args.output_full_path, f'ckpt_{args.severity}.pth'))
