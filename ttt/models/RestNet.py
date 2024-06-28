@@ -20,6 +20,7 @@ class ResNetMNIST(nn.Module):
         self.relu = nn.ReLU(inplace=True)
         self.avgpool = nn.AvgPool2d(kernel_size=8)
         self.fc = nn.Linear(in_features=fc_in, out_features=class_num)
+        self.soft_max = nn.Softmax(dim=1)
 
         # Initialization
         for m in self.modules():

@@ -24,6 +24,7 @@ def head_on_layer2(net: nn.Module, width: int, class_num: int, fc_in: int) -> nn
     head = copy.deepcopy([net.layer3, net.bn, net.relu, net.avgpool])
     head.append(ViewFlatten())
     head.append(nn.Linear(in_features=fc_in, out_features=class_num))
+    # head.append(nn.Softmax(dim=1))
     return nn.Sequential(*head)
 
 class ViewFlatten(nn.Module):

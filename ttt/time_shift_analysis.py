@@ -41,6 +41,7 @@ def measure_one(model: nn.Module, audio: torch.Tensor, label: int) -> tuple[int,
     with torch.no_grad():
         output = model(audio)
         _, pred = torch.max(output, dim=1)
+        # confidence = output.squeeze()[label].item()
         confidence = nn.functional.softmax(output, dim=1).squeeze()[label].item()
     correctness = 1 if pred.item() == label else 0
     return correctness, confidence
