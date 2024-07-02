@@ -24,3 +24,9 @@ class BatchTransform(object):
     
     def inner_transforms(self) -> nn.Module:
         return self.transforms
+    
+def count_ttl_params(model: nn.Module, filter_by_grad=False, requires_grad=True):
+    if not filter_by_grad:
+        return sum(p.numel() for p in model.parameters())
+    else:
+        return sum(p.numel() for p in model.parameters() if p.requires_grad == requires_grad)

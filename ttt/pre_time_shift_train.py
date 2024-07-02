@@ -7,7 +7,7 @@ import torch
 import torch.optim as optim
 import torch.nn as nn
 
-from lib.toolkit import print_argparse
+from lib.toolkit import print_argparse, count_ttl_params
 from ttt.lib.test_helpers import build_mnist_model
 from ttt.lib.prepare_dataset import prepare_train_data, train_transforms, TimeShiftOps
 from ttt.lib.time_shift_rotation import rotate_batch
@@ -58,6 +58,8 @@ if __name__ == '__main__':
     # Finished args prepare
 
     net, ext, head, ssh = build_mnist_model(args=args)
+    print(f'net weight number is: {count_ttl_params(net)}, ssh weight number is: {count_ttl_params(ssh)}')
+    print((f'total weight number is: {count_ttl_params(net) + count_ttl_params(head)}'))
     train_dataset, train_loader = prepare_train_data(args=args)
     tran_transfs = train_transforms(args=args)
 
