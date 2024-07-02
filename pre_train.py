@@ -12,7 +12,7 @@ import torch.optim as optim
 from lib.datasets import AudioMINST, load_datapath
 from lib.wavUtils import Components, pad_trunc, time_shift
 from lib.models import WavClassifier
-from lib.toolkit import print_argparse
+from lib.toolkit import print_argparse, count_ttl_params
 
 if __name__ == '__main__':
     ap = argparse.ArgumentParser(description='SHOT')
@@ -65,6 +65,7 @@ if __name__ == '__main__':
         model = WavClassifier(class_num=10, l1_in_features=64, c1_in_channels=1).to(device=device)
     else:
         raise Exception('Configure cannot be satisfied')
+    print(f'model weight number is: {count_ttl_params(model)}')
     loss_fn = nn.CrossEntropyLoss().to(device=device)
     optimizer = optim.Adam(params=model.parameters(), lr=args.lr)
 
