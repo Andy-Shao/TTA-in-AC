@@ -20,7 +20,7 @@ def build_mnist_model(args: argparse.Namespace) -> tuple[nn.Module, nn.Module, n
             return nn.GroupNorm(num_groups=args.group_norm, num_channels=planes)
         norm_layer = gn_helper
     net = ResNet(depth=args.depth, width=args.width, channels=1, class_num=args.class_num, 
-                 norm_layer=norm_layer, fc_in=args.final_full_line_in).to(device=args.device)
+                 norm_layer=norm_layer, fc_in=args.final_full_line_in)
     if args.shared == 'none':
         args.shared = None
 
@@ -32,8 +32,8 @@ def build_mnist_model(args: argparse.Namespace) -> tuple[nn.Module, nn.Module, n
         from ttt.models.SSHead import extractor_from_layer2, head_on_layer2
         ext = extractor_from_layer2(net)
         head = head_on_layer2(net=net, width=args.width, class_num=args.ssh_class_num, fc_in=args.final_full_line_in)
-    ssh = ExtractorHead(ext=ext, head=head).to(device=args.device)
-    return net, ext, head, ssh
+    ssh = ExtractorHead(ext=ext, head=head)
+    return net.to(device=args.device), ext.to(device=args.device), head.to(device=args.device), ssh.to(device=args.device)
 
 def time_shift_inference(model: nn.Module, loader: DataLoader, test_transf: dict[str, BatchTransform], device: str) -> float:
     test_corr = 0.

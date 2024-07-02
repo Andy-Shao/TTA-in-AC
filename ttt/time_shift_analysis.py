@@ -46,13 +46,9 @@ def measure_one(model: nn.Module, audio: torch.Tensor, label: int) -> tuple[int,
     correctness = 1 if pred.item() == label else 0
     return correctness, confidence
 
-def load_model(args: argparse.Namespace, mode:str) -> tuple[nn.Module, nn.Module, nn.Module, nn.Module]:
-    assert mode in ['origin', 'adapted']
+def load_model(args: argparse.Namespace) -> tuple[nn.Module, nn.Module, nn.Module, nn.Module]:
     net, ext, head, ssh = build_mnist_model(args)
-    if mode == 'origin':
-        stat = torch.load(args.origin_model_weight_file_path)
-    elif mode == 'adapted':
-        stat = torch.load(args.adapted_model_weight_file_path)
+    stat = torch.load(args.origin_model_weight_file_path)
     net.load_state_dict(stat['net'])
     head.load_state_dict(stat['head'])
     return net, ext, head, ssh
@@ -61,7 +57,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='SHOT')
     parser.add_argument('--dataset', type=str, default='audio-mnist', choices=['audio-mnist'])
     parser.add_argument('--origin_model_weight_file_path', type=str)
-    parser.add_argument('--adapted_model_weight_file_path', type=str)
     parser.add_argument('--output_path', type=str, default='./result')
     parser.add_argument('--output_csv_name', type=str, default='accuracy_record.csv')
     parser.add_argument('--dataset_root_path', type=str)
@@ -76,7 +71,7 @@ if __name__ == '__main__':
     parser.add_argument('--lr', default=0.001, type=float)
     parser.add_argument('--niter', default=1, type=int)
     parser.add_argument('--online', action='store_true')
-    parser.add_argument('--threshold', default=1, type=float)
+    parser.add_argument('--threshold', default=1., type=float)
     parser.add_argument('--shift_limit', default=.25, type=float)
 
     args = parser.parse_args()
@@ -96,7 +91,7 @@ if __name__ == '__main__':
         args.final_full_line_in = 384
         args.hop_length = 505
         args.ssh_class_num = 3
-        net, ext, head, ssh = load_model(args, mode='origin')
+        net, ext, head, ssh = load_model(args)
     else:
         raise Exception('No support')
     
@@ -128,7 +123,7 @@ if __name__ == '__main__':
     args.batch_size = args.batch_size // 3
     train_transfs = train_transforms(args)
     if args.dataset == 'audio-mnist':
-        net, ext, head, ssh = load_model(args, mode='origin')
+        net, ext, head, ssh = load_model(args)
     else:
         raise Exception('No support')
     criterion_ssh = nn.CrossEntropyLoss().to(device=args.device)
