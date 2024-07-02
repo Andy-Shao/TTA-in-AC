@@ -1,1 +1,1 @@
-python pre_train.py --dataset_root_path '/root/data/AudioMNIST/data' --output_path './result' --max_epoch 5
+python pre_train.py --dataset_root_path '/root/data/AudioMNIST/data' --output_path './result' --max_epoch 5 

@@ -24,6 +24,8 @@ if __name__ == '__main__':
     ap.add_argument('--dataset_root_path', type=str)
     ap.add_argument('--model', type=str, default='cnn', choices=['cnn', 'rnn', 'restnet'])
     ap.add_argument('--output_path', type=str, default='./result')
+    ap.add_argument('--output_csv_name', type=str, default='training_records.csv')
+    ap.add_argument('--output_weight_name', type=str, default='model_weights.pt')
 
     args = ap.parse_args()
     print_argparse(args=args)
@@ -103,5 +105,5 @@ if __name__ == '__main__':
             record.loc[len(record)] = ['validation', val_step, val_accu/labels.shape[0] * 100., loss.cpu().item()]
             val_step += 1 
         print(f'validation accuracy: {record.iloc[-1, 2]:.2f}%, validation loss: {record.iloc[-1, 3]:.2f}')
-        torch.save(model.state_dict(), os.path.join(args.output_full_path, 'model_weights.pt'))
-    record.to_csv(os.path.join(args.output_full_path, 'training_records.csv'))
+        torch.save(model.state_dict(), os.path.join(args.output_full_path, args.output_weight_name))
+    record.to_csv(os.path.join(args.output_full_path, args.output_csv_name))
