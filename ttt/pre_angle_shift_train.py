@@ -7,7 +7,7 @@ import torch
 import torch.optim as optim
 import torch.nn as nn
 
-from lib.toolkit import print_argparse
+from lib.toolkit import print_argparse, count_ttl_params
 from ttt.lib.test_helpers import build_mnist_model
 from ttt.lib.prepare_dataset import prepare_train_data, train_transforms, TimeShiftOps
 from ttt.lib.angle_shift_rotation import rotate_batch
@@ -15,7 +15,7 @@ from ttt.lib.angle_shift_rotation import rotate_batch
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='SHOT')
     parser.add_argument('--dataset', type=str, default='audio-mnist', choices=['audio-mnist'])
-    parser.add_argument('--batch_size', type=int, default=96)
+    parser.add_argument('--batch_size', type=int, default=128)
     parser.add_argument('--max_epoch', type=int, default=75)
     parser.add_argument('--lr', type=float, default=.1)
     parser.add_argument('--wandb', action='store_true')
@@ -28,16 +28,15 @@ if __name__ == '__main__':
     parser.add_argument('--group_norm', default=0, type=int)
     parser.add_argument('--depth', default=26, type=int)
     parser.add_argument('--width', default=1, type=int)
-    parser.add_argument('--severity_level', default=.0025, type=float)
-    parser.add_argument('--shift_limit', default=.25, type=float)
-    parser.add_argument('--outpt_csv_name', type=str, default='accu_record.csv')
-    parser.add_argument('--outpt_weight_name', type=str, default='ckpt.pth')
+    # parser.add_argument('--severity_level', default=.0025, type=float)
+    parser.add_argument('--output_csv_name', type=str, default='accu_record.csv')
+    parser.add_argument('--output_weight_name', type=str, default='ckpt.pth')
 
     args = parser.parse_args()
     print('TTT pre-train')
     import torch.backends.cudnn as cudnn
     cudnn.benchmark = True
-    args.output_full_path = os.path.join(args.output_path, args.dataset, 'ttt', 'pre_angle_shift_train')
+    args.output_full_path = os.path.join(args.output_path, args.dataset, 'ttt', 'pre_time_shift_train')
     try:
         os.makedirs(args.output_full_path)
     except:
@@ -53,13 +52,14 @@ if __name__ == '__main__':
     else:
         raise Exception('No support')
     args.device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    args.severity = 'high' if args.severity_level >= .01 else 'low'
     print_argparse(args=args)
-    # finish args prepare
+    # Finished args prepare
 
     net, ext, head, ssh = build_mnist_model(args=args)
+    print(f'net weight number is: {count_ttl_params(net)}, ssh weight number is: {count_ttl_params(ssh)}, ext weight number is: {count_ttl_params(ext)}')
+    print((f'total weight number is: {count_ttl_params(net) + count_ttl_params(head)}'))
+    train_dataset, train_loader = prepare_train_data(args=args)
     tran_transfs = train_transforms(args=args)
-    _, train_loader = prepare_train_data(args=args, data_transforms=tran_transfs[TimeShiftOps.ORIGIN].inner_transforms())
 
     parameters = list(net.parameters()) + list(head.parameters())
     optimizer = optim.SGD(params=parameters, lr=args.lr, momentum=.9, weight_decay=5e-4)
@@ -85,10 +85,9 @@ if __name__ == '__main__':
         ttl_ssh_corr = 0.
         ttl_cls_size = 0
         ttl_ssh_size = 0
-        # for batch_idx, (features, labels) in enumerate(train_loader):
         for features, labels in tqdm(train_loader):
             optimizer.zero_grad()
-            features_cls = features.to(args.device)
+            features_cls = tran_transfs[TimeShiftOps.ORIGIN].transf(features).to(args.device)
             labels_cls = labels.to(args.device)
             outputs_cls = net(features_cls)
             loss = criterion(outputs_cls, labels_cls)
@@ -115,7 +114,7 @@ if __name__ == '__main__':
             optimizer.step()
             train_step += 1
         scheduler.step()
-        print(('Epoch %d/%d:' %(epoch, args.max_epoch)).ljust(24) + 'cls_accu: %.2f\t\t ssh_accu: %.2f' %(ttl_cls_corr/ttl_cls_size*100., ttl_ssh_corr/ttl_ssh_size*100.))
-    accu_records.to_csv(os.path.join(args.output_full_path, args.outpt_csv_name))
+        print(('Epoch %d/%d:' %(epoch, args.max_epoch)).ljust(24) + '%.2f\t\t %.2f' %(ttl_cls_corr/ttl_cls_size*100., ttl_ssh_corr/ttl_ssh_size*100.))
+    accu_records.to_csv(os.path.join(args.output_full_path, args.output_csv_name))
     state = {'net': net.state_dict(), 'head': head.state_dict(), 'optimizer': optimizer.state_dict()}
-    torch.save(state, os.path.join(args.output_full_path, args.outpt_weight_name))
+    torch.save(state, os.path.join(args.output_full_path, args.output_weight_name))

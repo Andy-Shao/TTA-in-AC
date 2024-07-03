@@ -28,7 +28,7 @@ if __name__ == '__main__':
     parser.add_argument('--group_norm', default=0, type=int)
     parser.add_argument('--depth', default=26, type=int)
     parser.add_argument('--width', default=1, type=int)
-    parser.add_argument('--severity_level', default=.0025, type=float)
+    # parser.add_argument('--severity_level', default=.0025, type=float)
     parser.add_argument('--shift_limit', default=.25, type=float)
     parser.add_argument('--output_csv_name', type=str, default='accu_record.csv')
     parser.add_argument('--output_weight_name', type=str, default='ckpt.pth')
@@ -53,7 +53,7 @@ if __name__ == '__main__':
     else:
         raise Exception('No support')
     args.device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    args.severity = 'high' if args.severity_level >= .01 else 'low'
+    # args.severity = 'high' if args.severity_level >= .01 else 'low'
     print_argparse(args=args)
     # Finished args prepare
 
@@ -116,7 +116,7 @@ if __name__ == '__main__':
             optimizer.step()
             train_step += 1
         scheduler.step()
-        print(('Epoch %d/%d:' %(epoch, args.max_epoch)).ljust(24) + 'cls_accu: %.2f\t\t ssh_accu: %.2f' %(ttl_cls_corr/ttl_cls_size*100., ttl_ssh_corr/ttl_ssh_size*100.))
+        print(('Epoch %d/%d:' %(epoch, args.max_epoch)).ljust(24) + '%.2f\t\t %.2f' %(ttl_cls_corr/ttl_cls_size*100., ttl_ssh_corr/ttl_ssh_size*100.))
     accu_records.to_csv(os.path.join(args.output_full_path, args.output_csv_name))
     state = {'net': net.state_dict(), 'head': head.state_dict(), 'optimizer': optimizer.state_dict()}
     torch.save(state, os.path.join(args.output_full_path, args.output_weight_name))
