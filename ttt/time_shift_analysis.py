@@ -8,8 +8,9 @@ import torch.nn as nn
 import torch.optim as optim
 
 from lib.toolkit import print_argparse
+from lib.wavUtils import GuassianNoise
 from ttt.lib.test_helpers import build_mnist_model, time_shift_inference as inference
-from ttt.lib.prepare_dataset import prepare_test_data, test_transforms, TimeShiftOps, train_transforms, Components, GuassianNoise, pad_trunc
+from ttt.lib.prepare_dataset import prepare_test_data, test_transforms, TimeShiftOps, train_transforms, Components, pad_trunc
 from ttt.lib.time_shift_rotation import rotate_batch
 
 def test_one(feature: torch.Tensor, model: nn.Module, data_transf: nn.Module) -> tuple[int, int]:
@@ -120,7 +121,7 @@ if __name__ == '__main__':
     print(f'corrupted data size: {len(test_dataset)}, corrupted accuracy: {corrupted_test_accu:.2f}%')
 
     print('Online ttt adaptation')
-    args.batch_size = args.batch_size // 3
+    args.batch_size = 32
     train_transfs = train_transforms(args)
     if args.dataset == 'audio-mnist':
         net, ext, head, ssh = load_model(args)

@@ -2,10 +2,9 @@ import argparse
 
 import torchaudio.transforms as transforms
 from torch.utils.data import Dataset, DataLoader
-import torch.nn as nn
 
 from lib.datasets import AudioMINST, load_datapath
-from lib.wavUtils import Components, pad_trunc, GuassianNoise, time_shift
+from lib.wavUtils import Components, pad_trunc, time_shift
 from lib.toolkit import BatchTransform
 
 common_corruptions = ['gaussian_noise']
@@ -84,12 +83,12 @@ def prepare_train_data(args: argparse.Namespace, data_transforms=None) -> tuple[
         return dataset, data_loader
     raise Exception('No support')
 
-def prepare_test_data(args: argparse.Namespace, data_transforms=None) -> tuple[Dataset, DataLoader]:
+def prepare_test_data(args: argparse.Namespace, data_transforms=None, is_stored=False, stored_path=None) -> tuple[Dataset, DataLoader]:
     if args.dataset == 'audio-mnist':
         if data_transforms is None:
             data_transforms = pad_trunc(max_ms=1000, sample_rate=args.sample_rate)
         dataset = AudioMINST(data_paths=load_datapath(root_path=args.dataset_root_path, filter_fn=lambda x: x['accent']!= 'German'), 
                              include_rate=False, data_trainsforms=data_transforms)
-        data_loader = DataLoader(dataset=dataset, batch_size=args.batch_size, shuffle=True, drop_last=False)
+        data_loader = DataLoader(dataset=dataset, batch_size=args.batch_size, shuffle=False, drop_last=False)
         return dataset, data_loader
     raise Exception('No support')
