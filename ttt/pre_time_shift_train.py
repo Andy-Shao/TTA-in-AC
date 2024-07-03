@@ -87,7 +87,6 @@ if __name__ == '__main__':
         ttl_ssh_corr = 0.
         ttl_cls_size = 0
         ttl_ssh_size = 0
-        # for batch_idx, (features, labels) in enumerate(train_loader):
         for features, labels in tqdm(train_loader):
             optimizer.zero_grad()
             features_cls = tran_transfs[TimeShiftOps.ORIGIN].transf(features).to(args.device)

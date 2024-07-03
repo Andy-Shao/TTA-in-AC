@@ -13,9 +13,9 @@ class ResNetMNIST(nn.Module):
         # Following the Wide ResNet convention, we fix the very first convolution
         self.conv1 = nn.Conv2d(in_channels=channels, out_channels=16, kernel_size=3, stride=1, padding=1, bias=False)
         self.inplanes = 16
-        self.layer1 = self._make_layer(norm_layer=norm_layer, planes=16 * width)
-        self.layer2 = self._make_layer(norm_layer=norm_layer, planes=32 * width, stride=2)
-        self.layer3 = self._make_layer(norm_layer=norm_layer, planes=64 * width, stride=2)
+        self.layer1 = self._make_layer(norm_layer=norm_layer, planes=16 * width, N=self.N)
+        self.layer2 = self._make_layer(norm_layer=norm_layer, planes=32 * width, stride=2, N=self.N)
+        self.layer3 = self._make_layer(norm_layer=norm_layer, planes=64 * width, stride=2, N=self.N)
         self.bn = norm_layer(64 * width)
         self.relu = nn.ReLU(inplace=True)
         self.avgpool = nn.AvgPool2d(kernel_size=8)
@@ -28,13 +28,13 @@ class ResNetMNIST(nn.Module):
                 n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
                 m.weight.data.normal_(mean=0, std=math.sqrt(2. / n))
     
-    def _make_layer(self, planes: int, norm_layer=nn.BatchNorm2d, stride=1) -> nn.Module:
+    def _make_layer(self, planes: int, N: int, norm_layer=nn.BatchNorm2d, stride=1) -> nn.Module:
         downsample = None
         if stride != 1 or self.inplanes != planes:
             downsample = Downsample(nIn=self.inplanes, nOut=planes, stride=stride)
         layers = [BasicBlock(inplanes=self.inplanes, planes=planes, norm_layer=norm_layer, stride=stride, downsample=downsample)]
         self.inplanes = planes
-        for i in range(self.N - 1):
+        for i in range(N - 1):
             layers.append(BasicBlock(inplanes=self.inplanes, planes=planes, norm_layer=norm_layer))
         return nn.Sequential(*layers)
 
