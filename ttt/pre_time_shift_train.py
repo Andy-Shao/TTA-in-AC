@@ -58,7 +58,7 @@ if __name__ == '__main__':
     # Finished args prepare
 
     net, ext, head, ssh = build_mnist_model(args=args)
-    print(f'net weight number is: {count_ttl_params(net)}, ssh weight number is: {count_ttl_params(ssh)}')
+    print(f'net weight number is: {count_ttl_params(net)}, ssh weight number is: {count_ttl_params(ssh)}, ext weight number is: {count_ttl_params(ext)}')
     print((f'total weight number is: {count_ttl_params(net) + count_ttl_params(head)}'))
     train_dataset, train_loader = prepare_train_data(args=args)
     tran_transfs = train_transforms(args=args)

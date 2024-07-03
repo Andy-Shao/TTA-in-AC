@@ -24,13 +24,17 @@ def test_one(feature: torch.Tensor, model: nn.Module, data_transf: nn.Module) ->
     return correct_num, labels.shape[0]
 
 def adapt_one(feature: torch.Tensor, ssh: nn.Module, ext: nn.Module, args: argparse.Namespace, 
-              criterion: nn.Module, data_transf: nn.Module, optimizer: optim.Optimizer) -> None:
+              criterion: nn.Module, data_transf: nn.Module, optimizer: optim.Optimizer, net: nn.Module, 
+              head: nn.Module, mode='online') -> None:
+    assert mode in ['online', 'slow'], 'mode is error'
+    # if mode == 'slow':
+    #     refresh_model(args=args, net=net, head=head)
     ssh.eval()
     ext.train()
-    for it in range(args.niter):
-        features = torch.unsqueeze(feature, dim=0).repeat(args.batch_size, 1, 1)
-        audios, labels = rotate_batch(batch=features, label='rand', data_transforms=data_transf)
-        audios, labels = audios.to(args.device), labels.to(args.device)
+    features = torch.unsqueeze(feature, dim=0).repeat(args.batch_size, 1, 1)
+    audios, labels = rotate_batch(batch=features, label='rand', data_transforms=data_transf)
+    audios, labels = audios.to(args.device), labels.to(args.device)
+    for it in range(args.niter if mode == 'online' else args.niter * 10):
         optimizer.zero_grad()
         outputs = ssh(audios)
         loss = criterion(outputs, labels)
@@ -47,11 +51,14 @@ def measure_one(model: nn.Module, audio: torch.Tensor, label: int) -> tuple[int,
     correctness = 1 if pred.item() == label else 0
     return correctness, confidence
 
-def load_model(args: argparse.Namespace) -> tuple[nn.Module, nn.Module, nn.Module, nn.Module]:
-    net, ext, head, ssh = build_mnist_model(args)
+def refresh_model(args: argparse.Namespace, net: nn.Module, head: nn.Module):
     stat = torch.load(args.origin_model_weight_file_path)
     net.load_state_dict(stat['net'])
     head.load_state_dict(stat['head'])
+
+def load_model(args: argparse.Namespace) -> tuple[nn.Module, nn.Module, nn.Module, nn.Module]:
+    net, ext, head, ssh = build_mnist_model(args)
+    refresh_model(args=args, net=net, head=head)
     return net, ext, head, ssh
 
 if __name__ == '__main__':
@@ -71,7 +78,6 @@ if __name__ == '__main__':
     ########################################################################
     parser.add_argument('--lr', default=0.001, type=float)
     parser.add_argument('--niter', default=1, type=int)
-    parser.add_argument('--online', action='store_true')
     parser.add_argument('--threshold', default=1., type=float)
     parser.add_argument('--shift_limit', default=.25, type=float)
 
@@ -98,6 +104,11 @@ if __name__ == '__main__':
     
     import torch.backends.cudnn as cudnn
     cudnn.benchmark = True
+
+    if args.group_norm == 0:
+        args.ttt_operation = f'TTT, ts, bn'
+    else: 
+        args.ttt_operation = f'TTT, ts, gn'
     print_argparse(args)
     # Finish args prepare
     
@@ -121,7 +132,7 @@ if __name__ == '__main__':
     print(f'corrupted data size: {len(test_dataset)}, corrupted accuracy: {corrupted_test_accu:.2f}%')
 
     print('Online ttt adaptation')
-    args.batch_size = 32
+    args.batch_size = args.batch_size // 3
     train_transfs = train_transforms(args)
     if args.dataset == 'audio-mnist':
         net, ext, head, ssh = load_model(args)
@@ -135,11 +146,33 @@ if __name__ == '__main__':
         input = input.to(args.device)
         _, confidence = measure_one(model=ssh, audio=input, label=0)
         if confidence < args.threshold:
-            adapt_one(feature=feature, ssh=ssh, ext=ext, args=args, criterion=criterion_ssh, data_transf=train_transfs, optimizer=optimizer_ssh)
+            adapt_one(feature=feature, ssh=ssh, ext=ext, args=args, criterion=criterion_ssh, data_transf=train_transfs, 
+                      optimizer=optimizer_ssh, net=net, head=head, mode='online')
         correctness, confidence = measure_one(model=net, audio=input, label=label)
         ttt_corr += correctness
     ttt_accu = ttt_corr / len(test_dataset) * 100.
     print(f'Online TTT adaptation data size: {len(test_dataset)}, accuracy: {ttt_accu:.2f}%')
-    accu_record.loc[len(accu_record)] = [args.dataset, 'RestNet', 'TTT time-shift', args.corruption, ttt_accu, 100. - ttt_accu, args.severity_level]
+    accu_record.loc[len(accu_record)] = [args.dataset, 'RestNet', args.ttt_operation + ', online', args.corruption, ttt_accu, 100. - ttt_accu, args.severity_level]
+
+    # print('Slow ttt adaption')
+    # if args.dataset == 'audio-mnist':
+    #     net, ext, head, ssh = load_model(args)
+    # else:
+    #     raise Exception('No support')
+    # criterion_ssh = nn.CrossEntropyLoss().to(device=args.device)
+    # optimizer_ssh = optim.SGD(params=ssh.parameters(), lr=args.lr)
+    # ttt_corr = 0
+    # for feature, label in tqdm(corrupted_test_dataset):
+    #     input = corrupted_test_transf[TimeShiftOps.ORIGIN].tran_one(feature)
+    #     input = input.to(args.device)
+    #     _, confidence = measure_one(model=ssh, audio=input, label=0)
+    #     if confidence < args.threshold:
+    #         adapt_one(feature=feature, ssh=ssh, ext=ext, args=args, criterion=criterion_ssh, data_transf=train_transfs, 
+    #                   optimizer=optimizer_ssh, net=net, head=head, mode='slow')
+    #     correctness, confidence = measure_one(model=net, audio=input, label=label)
+    #     ttt_corr += correctness
+    # ttt_accu = ttt_corr / len(test_dataset) * 100.
+    # print(f'Slow TTT adaptation data size: {len(test_dataset)}, accuracy: {ttt_accu:.2f}%')
+    # accu_record.loc[len(accu_record)] = [args.dataset, 'RestNet', args.ttt_operation + ', slow', args.corruption, ttt_accu, 100. - ttt_accu, args.severity_level]
 
     accu_record.to_csv(os.path.join(args.output_full_path, args.output_csv_name))
