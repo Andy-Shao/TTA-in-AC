@@ -2,31 +2,19 @@ import argparse
 import os
 import pandas as pd
 from tqdm import tqdm
-import numpy as np
-import random
 
 import torch 
 import torch.nn as nn
 import torch.optim as optim
 
-from lib.toolkit import print_argparse
+from lib.toolkit import print_argparse, BatchTransform
 from lib.wavUtils import GuassianNoise
 from ttt.lib.test_helpers import build_mnist_model, time_shift_inference as inference
 from ttt.lib.prepare_dataset import prepare_test_data, test_transforms, TimeShiftOps, train_transforms, Components, pad_trunc
-from ttt.lib.time_shift_rotation import rotate_batch
-
-def test_one(feature: torch.Tensor, model: nn.Module, data_transf: nn.Module) -> tuple[int, int]:
-    model.eval()
-    audios, labels = rotate_batch(batch=torch.unsqueeze(feature, dim=0), label='expand', data_transforms=data_transf)
-    audios, labels = audios.to(device=args.device), labels.to(device=args.device)
-    with torch.no_grad():
-        outputs = model(audios)
-        _, preds = torch.max(outputs, dim=1)
-    correct_num = (preds == labels).sum().cpu().item()
-    return correct_num, labels.shape[0]
+from ttt.lib.angle_shift_rotation import rotate_batch
 
 def adapt_one(feature: torch.Tensor, ssh: nn.Module, ext: nn.Module, args: argparse.Namespace, 
-              criterion: nn.Module, data_transf: nn.Module, optimizer: optim.Optimizer, net: nn.Module, 
+              criterion: nn.Module, data_transf: dict[str, BatchTransform], optimizer: optim.Optimizer, net: nn.Module, 
               head: nn.Module, mode='online') -> None:
     assert mode in ['online', 'slow'], 'mode is error'
     # if mode == 'slow':
@@ -34,7 +22,8 @@ def adapt_one(feature: torch.Tensor, ssh: nn.Module, ext: nn.Module, args: argpa
     ssh.eval()
     ext.train()
     features = torch.unsqueeze(feature, dim=0).repeat(args.batch_size, 1, 1)
-    audios, labels = rotate_batch(batch=features, label='rand', data_transforms=data_transf)
+    features = data_transf[TimeShiftOps.ORIGIN].transf(features)
+    audios, labels = rotate_batch(batch=features, label='rand')
     audios, labels = audios.to(args.device), labels.to(args.device)
     for it in range(args.niter if mode == 'online' else args.niter * 10):
         optimizer.zero_grad()
@@ -75,16 +64,15 @@ if __name__ == '__main__':
     parser.add_argument('--depth', default=26, type=int)
     parser.add_argument('--width', default=1, type=int)
     parser.add_argument('--severity_level', default=.0025, type=float)
-    parser.add_argument('--batch_size', type=int, default=96)
+    parser.add_argument('--batch_size', type=int, default=128)
     parser.add_argument('--shared', type=str, default='layer2')
     ########################################################################
     parser.add_argument('--lr', default=0.001, type=float)
     parser.add_argument('--niter', default=1, type=int)
     parser.add_argument('--threshold', default=1., type=float)
-    parser.add_argument('--shift_limit', default=.25, type=float)
 
     args = parser.parse_args()
-    args.output_full_path = os.path.join(args.output_path, args.dataset, 'ttt', 'time_shift_analysis')
+    args.output_full_path = os.path.join(args.output_path, args.dataset, 'ttt', 'angles_shift_analysis')
     try:
         os.makedirs(args.output_full_path)
     except:
@@ -96,10 +84,10 @@ if __name__ == '__main__':
     if args.dataset == 'audio-mnist':
         args.class_num = 10
         args.sample_rate = 48000
-        args.n_mels = 64
-        args.final_full_line_in = 384
+        args.n_mels = 96
+        args.final_full_line_in = 576
         args.hop_length = 505
-        args.ssh_class_num = 3
+        args.ssh_class_num = 4
         net, ext, head, ssh = load_model(args)
     else:
         raise Exception('No support')
@@ -108,9 +96,10 @@ if __name__ == '__main__':
     cudnn.benchmark = True
 
     if args.group_norm == 0:
-        args.ttt_operation = f'TTT, ts, bn'
+        args.ttt_operation = f'TTT, as, bn'
     else: 
-        args.ttt_operation = f'TTT, ts, gn'
+        args.ttt_operation = f'TTT, as, gn'
+    
     print_argparse(args)
     # Finish args prepare
     
@@ -134,7 +123,7 @@ if __name__ == '__main__':
     print(f'corrupted data size: {len(test_dataset)}, corrupted accuracy: {corrupted_test_accu:.2f}%')
 
     print('Online ttt adaptation')
-    args.batch_size = args.batch_size // 3
+    args.batch_size = args.batch_size // 4
     train_transfs = train_transforms(args)
     if args.dataset == 'audio-mnist':
         net, ext, head, ssh = load_model(args)
@@ -152,8 +141,8 @@ if __name__ == '__main__':
                       optimizer=optimizer_ssh, net=net, head=head, mode='online')
         correctness, confidence = measure_one(model=net, audio=input, label=label)
         ttt_corr += correctness
-    ttt_accu = ttt_corr / len(test_dataset) * 100.
-    print(f'Online TTT adaptation data size: {len(test_dataset)}, accuracy: {ttt_accu:.2f}%')
+    ttt_accu = ttt_corr / len(corrupted_test_dataset) * 100.
+    print(f'Online TTT adaptation data size: {len(corrupted_test_dataset)}, accuracy: {ttt_accu:.2f}%')
     accu_record.loc[len(accu_record)] = [args.dataset, 'RestNet', args.ttt_operation + ', online', args.corruption, ttt_accu, 100. - ttt_accu, args.severity_level]
 
     # print('Slow ttt adaption')

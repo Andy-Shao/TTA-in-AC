@@ -2,6 +2,8 @@ import argparse
 import os
 import pandas as pd
 from tqdm import tqdm
+import numpy as np
+import random
 
 import torch
 import torch.optim as optim
@@ -31,6 +33,7 @@ if __name__ == '__main__':
     # parser.add_argument('--severity_level', default=.0025, type=float)
     parser.add_argument('--output_csv_name', type=str, default='accu_record.csv')
     parser.add_argument('--output_weight_name', type=str, default='ckpt.pth')
+    parser.add_argument('--seed', default=2024, type=int)
 
     args = parser.parse_args()
     print('TTT pre-train')
@@ -52,6 +55,11 @@ if __name__ == '__main__':
     else:
         raise Exception('No support')
     args.device = 'cuda' if torch.cuda.is_available() else 'cpu'
+
+    random.seed(args.seed)
+    np.random.seed(args.seed)
+    torch.manual_seed(args.seed)
+    torch.cuda.manual_seed(args.seed)
     print_argparse(args=args)
     # Finished args prepare
 
@@ -99,7 +107,7 @@ if __name__ == '__main__':
             ttl_cls_size += labels_cls.size(0)
 
             if args.shared is not None:
-                features_ssh, labels_ssh = rotate_batch(features, args.rotation_type)
+                features_ssh, labels_ssh = rotate_batch(features_cls, args.rotation_type)
                 features_ssh, labels_ssh = features_ssh.to(args.device), labels_ssh.to(args.device)
                 outputs_ssh = ssh(features_ssh)
                 loss_ssh = criterion(outputs_ssh, labels_ssh)

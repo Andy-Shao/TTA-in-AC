@@ -44,9 +44,10 @@ if __name__ == '__main__':
     ap.add_argument('--model_weight_file_path', type=str)
     ap.add_argument('--output_path', type=str, default='./result')
     ap.add_argument('--dataset_root_path', type=str)
+    ap.add_argument('--severity_level', default=.0025, type=float)
+    ap.add_argument('--output_csv_name', type=str, default='accuracy_record.csv')
 
     args = ap.parse_args()
-    args.severity_level = .0025
     args.corruption = 'gaussian_noise'
     print_argparse(args=args)
     args.output_full_path = os.path.join(args.output_path, args.dataset, args.model, 'analysis')
@@ -119,4 +120,4 @@ if __name__ == '__main__':
     print(f'norm test data size: {len(corrupted_test_dataset)}, norm test accuracy: {norm_accu:.2f}%')
 
     # Stroe the record
-    accu_record.to_csv(os.path.join(args.output_full_path, 'accuracy_records.csv'))
+    accu_record.to_csv(os.path.join(args.output_full_path, args.output_csv_name))

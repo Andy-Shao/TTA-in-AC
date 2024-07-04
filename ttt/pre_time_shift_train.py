@@ -2,6 +2,8 @@ import argparse
 import os
 import pandas as pd
 from tqdm import tqdm
+import numpy as np
+import random
 
 import torch
 import torch.optim as optim
@@ -32,6 +34,7 @@ if __name__ == '__main__':
     parser.add_argument('--shift_limit', default=.25, type=float)
     parser.add_argument('--output_csv_name', type=str, default='accu_record.csv')
     parser.add_argument('--output_weight_name', type=str, default='ckpt.pth')
+    parser.add_argument('--seed', default=2024, type=int)
 
     args = parser.parse_args()
     print('TTT pre-train')
@@ -53,7 +56,11 @@ if __name__ == '__main__':
     else:
         raise Exception('No support')
     args.device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    # args.severity = 'high' if args.severity_level >= .01 else 'low'
+
+    random.seed(args.seed)
+    np.random.seed(args.seed)
+    torch.manual_seed(args.seed)
+    torch.cuda.manual_seed(args.seed)
     print_argparse(args=args)
     # Finished args prepare
 
