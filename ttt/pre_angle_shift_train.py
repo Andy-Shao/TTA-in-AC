@@ -36,7 +36,7 @@ if __name__ == '__main__':
     print('TTT pre-train')
     import torch.backends.cudnn as cudnn
     cudnn.benchmark = True
-    args.output_full_path = os.path.join(args.output_path, args.dataset, 'ttt', 'pre_time_shift_train')
+    args.output_full_path = os.path.join(args.output_path, args.dataset, 'ttt', 'pre_angle_shift_train')
     try:
         os.makedirs(args.output_full_path)
     except:
