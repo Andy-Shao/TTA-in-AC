@@ -4,9 +4,10 @@
 + **legacy**: it includes all previous research algorithm implements
 + **lib**: the library code for this project.
 + **TTT**: the TTBA test-time training algorithm implement.
++ **CoNMix**: the CoNMix test-time training algorithm implement
 
 `Note`: the **legacy** is `excluded from this project's implementation`. 
-You can ignore them if you do not want to review the previous research.
+You can ignore them since them are abandoned implements.
 
 ## Software Environment
 ```shell
