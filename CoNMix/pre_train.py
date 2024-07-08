@@ -26,7 +26,7 @@ def lr_scheduler(optimizer: torch.optim.Optimizer, iter_num: int, max_iter: int,
         param_group['weight_decay'] = 1e-3
         param_group['momentum'] = .9
         param_group['nestenv'] = True
-    wandb.log({'Train/learning_rate': param_group['lr']})
+    wandb.log({'Train/learning_rate': param_group['lr']}, step=iter_num)
     return optimizer
 
 def build_optimizer(args: argparse.Namespace, modelF: nn.Module, modelB: nn.Module, modelC: nn.Module) -> optim.Optimizer:
@@ -164,13 +164,13 @@ if __name__ == '__main__':
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-            wandb_run.log({'Train/classifier_loss': loss.cpu().item()})
+            wandb_run.log({'Train/classifier_loss': loss.cpu().item()}, step=iter)
             features = None
             labels = None
             loss = None
             outputs = None
 
-            if iter % interval == 0 or iter == max_iter:
+            if iter % interval == 0 or iter == max_iter-1:
                 lr_scheduler(optimizer=optimizer, iter_num=iter, max_iter=max_iter)
 
                 modelF.eval()
@@ -186,7 +186,7 @@ if __name__ == '__main__':
                     ttl_corr += (preds == labels).sum().cpu().item()
                     ttl_size += labels.shape[0]
                 curr_accu = ttl_corr / ttl_size * 100.
-                wandb_run.log({'Train/Accuracy': curr_accu})
+                wandb_run.log({'Train/Accuracy': curr_accu}, step=iter)
                 if curr_accu > best_accuracy:
                     best_accuracy = curr_accu
                     best_modelF = modelF.state_dict()
