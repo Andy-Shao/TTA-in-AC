@@ -14,10 +14,13 @@ conda create --name my-audio python=3.9 -y
 conda activate my-audio
 # CUDA 11.8
 conda install pytorch==2.1.0 torchvision==0.16.0 torchaudio==2.1.0 pytorch-cuda=11.8 -c pytorch -c nvidia -y
+conda install -y -c anaconda scipy==1.11.3
+conda install conda-forge::ml-collections==0.1.1 -y
+conda install pandas==2.2.2 -y
 conda install tqdm==4.66.4 -y
 conda install jupyter -y
-conda install matplotlib==3.8.4 -y
-conda install pandas==2.2.2 -y 
+conda install matplotlib==3.8.4 -y 
+pip install wandb==0.17.1
 ```
 
 ## Training
@@ -32,6 +35,14 @@ sh script/pre_train.sh
 sh script/ttt_pre_train.sh
 ```
 `Note`: try to modify the `--dataset_root_path ` for your dataset location.
+
+### CoNMix 
+Model download:
+```shell
+wget https://storage.googleapis.com/vit_models/imagenet21k/R50+ViT-B_16.npz
+mkdir -p model/vit_checkpoint/imagenet21k
+mv R50+ViT-B_16.npz model/vit_checkpoint/imagenet21k/R50+ViT-B_16.npz
+```
 
 ## Analysis
 ### Tent & Norm Adaptation
@@ -59,5 +70,8 @@ After that open and run the `analysis_exhibition.ipynb` to demonstrate the analy
 [Audio MNIST Link](https://github.com/soerenab/AudioMNIST/tree/master)
 
 ## Code Reference
-[tent](https://github.com/DequanWang/tent)<br/>
-[ttt_cifar_release](https://github.com/yueatsprograms/ttt_cifar_release/tree/master)
++ [tent](https://github.com/DequanWang/tent)
++ [ttt_cifar_release](https://github.com/yueatsprograms/ttt_cifar_release/tree/master)
++ [CoNMix](https://github.com/vcl-iisc/CoNMix/tree/master)
++ [TransUNet](https://github.com/Beckschen/TransUNet)
++ [SHOT](https://github.com/tim-learn/SHOT)
