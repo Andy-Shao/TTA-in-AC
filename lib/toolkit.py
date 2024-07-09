@@ -36,7 +36,7 @@ def count_ttl_params(model: nn.Module, filter_by_grad=False, requires_grad=True)
 def cal_norm(loader: DataLoader) -> tuple[int, int]:
     mean = torch.zeros((3), dtype=torch.float32)
     std = torch.zeros((3), dtype=torch.float32)
-    for  features, _ in tqdm(loader):
+    for features, _ in tqdm(loader):
         channel_size = features.shape[1]
         features = torch.transpose(features, 1, 0)
         features = features.reshape(channel_size, -1)
@@ -45,3 +45,8 @@ def cal_norm(loader: DataLoader) -> tuple[int, int]:
     mean /= len(loader)
     std /= len(loader)
     return mean.numpy(), std.numpy()
+
+def store_model_structure_to_txt(model: nn.Module, output_path: str) -> None:
+    model_info = str(model)
+    with open(output_path, 'w') as f:
+        f.write(model_info)

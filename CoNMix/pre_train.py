@@ -12,7 +12,7 @@ from torchvision import transforms as v_transforms
 from torch.utils.data import DataLoader
 import torch.optim as optim
 
-from lib.toolkit import print_argparse
+from lib.toolkit import print_argparse, store_model_structure_to_txt
 from lib.wavUtils import Components, pad_trunc, time_shift
 from lib.datasets import AudioMINST, load_datapath, ClipDataset
 from CoNMix.lib.prepare_dataset import ExpandChannel
@@ -60,7 +60,7 @@ if __name__ == '__main__':
     ap.add_argument('--dataset_root_path', type=str)
     ap.add_argument('--output_path', type=str, default='./result')
     ap.add_argument('--output_csv_name', type=str, default='training_records.csv')
-    ap.add_argument('--output_weight_prefix', type=str, default='audio-mnist_best')
+    ap.add_argument('--output_weight_prefix', type=str, default='audio-mnist')
     ap.add_argument('--temporary_path', type=str)
     ap.add_argument('--wandb', action='store_true')
 
@@ -68,6 +68,7 @@ if __name__ == '__main__':
     # ap.add_argument('--severity_level', type=float, default=.0025)
 
     ap.add_argument('--seed', type=int, default=2024, help='random seed')
+    ap.add_argument('--test_rate', type=float, default=.3)
 
     ap.add_argument('--max_epoch', type=int, default=200, help='max epoch')
     ap.add_argument('--interval', type=int, default=50, help='interval')
@@ -137,13 +138,16 @@ if __name__ == '__main__':
             v_transforms.Normalize(mean=mean_vals, std=std_vals)
         ])
         test_dataset = AudioMINST(data_paths=train_data_paths, data_trainsforms=test_tf, include_rate=False)
-        test_dataset = ClipDataset(dataset=test_dataset, rate=.3)
+        test_dataset = ClipDataset(dataset=test_dataset, rate=args.test_rate)
     else:
         raise Exception('No support')
 
     train_loader = DataLoader(dataset=train_dataset, batch_size=args.batch_size, shuffle=True, drop_last=False)
     test_loader = DataLoader(dataset=test_dataset, batch_size=args.batch_size, shuffle=False, drop_last=False)
     modelF, modelB, modelC = load_models(args)
+    store_model_structure_to_txt(model=modelF, output_path=os.path.join(args.full_output_path, 'modelF_structure.txt'))
+    store_model_structure_to_txt(model=modelB, output_path=os.path.join(args.full_output_path, 'modelB_structure.txt'))
+    store_model_structure_to_txt(model=modelC, output_path=os.path.join(args.full_output_path, 'modelC_structure.txt'))
     optimizer = build_optimizer(args, modelF, modelB, modelC)
     classifier_loss = CrossEntropyLabelSmooth(num_classes=args.class_num, epsilon=args.smooth, use_gpu=True).to(device=args.device)
 
@@ -193,9 +197,9 @@ if __name__ == '__main__':
                     best_modelB = modelB.state_dict()
                     best_modelC = modelC.state_dict()
 
-                    torch.save(best_modelF, os.path.join(args.full_output_path, f'{args.output_weight_prefix}_modelF.pt'))
-                    torch.save(best_modelF, os.path.join(args.full_output_path, f'{args.output_weight_prefix}_modelB.pt'))
-                    torch.save(best_modelF, os.path.join(args.full_output_path, f'{args.output_weight_prefix}_modelC.pt'))
+                    torch.save(best_modelF, os.path.join(args.full_output_path, f'{args.output_weight_prefix}_best_modelF.pt'))
+                    torch.save(best_modelB, os.path.join(args.full_output_path, f'{args.output_weight_prefix}_best_modelB.pt'))
+                    torch.save(best_modelC, os.path.join(args.full_output_path, f'{args.output_weight_prefix}_best_modelC.pt'))
                 modelF.train()
                 modelB.train()
                 modelC.train()

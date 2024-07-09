@@ -5,8 +5,9 @@ from tqdm import tqdm
 import torch 
 from torchaudio import transforms as a_transforms
 from torchvision import transforms as v_transforms
+from torch.utils.data import DataLoader
 
-from lib.toolkit import print_argparse
+from lib.toolkit import print_argparse, cal_norm
 from lib.prepare_dataset import ExpandChannel
 from lib.wavUtils import Components, pad_trunc, GuassianNoise
 from lib.datasets import AudioMINST, load_datapath, store_to, load_from
@@ -20,6 +21,7 @@ if __name__ == '__main__':
 
     ap.add_argument('--corruption', type=str, default='gaussian_noise')
     ap.add_argument('--severity_level', type=float, default=.0025)
+    ap.add_argument('--cal_norm', action='store_true')
 
     # ap.add_argument('--seed', type=int, default=2024, help='random seed')
 
@@ -61,3 +63,8 @@ if __name__ == '__main__':
     print(f'Foreach checking, datasize: {len(sd)}')
     for feature, label in tqdm(sd):
         pass
+
+    if args.cal_norm:
+        data_loader = DataLoader(dataset=sd, batch_size=256, shuffle=False, drop_last=False)
+        mean, std = cal_norm(data_loader)
+        print(f'mean: {mean}, std: {std}')
