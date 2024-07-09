@@ -42,57 +42,46 @@ def load_datapath(root_path: str, filter_fn) -> list[str]:
                     dataset_list.append(f'{data_path}/{it}')
     return dataset_list
 
-class StoredDataset(Dataset):
-    def __init__(self, dataset: Dataset, data_transf=None, label_transf=None) -> None:
-        super().__init__()
-        self.dataset = dataset
-        self.ready_for_read = False
-        self.data_index = pd.DataFrame(columns=['data_path', 'label'])
-        self.data_transf = data_transf
-        self.label_transf = label_transf
-    
-    def __len__(self) -> int:
-        if not self.ready_for_read:
-            return 0
-        return len(self.data_index)
-        
-    def __getitem__(self, index) -> tuple[torch.Tensor, int]:
-        if not self.ready_for_read:
-            return None
-        data_path = self.data_index['data_path'][index]
-        feature, label = torch.load(data_path), self.data_index['label'][index]
-        if self.data_transf is not None:
-            feature = self.data_transf(feature)
-        if self.label_transf is not None:
-            label = self.label_transf(label)
-        return feature, int(label)
-    
-    def store_to(self, root_path: str, index_file_name: str, data_transf=None, label_transf=None) -> None:
-        print(f'Store dataset into {root_path}, meta file is: {index_file_name}')
-        try: 
-            if os.path.exists(root_path): os.removedirs(root_path)
-            os.makedirs(root_path)
-        except:
-            pass
-        for index, (feature, label) in tqdm(enumerate(self.dataset), total=len(self.dataset)):
-            if data_transf is not None:
-                feature = data_transf(feature)
-            if label_transf is not None:
-                label = data_transf(feature)
-            data_path = f'{index}_{label}.dt'
-            self.data_index.loc[len(self.data_index)] = [data_path, label]
-            torch.save(feature, os.path.join(root_path, data_path))
-        self.data_index.to_csv(os.path.join(root_path, index_file_name))
-        self.load_from(root_path=root_path, index_file_name=index_file_name)
+def store_to(dataset: Dataset, root_path: str, index_file_name: str, data_transf=None, label_transf=None) -> None:
+    print(f'Store dataset into {root_path}, meta file is: {index_file_name}')
+    data_index = pd.DataFrame(columns=['data_path', 'label'])
+    try: 
+        if os.path.exists(root_path): os.removedirs(root_path)
+        os.makedirs(root_path)
+    except:
+        pass
+    for index, (feature, label) in tqdm(enumerate(dataset), total=len(dataset)):
+        if data_transf is not None:
+            feature = data_transf(feature)
+        if label_transf is not None:
+            label = data_transf(feature)
+        data_path = f'{index}_{label}.dt'
+        data_index.loc[len(data_index)] = [data_path, label]
+        torch.save(feature, os.path.join(root_path, data_path))
+    data_index.to_csv(os.path.join(root_path, index_file_name))
 
-    def load_from(self, root_path: str, index_file_name: str) -> None:
-        index_file_path = os.path.join(root_path, index_file_name)
-        self.data_index = pd.read_csv(index_file_path, index_col=0)
-        data_pathes = []
-        for pth in self.data_index['data_path']:
-            data_pathes.append(os.path.join(root_path, pth))
-        self.data_index['data_path'] = data_pathes
-        self.ready_for_read = True  
+def load_from(root_path: str, index_file_name: str, data_tf=None, label_tf=None) -> Dataset:
+    class LoadDs(Dataset):
+        def __init__(self) -> None:
+            super().__init__()
+            data_index = pd.read_csv(os.path.join(root_path, index_file_name))
+            self.data_meta = []
+            for idx in range(len(data_index)):
+                self.data_meta.append([data_index['data_path'][idx], data_index['label'][idx]]) 
+        
+        def __len__(self):
+            return len(self.data_meta)
+        
+        def __getitem__(self, index) -> Any:
+            data_path = self.data_meta[index][0]
+            feature = torch.load(os.path.join(root_path, data_path))
+            label = self.data_meta[index][1]
+            if data_tf is not None:
+                feature = data_tf(feature)
+            if label_tf is not None:
+                label = label_tf(label)
+            return feature, int(label)
+    return LoadDs()
 
 class ClipDataset(Dataset):
     def __init__(self, dataset: Dataset, rate: float) -> None:
