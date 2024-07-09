@@ -42,7 +42,7 @@ def load_datapath(root_path: str, filter_fn) -> list[str]:
                     dataset_list.append(f'{data_path}/{it}')
     return dataset_list
 
-class FormateDataset(Dataset):
+class StoredDataset(Dataset):
     def __init__(self, dataset: Dataset, data_transf=None, label_transf=None) -> None:
         super().__init__()
         self.dataset = dataset
@@ -68,6 +68,7 @@ class FormateDataset(Dataset):
         return feature, int(label)
     
     def store_to(self, root_path: str, index_file_name: str, data_transf=None, label_transf=None) -> None:
+        print(f'Store dataset into {root_path}, meta file is: {index_file_name}')
         try: 
             if os.path.exists(root_path): os.removedirs(root_path)
             os.makedirs(root_path)
