@@ -44,7 +44,7 @@ def cal_norm(loader: DataLoader) -> tuple[int, int]:
         std += features.std(1)
     mean /= len(loader)
     std /= len(loader)
-    return mean.numpy(), std.numpy()
+    return mean.detach().numpy(), std.detach().numpy()
 
 def store_model_structure_to_txt(model: nn.Module, output_path: str) -> None:
     model_info = str(model)

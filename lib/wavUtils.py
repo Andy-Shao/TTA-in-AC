@@ -76,22 +76,6 @@ class time_shift(nn.Module):
             shift_arg = int(self.shift_limit * wavform.shape[1])
         return wavform.roll(shifts=shift_arg)
     
-class pitch_shift(nn.Module):
-    def __init__(self, sample_rate: int, semitones=4.0, is_bidirection=False) -> None:
-        super().__init__()
-        self.sample_rate = sample_rate
-        self.semitones = semitones
-        self.is_bidirection = is_bidirection
-
-    def forward(self, waveform: torch.Tensor) -> torch.Tensor:
-        import torchaudio.functional as F
-        if self.is_bidirection:
-            if random.random() > .5:
-                semitones = self.semitones
-            else:
-                semitones = -self.semitones
-        return F.pitch_shift(waveform=waveform, sample_rate=self.sample_rate, n_steps=semitones)
-    
 def display_wavform(waveform: torch.Tensor):
     import matplotlib.pyplot as plt
 

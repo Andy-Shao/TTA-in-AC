@@ -3,13 +3,11 @@ import os
 from tqdm import tqdm
 
 import torch 
-from torchaudio import transforms as a_transforms
-from torchvision import transforms as v_transforms
 from torch.utils.data import DataLoader
+from torchaudio import transforms as a_transforms
 
 from lib.toolkit import print_argparse, cal_norm
-from lib.prepare_dataset import ExpandChannel
-from lib.wavUtils import Components, pad_trunc, GuassianNoise, time_shift, pitch_shift
+from lib.wavUtils import Components, pad_trunc, GuassianNoise, time_shift
 from lib.datasets import AudioMINST, load_datapath, store_to, load_from
 
 if __name__ == '__main__':
@@ -44,7 +42,8 @@ if __name__ == '__main__':
         n_mels=128
         hop_length=377
         corrupted_test_tf = Components(transforms=[
-            pad_trunc(max_ms=max_ms, sample_rate=sample_rate)
+            pad_trunc(max_ms=max_ms, sample_rate=sample_rate),
+            GuassianNoise(noise_level=args.severity_level),
         ])
         audio_minst_load_pathes = load_datapath(root_path=args.dataset_root_path, filter_fn=lambda x: x['accent'] != 'German')
         corrupted_test_dataset = AudioMINST(data_trainsforms=corrupted_test_tf, include_rate=False, data_paths=audio_minst_load_pathes)
@@ -54,46 +53,40 @@ if __name__ == '__main__':
 
     print('low augmentation')
     low_path = f'{args.temporary_path}_low'
-    low_tf = Components(transforms=[
-        GuassianNoise(noise_level=args.severity_level),
-        a_transforms.MelSpectrogram(sample_rate=sample_rate, n_fft=1024, n_mels=n_mels, hop_length=hop_length),
-        a_transforms.AmplitudeToDB(top_db=80),
-        ExpandChannel(out_channel=3),
-        v_transforms.Resize((256, 256), antialias=False),
-        v_transforms.RandomCrop(224)
-    ])
-    store_to(dataset=corrupted_test_dataset, root_path=low_path, index_file_name=meta_file_name, data_transf=low_tf)
-    sd = load_from(root_path=low_path, index_file_name=meta_file_name)
+    store_to(dataset=corrupted_test_dataset, root_path=low_path, index_file_name=meta_file_name)
+    low_aug_dataset = load_from(root_path=low_path, index_file_name=meta_file_name)
 
-    print(f'Foreach checking, datasize: {len(sd)}')
-    for feature, label in tqdm(sd):
+    print(f'Foreach checking, datasize: {len(low_aug_dataset)}')
+    for feature, label in tqdm(low_aug_dataset):
         pass
 
     if args.cal_norm:
-        data_loader = DataLoader(dataset=sd, batch_size=256, shuffle=False, drop_last=False)
+        data_loader = DataLoader(dataset=low_aug_dataset, batch_size=256, shuffle=False, drop_last=False)
         mean, std = cal_norm(data_loader)
-        print(f'mean: {mean}, std: {std}')
+        result = f'mean: {mean}, std: {std}'
+        print(result)
+        with open(os.path.join(low_path, 'mean_std.txt'), 'w') as f:
+            f.write(result)
+            f.flush()
 
     print('strong augmentation')
     strong_path = f'{args.temporary_path}_high'
     strong_tf = Components(transforms=[
-        GuassianNoise(noise_level=args.severity_level),
-        time_shift(shift_limit=.25, is_random=True, is_bidirection=True),
-        pitch_shift(sample_rate=sample_rate, semitones=4., is_bidirection=True),
-        a_transforms.MelSpectrogram(sample_rate=sample_rate, n_fft=1024, n_mels=n_mels, hop_length=hop_length),
-        a_transforms.AmplitudeToDB(top_db=80),
-        ExpandChannel(out_channel=3),
-        v_transforms.Resize((256, 256), antialias=False),
-        v_transforms.RandomCrop(224)
+        a_transforms.PitchShift(sample_rate=sample_rate, n_steps=4, n_fft=512),
+        time_shift(shift_limit=.25, is_random=True, is_bidirection=True)
     ])
-    store_to(dataset=corrupted_test_dataset, root_path=strong_path, index_file_name=meta_file_name, data_transf=strong_tf)
-    sd = load_from(root_path=strong_path, index_file_name=meta_file_name)
+    store_to(dataset=low_aug_dataset, root_path=strong_path, index_file_name=meta_file_name, data_transf=strong_tf)
+    strong_aug_dataset = load_from(root_path=strong_path, index_file_name=meta_file_name)
 
-    print(f'Foreach checking, datasize: {len(sd)}')
-    for feature, label in tqdm(sd):
+    print(f'Foreach checking, datasize: {len(strong_aug_dataset)}')
+    for feature, label in tqdm(strong_aug_dataset):
         pass
 
     if args.cal_norm:
-        data_loader = DataLoader(dataset=sd, batch_size=256, shuffle=False, drop_last=False)
+        data_loader = DataLoader(dataset=strong_aug_dataset, batch_size=256, shuffle=False, drop_last=False)
         mean, std = cal_norm(data_loader)
-        print(f'mean: {mean}, std: {std}')
+        result = f'mean: {mean}, std: {std}'
+        print(result)
+        with open(os.path.join(strong_path, 'mean_std.txt'), 'w') as f:
+            f.write(result)
+            f.flush()

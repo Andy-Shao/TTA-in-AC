@@ -116,7 +116,15 @@ if __name__ == '__main__':
         audio_minst_load_pathes = load_datapath(root_path=args.dataset_root_path, filter_fn=lambda x: x['accent'] != 'German')
         test_dataset = AudioMINST(data_trainsforms=test_tf, include_rate=False, data_paths=audio_minst_load_pathes)
         
-        corrupted_test_tf = v_transforms.Normalize(mean=parse_mean_std(args.corrupted_mean), std=parse_mean_std(args.corrupted_std))
+        corrupted_test_tf = Components(transforms=[
+            pad_trunc(max_ms=max_ms, sample_rate=sample_rate),
+            a_transforms.MelSpectrogram(sample_rate=sample_rate, n_fft=1024, n_mels=n_mels, hop_length=hop_length),
+            a_transforms.AmplitudeToDB(top_db=80),
+            ExpandChannel(out_channel=3),
+            v_transforms.Resize((256, 256), antialias=False),
+            v_transforms.RandomCrop(224),
+            v_transforms.Normalize(mean=parse_mean_std(args.corrupted_mean), std=parse_mean_std(args.corrupted_std))
+        ])
         corrupted_test_dataset = load_from(root_path=args.temporary_path, index_file_name='audio_minst_meta.csv', data_tf=corrupted_test_tf)
     else:
         raise Exception('No support')
