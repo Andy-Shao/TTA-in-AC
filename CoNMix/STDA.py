@@ -63,7 +63,7 @@ if __name__ == "__main__":
     ap.add_argument('--strong_corrupted_std', type=str)
 
     ap.add_argument('--seed', type=int, default=2024, help='random seed')
-    ap.add_argument('--cal_norm', type=str, default='none', choices=['original', 'corrupted', 'none'])
+    ap.add_argument('--cal_norm', action='store_true')
 
     ap.add_argument('--max_epoch', type=int, default=100, help="max iterations")
     ap.add_argument('--interval', type=int, default=100)
@@ -121,6 +121,10 @@ if __name__ == "__main__":
     print_argparse(args)
     #################################################
 
+    wandb_run = wandb.init(
+        project='Audio Classification STDA (CoNMix)', name=args.dataset, mode='online' if args.wandb else 'disabled',
+        config=args, tags=['Audio Classification', args.dataset, 'ViT'])
+
     if args.dataset == 'audio-mnist':
         max_ms=1000
         sample_rate=48000
@@ -138,7 +142,7 @@ if __name__ == "__main__":
             v_transforms.RandomHorizontalFlip(), 
             v_transforms.Normalize(mean=parse_mean_std(args.weak_corrupted_mean), std=parse_mean_std(args.weak_corrupted_std))
         ])
-        weak_test_dataset = load_from(root_path=args.weak_aug_dataset_root_path, index_file_name='audio_minst_meta.csv', data_tf=low_test_tf)
+        weak_test_dataset = load_from(root_path=args.weak_aug_dataset_root_path, index_file_name='audio_minst_meta.csv', data_tf=weak_test_tf)
         weak_test_dataset = Dataset_Idx(dataset=weak_test_dataset)
         
         strong_test_tf = Components(transforms=[
@@ -158,17 +162,12 @@ if __name__ == "__main__":
     
     weak_test_loader = DataLoader(dataset=weak_test_dataset, batch_size=args.batch_size, shuffle=False, drop_last=False)
 
-    if args.cal_norm != 'none':
-        if args.cal_norm == 'original':
-            mean, std = cal_norm(loader=weak_test_loader)
-        if args.cal_norm == 'corrupted':
-            mean, std = cal_norm(loader=DataLoader(dataset=strong_test_dataset, batch_size=args.batch_size, shuffle=False, drop_last=False))
-        print(f'mean: {mean}, std: {std}')
+    if args.cal_norm:
+        mean, std = cal_norm(loader=weak_test_dataset)
+        print(f'weak dataset -- mean: {mean}, std: {std}')
+        mean, std = cal_norm(loader=DataLoader(dataset=strong_test_dataset, batch_size=args.batch_size, shuffle=False, drop_last=False))
+        print(f'strong dataset -- mean: {mean}, std: {std}')
         exit()
-
-    wandb_run = wandb.init(
-        project='Audio Classification STDA (CoNMix)', name=args.dataset, mode='online' if args.wandb else 'disabled',
-        config=args, tags=['Audio Classification', args.dataset, 'ViT'])
 
     # build mode & load pre-train weight
     modelF, modelB, modelC = load_model(args)

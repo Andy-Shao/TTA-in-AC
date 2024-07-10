@@ -3,7 +3,7 @@ export PYTHONPATH=$PYTHONPATH:$(pwd)
 python CoNMix/STDA.py --dataset 'audio-mnist' --low_aug_dataset_root_path '/root/tmp/AudioMNIST_analysis_005_low' \
     --strong_aug_dataset_root_path '/root/tmp/AudioMNIST_analysis_005_high' \
     --batch_size 32 --low_corrupted_mean '0, 0, 0' --low_corrupted_std '1, 1, 1' \
-    --strong_corrupted_mean '0, 0, 0' --strong_corrupted_std '1, 1, 1' --cal_norm 'original'
+    --strong_corrupted_mean '0, 0, 0' --strong_corrupted_std '1, 1, 1' --cal_norm
 
 # python CoNMix/STDA.py --dataset 'audio-mnist' --dataset_root_path '/root/tmp/AudioMNIST_analysis_005' \
 #     --batch_size 32 --severity_level 0.005 --max_epoch 5 --interval 50 \
