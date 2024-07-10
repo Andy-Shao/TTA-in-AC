@@ -1,4 +1,6 @@
 import random
+from PIL import Image
+import numpy as np
 
 import torch 
 import torch.nn as nn
@@ -74,6 +76,22 @@ class time_shift(nn.Module):
             shift_arg = int(self.shift_limit * wavform.shape[1])
         return wavform.roll(shifts=shift_arg)
     
+class pitch_shift(nn.Module):
+    def __init__(self, sample_rate: int, semitones=4.0, is_bidirection=False) -> None:
+        super().__init__()
+        self.sample_rate = sample_rate
+        self.semitones = semitones
+        self.is_bidirection = is_bidirection
+
+    def forward(self, waveform: torch.Tensor) -> torch.Tensor:
+        import torchaudio.functional as F
+        if self.is_bidirection:
+            if random.random() > .5:
+                semitones = self.semitones
+            else:
+                semitones = -self.semitones
+        return F.pitch_shift(waveform=waveform, sample_rate=self.sample_rate, n_steps=semitones)
+    
 def display_wavform(waveform: torch.Tensor):
     import matplotlib.pyplot as plt
 
@@ -89,6 +107,17 @@ def display_spectro_gram(waveform: torch.Tensor):
 
     plt.figure(figsize=(10,4))
     plt.imshow(waveform[0].detach().numpy(), cmap='viridis', origin='lower', aspect='auto')
+    plt.title('Mel Spectrogram in channel 0')
+    plt.xlabel('Time')
+    plt.ylabel('Frequency')
+    plt.colorbar(format='%+2.0f dB')
+    plt.show()
+
+def disply_PIL_image(img: Image):
+    import matplotlib.pyplot as plt
+
+    plt.figure(figsize=(10,4))
+    plt.imshow(np.asarray(img), cmap='viridis', origin='lower', aspect='auto')
     plt.title('Mel Spectrogram in channel 0')
     plt.xlabel('Time')
     plt.ylabel('Frequency')

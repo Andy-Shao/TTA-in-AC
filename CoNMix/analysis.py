@@ -11,17 +11,11 @@ from torchvision import transforms as v_transforms
 from torch.utils.data import DataLoader
 import torch.nn as nn
 
-from lib.toolkit import print_argparse, cal_norm
+from lib.toolkit import print_argparse, cal_norm, parse_mean_std
 from lib.wavUtils import pad_trunc, Components
 from CoNMix.lib.prepare_dataset import ExpandChannel
 from lib.datasets import AudioMINST, load_datapath, load_from
 import CoNMix.lib.models as models
-
-def parse_mean_std(arg: str):
-    ret = []
-    for it in arg.split(','):
-        ret.append(float(it.strip()))
-    return ret
 
 def inference(modelF: nn.Module, modelB: nn.Module, modelC: nn.Module, data_loader: DataLoader, args: argparse.Namespace) -> float:
     modelF.eval()
@@ -77,9 +71,9 @@ if __name__ == '__main__':
     ap.add_argument('--epsilon', type=float, default=1e-5)
     ap.add_argument('--layer', type=str, default='wn', choices=['linear', 'wn'])
     ap.add_argument('--classifier', type=str, default='bn', choices=['ori', 'bn'])
-    ap.add_argument('--smooth', type=float, default=.1)
+    # ap.add_argument('--smooth', type=float, default=.1)
     # ap.add_argument('--da', type=str, default='uda', choices=['uda', 'pda', 'oda'])
-    ap.add_argument('--trte', type=str, default='val', choices=['full', 'val'])
+    # ap.add_argument('--trte', type=str, default='val', choices=['full', 'val'])
     # ap.add_argument('--bsp', type=bool, default=False)
     # ap.add_argument('--se', type=bool, default=False)
     # ap.add_argument('--nl', type=bool, default=False)

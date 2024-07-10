@@ -50,3 +50,9 @@ def store_model_structure_to_txt(model: nn.Module, output_path: str) -> None:
     model_info = str(model)
     with open(output_path, 'w') as f:
         f.write(model_info)
+
+def parse_mean_std(arg: str):
+    ret = []
+    for it in arg.split(','):
+        ret.append(float(it.strip()))
+    return ret
