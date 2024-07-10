@@ -7,15 +7,17 @@ from tqdm import tqdm
 
 import torch 
 from torchvision import transforms as v_transforms
+from torchaudio import transforms as a_transforms
 from torch.utils.data import DataLoader
 import torch.optim as optim
 import torch.nn as nn
 
-from lib.toolkit import print_argparse, parse_mean_std
+from lib.toolkit import print_argparse, parse_mean_std, cal_norm
 from lib.datasets import load_from
 from CoNMix.analysis import load_model, load_origin_stat
 from CoNMix.pre_train import op_copy
-from CoNMix.lib.prepare_dataset import Dataset_Idx
+from CoNMix.lib.prepare_dataset import Dataset_Idx, ExpandChannel
+from lib.wavUtils import Components, time_shift, pad_trunc
 
 def build_optim(args: argparse.Namespace, modelF: nn.Module, modelB: nn.Module, modelC: nn.Module) -> optim.Optimizer:
     param_group = []
@@ -42,8 +44,8 @@ def build_optim(args: argparse.Namespace, modelF: nn.Module, modelB: nn.Module, 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser(description='Rand-Augment')
     ap.add_argument('--dataset', type=str, default='audio-mnist', choices=['audio-mnist'])
-    ap.add_argument('--dataset_root_path', type=str)
-    # ap.add_argument('--temporary_path', type=str)
+    ap.add_argument('--weak_aug_dataset_root_path', type=str)
+    ap.add_argument('--strong_aug_dataset_root_path', type=str)
     ap.add_argument('--output_path', type=str, default='./result')
     ap.add_argument('--modelF_weight_path', type=str)
     ap.add_argument('--modelB_weight_path', type=str)
@@ -55,8 +57,8 @@ if __name__ == "__main__":
 
     ap.add_argument('--corruption', type=str, default='gaussian_noise')
     ap.add_argument('--severity_level', type=float, default=.0025)
-    ap.add_argument('--low_corrupted_mean', type=str)
-    ap.add_argument('--low_corrupted_std', type=str)
+    ap.add_argument('--weak_corrupted_mean', type=str)
+    ap.add_argument('--weak_corrupted_std', type=str)
     ap.add_argument('--strong_corrupted_mean', type=str)
     ap.add_argument('--strong_corrupted_std', type=str)
 
@@ -119,35 +121,61 @@ if __name__ == "__main__":
     print_argparse(args)
     #################################################
 
-    wandb_run = wandb.init(
-        project='Audio Classification STDA (CoNMix)', name=args.dataset, mode='online' if args.wandb else 'disabled',
-        config=args, tags=['Audio Classification', args.dataset, 'ViT'])
-
     if args.dataset == 'audio-mnist':
         max_ms=1000
         sample_rate=48000
         n_mels=128
         hop_length=377
         args.class_num = 10
-        test_tf = v_transforms.Normalize(mean=parse_mean_std(args.corrupted_mean), std=parse_mean_std(args.corrupted_std))
-        test_dataset = load_from(root_path=args.dataset_root_path, index_file_name='audio_minst_meta.csv', data_tf=test_tf)
-        test_dataset = Dataset_Idx(dataset=test_dataset)
-        
-        strong_test_tf = v_transforms.Compose(transforms=[
-            v_transforms.Normalize(mean=parse_mean_std(args.corrupted_mean), std=parse_mean_std(args.corrupted_std))
+        weak_test_tf = Components(transforms=[
+            pad_trunc(max_ms=max_ms, sample_rate=sample_rate),
+            time_shift(shift_limit=.25, is_random=True, is_bidirection=True),
+            a_transforms.MelSpectrogram(sample_rate=sample_rate, n_fft=1024, n_mels=n_mels, hop_length=hop_length),
+            a_transforms.AmplitudeToDB(top_db=80),
+            ExpandChannel(out_channel=3),
+            v_transforms.Resize((256, 256), antialias=False),
+            v_transforms.RandomCrop(224),
+            v_transforms.RandomHorizontalFlip(), 
+            v_transforms.Normalize(mean=parse_mean_std(args.weak_corrupted_mean), std=parse_mean_std(args.weak_corrupted_std))
         ])
-        strong_test_dataset = load_from(root_path=args.dataset_root_path, index_file_name='audio_minst_meta.csv')
+        weak_test_dataset = load_from(root_path=args.weak_aug_dataset_root_path, index_file_name='audio_minst_meta.csv', data_tf=low_test_tf)
+        weak_test_dataset = Dataset_Idx(dataset=weak_test_dataset)
+        
+        strong_test_tf = Components(transforms=[
+            pad_trunc(max_ms=max_ms, sample_rate=sample_rate),
+            time_shift(shift_limit=.25, is_random=True, is_bidirection=True),
+            a_transforms.MelSpectrogram(sample_rate=sample_rate, n_fft=1024, n_mels=n_mels, hop_length=hop_length),
+            a_transforms.AmplitudeToDB(top_db=80),
+            ExpandChannel(out_channel=3),
+            v_transforms.Resize((256, 256), antialias=False),
+            v_transforms.RandomCrop(224),
+            v_transforms.RandomHorizontalFlip(), 
+            v_transforms.Normalize(mean=parse_mean_std(args.strong_corrupted_mean), std=parse_mean_std(args.strong_corrupted_std))
+        ])
+        strong_test_dataset = load_from(root_path=args.strong_aug_dataset_root_path, index_file_name='audio_minst_meta.csv', data_tf=strong_test_tf)
     else:
         raise Exception('No support')
     
-    test_loader = DataLoader(dataset=test_dataset, batch_size=args.batch_size, shuffle=False, drop_last=False)
+    weak_test_loader = DataLoader(dataset=weak_test_dataset, batch_size=args.batch_size, shuffle=False, drop_last=False)
+
+    if args.cal_norm != 'none':
+        if args.cal_norm == 'original':
+            mean, std = cal_norm(loader=weak_test_loader)
+        if args.cal_norm == 'corrupted':
+            mean, std = cal_norm(loader=DataLoader(dataset=strong_test_dataset, batch_size=args.batch_size, shuffle=False, drop_last=False))
+        print(f'mean: {mean}, std: {std}')
+        exit()
+
+    wandb_run = wandb.init(
+        project='Audio Classification STDA (CoNMix)', name=args.dataset, mode='online' if args.wandb else 'disabled',
+        config=args, tags=['Audio Classification', args.dataset, 'ViT'])
 
     # build mode & load pre-train weight
     modelF, modelB, modelC = load_model(args)
     load_origin_stat(args, modelF=modelF, modelB=modelB, modelC=modelC)
     
     optimizer = build_optim(args, modelF=modelF, modelB=modelB, modelC=modelC)
-    max_iter = args.max_epoch * len(test_loader)
+    max_iter = args.max_epoch * len(weak_test_loader)
     interval_iter = max_iter // args.interval
     iter = 0
 

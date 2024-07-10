@@ -14,7 +14,6 @@ if __name__ == '__main__':
     ap = argparse.ArgumentParser()
     ap.add_argument('--dataset', type=str, default='audio-mnist', choices=['audio-mnist'])
     ap.add_argument('--dataset_root_path', type=str)
-    ap.add_argument('--temporary_path', type=str)
     ap.add_argument('--output_path', type=str, default='./result')
 
     ap.add_argument('--corruption', type=str, default='gaussian_noise')
@@ -25,11 +24,6 @@ if __name__ == '__main__':
 
     args = ap.parse_args()
     args.device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    args.full_output_path = os.path.join(args.output_path, args.dataset, 'CoNMix', 'analysis')
-    try:
-        os.makedirs(args.full_output_path)
-    except:
-        pass
     torch.backends.cudnn.benchmark = True
 
     print_argparse(args)
@@ -52,30 +46,30 @@ if __name__ == '__main__':
     meta_file_name = 'audio_minst_meta.csv'
 
     print('low augmentation')
-    low_path = f'{args.temporary_path}_low'
-    store_to(dataset=corrupted_test_dataset, root_path=low_path, index_file_name=meta_file_name)
-    low_aug_dataset = load_from(root_path=low_path, index_file_name=meta_file_name)
+    weak_path = f'{args.output_path}_weak'
+    store_to(dataset=corrupted_test_dataset, root_path=weak_path, index_file_name=meta_file_name)
+    weak_aug_dataset = load_from(root_path=weak_path, index_file_name=meta_file_name)
 
-    print(f'Foreach checking, datasize: {len(low_aug_dataset)}')
-    for feature, label in tqdm(low_aug_dataset):
+    print(f'Foreach checking, datasize: {len(weak_aug_dataset)}')
+    for feature, label in tqdm(weak_aug_dataset):
         pass
 
     if args.cal_norm:
-        data_loader = DataLoader(dataset=low_aug_dataset, batch_size=256, shuffle=False, drop_last=False)
+        data_loader = DataLoader(dataset=weak_aug_dataset, batch_size=256, shuffle=False, drop_last=False)
         mean, std = cal_norm(data_loader)
         result = f'mean: {mean}, std: {std}'
         print(result)
-        with open(os.path.join(low_path, 'mean_std.txt'), 'w') as f:
+        with open(os.path.join(weak_aug_dataset, 'mean_std.txt'), 'w') as f:
             f.write(result)
             f.flush()
 
     print('strong augmentation')
-    strong_path = f'{args.temporary_path}_high'
+    strong_path = f'{args.output_path}_strong'
     strong_tf = Components(transforms=[
         a_transforms.PitchShift(sample_rate=sample_rate, n_steps=4, n_fft=512),
         time_shift(shift_limit=.25, is_random=True, is_bidirection=True)
     ])
-    store_to(dataset=low_aug_dataset, root_path=strong_path, index_file_name=meta_file_name, data_transf=strong_tf)
+    store_to(dataset=weak_aug_dataset, root_path=strong_path, index_file_name=meta_file_name, data_transf=strong_tf)
     strong_aug_dataset = load_from(root_path=strong_path, index_file_name=meta_file_name)
 
     print(f'Foreach checking, datasize: {len(strong_aug_dataset)}')
