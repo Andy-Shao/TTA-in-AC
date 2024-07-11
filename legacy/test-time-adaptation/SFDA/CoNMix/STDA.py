@@ -245,7 +245,8 @@ def train_target(args: argparse.Namespace) -> Tuple[nn.Module, nn.Module, nn.Mod
     max_accuracy = 0
     while iter_num < max_iter:
         try:
-            inputs_test, target_index = next(iter_test)
+            inputs_test, _, target_index = next(iter_test)
+            inputs_test_strong = get_strong_aug(datasets['strong_aug'], target_index)
         except:
             iter_test = iter(dataset_loaders['target'])
             inputs_test, _, target_index = next(iter_test)
