@@ -169,10 +169,10 @@ def obtain_label(loader: DataLoader, modelF: nn.Module, modelB: nn.Module, model
         pred_label = labelset[pred_label]
     
     acc = np.sum(pred_label == all_label.float().numpy()) / len(all_feature)
-    wandb.log({"Accuracy/Pseudo Label Accuracy": acc*100})
+    wandb_run.log({"Accuracy/Pseudo Label Accuracy": acc*100})
 
     dd = F.softmax(torch.from_numpy(dd), dim=1)
-    return pred_label, all_output.cpu().numpy(), dd.numpy().astype('float32'), mean_all_output, all_label.cpu().numpy().astype(np.uint16)
+    return pred_label, all_output.cpu().numpy(), dd.numpy().astype(np.float32), mean_all_output, all_label.cpu().numpy().astype(np.uint16)
 
 def build_optim(args: argparse.Namespace, modelF: nn.Module, modelB: nn.Module, modelC: nn.Module) -> optim.Optimizer:
     param_group = []
@@ -307,6 +307,7 @@ if __name__ == "__main__":
     for epoch in range(1, args.max_epoch+1):
         print(f'Epoch {epoch}/{args.max_epoch}')
         for weak_features, _, idxes in tqdm(weak_test_loader):
+            batch_size = weak_features.shape[0]
             if iter % interval_iter == 0 and args.cls_par >= 0:
                 modelF.eval()
                 modelB.eval()
@@ -321,9 +322,7 @@ if __name__ == "__main__":
                         mem_label = dd
                     else:
                         mem_label = plr(prev_mem_label, mem_label, dd, args.class_num, alpha = args.alpha)
-                        mem_label = mem_label.argmax(axis=1).astype(int)
-                        refined_label = mem_label
-                        prev_mem_label = refined_label
+                        prev_mem_label = mem_label.argmax(axis=1).astype(int)
     
                 # print('Completed finding Pseudo Labels\n')
                 mem_label = torch.from_numpy(mem_label).to(args.device)
@@ -344,7 +343,7 @@ if __name__ == "__main__":
             if args.cls_par > 0:
                 with torch.no_grad():
                     pred = mem_label[idxes]
-                classifier_loss = SoftCrossEntropyLoss(outputs[0:args.batch_size], pred)
+                classifier_loss = SoftCrossEntropyLoss(outputs[0:batch_size], pred)
                 classifier_loss = torch.mean(classifier_loss)
             else:
                 classifier_loss = torch.tensor(.0).cuda()
@@ -361,11 +360,11 @@ if __name__ == "__main__":
             # Consist loss -> soft cross-entropy loss
             if args.consist:
                 softmax_output = nn.Softmax(dim=1)(outputs)
-                expectation_ratio = mean_all_output/torch.mean(softmax_output[0:args.batch_size],dim=0)
+                expectation_ratio = mean_all_output/torch.mean(softmax_output[0:batch_size],dim=0)
                 with torch.no_grad():
-                    soft_label_norm = torch.norm(softmax_output[0:args.batch_size]*expectation_ratio,dim=1,keepdim=True) #Frobenius norm
-                    soft_label = (softmax_output[0:args.batch_size]*expectation_ratio)/soft_label_norm
-                    consistency_loss = args.const_par*torch.mean(soft_CE(softmax_output[args.batch_size:],soft_label))
+                    soft_label_norm = torch.norm(softmax_output[0:batch_size]*expectation_ratio,dim=1,keepdim=True) #Frobenius norm
+                    soft_label = (softmax_output[0:batch_size]*expectation_ratio)/soft_label_norm
+                    consistency_loss = args.const_par*torch.mean(soft_CE(softmax_output[batch_size:],soft_label))
                     cs_loss = consistency_loss.item()
             else:
                 consistency_loss = torch.tensor(.0).cuda()
@@ -375,7 +374,7 @@ if __name__ == "__main__":
             total_loss.backward()
             optimizer.step()
 
-            wandb.log({"LOSS/total loss":total_loss.item(), "LOSS/Pseudo-label cross-entorpy loss":classifier_loss.item(), "LOSS/consistency loss":consistency_loss.item(), "LOSS/Nuclear-norm Maximization loss":fbnm_loss.item()})
+            wandb_run.log({"LOSS/total loss":total_loss.item(), "LOSS/Pseudo-label cross-entorpy loss":classifier_loss.item(), "LOSS/consistency loss":consistency_loss.item(), "LOSS/Nuclear-norm Maximization loss":fbnm_loss.item()})
 
             if iter % interval_iter == 0 or iter == max_iter:
                 if args.sdlr:
@@ -387,7 +386,7 @@ if __name__ == "__main__":
                     torch.save(modelF.state_dict(), os.path.join(args.full_output_path, args.STDA_modelF_weight_file_name))
                     torch.save(modelB.state_dict(), os.path.join(args.full_output_path, args.STDA_modelB_weight_file_name))
                     torch.save(modelC.state_dict(), os.path.join(args.full_output_path, args.STDA_modelC_weight_file_name))
-                wandb.log({'Accuracy/classifier accuracy': max_accu})
+                wandb_run.log({'Accuracy/classifier accuracy': accuracy})
                 modelF.train()
                 modelB.train()
                 modelC.train()
