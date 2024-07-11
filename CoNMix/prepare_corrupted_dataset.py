@@ -5,16 +5,19 @@ from tqdm import tqdm
 import torch 
 from torch.utils.data import DataLoader
 from torchaudio import transforms as a_transforms
+from torchvision import transforms as v_transforms
 
 from lib.toolkit import print_argparse, cal_norm
 from lib.wavUtils import Components, pad_trunc, GuassianNoise, time_shift
 from lib.datasets import AudioMINST, load_datapath, store_to, load_from
+from CoNMix.lib.prepare_dataset import ExpandChannel
 
 if __name__ == '__main__':
     ap = argparse.ArgumentParser()
     ap.add_argument('--dataset', type=str, default='audio-mnist', choices=['audio-mnist'])
     ap.add_argument('--dataset_root_path', type=str)
     ap.add_argument('--output_path', type=str, default='./result')
+    ap.add_argument('--data_type', type=str, choices=['raw', 'final'], default='final')
 
     ap.add_argument('--corruption', type=str, default='gaussian_noise')
     ap.add_argument('--severity_level', type=float, default=.0025)
@@ -46,9 +49,25 @@ if __name__ == '__main__':
         raise Exception('No support')
     meta_file_name = 'audio_minst_meta.csv'
 
+    if args.data_type == 'final':
+        store_to(dataset=corrupted_test_dataset, root_path=args.output_path, index_file_name=meta_file_name)
+        corrupted_test_dataset = load_from(root_path=args.output_path, index_file_name=meta_file_name)
+
+    weak_tf = Components(transforms=[
+        a_transforms.MelSpectrogram(sample_rate=sample_rate, n_fft=1024, n_mels=n_mels, hop_length=hop_length),
+        a_transforms.AmplitudeToDB(top_db=80),
+        ExpandChannel(out_channel=3),
+        v_transforms.Resize((256, 256), antialias=False),
+        v_transforms.RandomCrop(224)
+    ])
     print('low augmentation')
     weak_path = f'{args.output_path}_weak'
-    store_to(dataset=corrupted_test_dataset, root_path=weak_path, index_file_name=meta_file_name)
+    if args.data_type == 'raw':
+        store_to(dataset=corrupted_test_dataset, root_path=weak_path, index_file_name=meta_file_name)
+    elif args.data_type == 'final':
+        store_to(dataset=corrupted_test_dataset, root_path=weak_path, index_file_name=meta_file_name, data_transf=weak_tf)
+    else:
+        raise Exception('No support')
     weak_aug_dataset = load_from(root_path=weak_path, index_file_name=meta_file_name)
 
     print(f'Foreach checking, datasize: {len(weak_aug_dataset)}')
@@ -60,18 +79,32 @@ if __name__ == '__main__':
         mean, std = cal_norm(data_loader)
         result = f'mean: {mean}, std: {std}'
         print(result)
-        with open(os.path.join(weak_aug_dataset, 'mean_std.txt'), 'w') as f:
+        with open(os.path.join(weak_path, 'mean_std.txt'), 'w') as f:
             f.write(result)
             f.flush()
 
     if args.cal_strong:
         print('strong augmentation')
         strong_path = f'{args.output_path}_strong'
-        strong_tf = Components(transforms=[
-            a_transforms.PitchShift(sample_rate=sample_rate, n_steps=4, n_fft=512),
-            time_shift(shift_limit=.25, is_random=True, is_bidirection=True)
-        ])
-        store_to(dataset=weak_aug_dataset, root_path=strong_path, index_file_name=meta_file_name, data_transf=strong_tf)
+        if args.data_type == 'raw':
+            strong_tf = Components(transforms=[
+                a_transforms.PitchShift(sample_rate=sample_rate, n_steps=4, n_fft=512),
+                time_shift(shift_limit=.25, is_random=True, is_bidirection=True)
+            ])
+            store_to(dataset=weak_aug_dataset, root_path=strong_path, index_file_name=meta_file_name, data_transf=strong_tf)
+        elif args.data_type == 'final':
+            strong_tf = Components(transforms=[
+                a_transforms.PitchShift(sample_rate=sample_rate, n_steps=4, n_fft=512),
+                time_shift(shift_limit=.25, is_random=True, is_bidirection=True),
+                a_transforms.MelSpectrogram(sample_rate=sample_rate, n_fft=1024, n_mels=n_mels, hop_length=hop_length),
+                a_transforms.AmplitudeToDB(top_db=80),
+                ExpandChannel(out_channel=3),
+                v_transforms.Resize((256, 256), antialias=False),
+                v_transforms.RandomCrop(224)
+            ])
+            store_to(dataset=corrupted_test_dataset, root_path=strong_path, index_file_name=meta_file_name, data_transf=strong_tf)
+        else:
+            raise Exception('No support')
         strong_aug_dataset = load_from(root_path=strong_path, index_file_name=meta_file_name)
 
         print(f'Foreach checking, datasize: {len(strong_aug_dataset)}')

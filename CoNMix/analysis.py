@@ -17,14 +17,14 @@ from CoNMix.lib.prepare_dataset import ExpandChannel
 from lib.datasets import AudioMINST, load_datapath, load_from
 import CoNMix.lib.models as models
 
-def inference(modelF: nn.Module, modelB: nn.Module, modelC: nn.Module, data_loader: DataLoader, args: argparse.Namespace) -> float:
+def inference(modelF: nn.Module, modelB: nn.Module, modelC: nn.Module, data_loader: DataLoader, device='cpu') -> float:
     modelF.eval()
     modelB.eval()
     modelC.eval()
     ttl_corr = 0.
     ttl_size = 0.
     for features, labels in tqdm(data_loader):
-        features, labels = features.to(args.device), labels.to(args.device)
+        features, labels = features.to(device), labels.to(device)
         with torch.no_grad():
             outputs = modelC(modelB(modelF(features)))
         _, preds = torch.max(outputs, dim=1)
@@ -117,7 +117,6 @@ if __name__ == '__main__':
         test_dataset = AudioMINST(data_trainsforms=test_tf, include_rate=False, data_paths=audio_minst_load_pathes)
         
         corrupted_test_tf = Components(transforms=[
-            pad_trunc(max_ms=max_ms, sample_rate=sample_rate),
             a_transforms.MelSpectrogram(sample_rate=sample_rate, n_fft=1024, n_mels=n_mels, hop_length=hop_length),
             a_transforms.AmplitudeToDB(top_db=80),
             ExpandChannel(out_channel=3),
@@ -144,7 +143,7 @@ if __name__ == '__main__':
     modelF, modelB, modelC = load_model(args)
     ttl_weight_num = count_ttl_params(model=modelF) + count_ttl_params(model=modelB) + count_ttl_params(model=modelC)
     load_origin_stat(args, modelF=modelF, modelB=modelB, modelC=modelC)
-    accuracy = inference(modelF=modelF, modelB=modelB, modelC=modelC, args=args, data_loader=test_loader)
+    accuracy = inference(modelF=modelF, modelB=modelB, modelC=modelC, data_loader=test_loader, device=args.device)
     print(f'Oritinal Test -- data size is:{len(test_dataset)}, accuracy: {accuracy:.2f}%')
     accu_record.loc[len(accu_record)] = [args.dataset, args.algorithm, 'N/A', 'N/A', accuracy, 100. - accuracy, 0., ttl_weight_num]
 
@@ -152,7 +151,7 @@ if __name__ == '__main__':
     modelF, modelB, modelC = load_model(args)
     ttl_weight_num = count_ttl_params(model=modelF) + count_ttl_params(model=modelB) + count_ttl_params(model=modelC)
     load_origin_stat(args, modelF=modelF, modelB=modelB, modelC=modelC)
-    accuracy = inference(modelF=modelF, modelB=modelB, modelC=modelC, args=args, data_loader=corrupted_test_loader)
+    accuracy = inference(modelF=modelF, modelB=modelB, modelC=modelC, data_loader=corrupted_test_loader, device=args.device)
     print(f'Corrupted Test -- data size is:{len(corrupted_test_dataset)}, accuracy: {accuracy:.2f}%')
     accu_record.loc[len(accu_record)] = [args.dataset, args.algorithm, 'N/A', args.corruption, accuracy, 100. - accuracy, args.severity_level, ttl_weight_num]
 

@@ -34,10 +34,11 @@ def count_ttl_params(model: nn.Module, filter_by_grad=False, requires_grad=True)
         return sum(p.numel() for p in model.parameters() if p.requires_grad == requires_grad)
     
 def cal_norm(loader: DataLoader) -> tuple[int, int]:
-    mean = torch.zeros((3), dtype=torch.float32)
-    std = torch.zeros((3), dtype=torch.float32)
-    for features, _ in tqdm(loader):
+    for idx, (features, _) in tqdm(enumerate(loader), total=len(loader)):
         channel_size = features.shape[1]
+        if idx == 0:
+            mean = torch.zeros((channel_size), dtype=torch.float32)
+            std = torch.zeros((channel_size), dtype=torch.float32)
         features = torch.transpose(features, 1, 0)
         features = features.reshape(channel_size, -1)
         mean += features.mean(1)
