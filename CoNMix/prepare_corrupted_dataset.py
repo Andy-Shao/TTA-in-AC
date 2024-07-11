@@ -19,6 +19,7 @@ if __name__ == '__main__':
     ap.add_argument('--corruption', type=str, default='gaussian_noise')
     ap.add_argument('--severity_level', type=float, default=.0025)
     ap.add_argument('--cal_norm', action='store_true')
+    ap.add_argument('--cal_strong', action='store_true')
 
     # ap.add_argument('--seed', type=int, default=2024, help='random seed')
 
@@ -63,24 +64,25 @@ if __name__ == '__main__':
             f.write(result)
             f.flush()
 
-    print('strong augmentation')
-    strong_path = f'{args.output_path}_strong'
-    strong_tf = Components(transforms=[
-        a_transforms.PitchShift(sample_rate=sample_rate, n_steps=4, n_fft=512),
-        time_shift(shift_limit=.25, is_random=True, is_bidirection=True)
-    ])
-    store_to(dataset=weak_aug_dataset, root_path=strong_path, index_file_name=meta_file_name, data_transf=strong_tf)
-    strong_aug_dataset = load_from(root_path=strong_path, index_file_name=meta_file_name)
+    if args.cal_strong:
+        print('strong augmentation')
+        strong_path = f'{args.output_path}_strong'
+        strong_tf = Components(transforms=[
+            a_transforms.PitchShift(sample_rate=sample_rate, n_steps=4, n_fft=512),
+            time_shift(shift_limit=.25, is_random=True, is_bidirection=True)
+        ])
+        store_to(dataset=weak_aug_dataset, root_path=strong_path, index_file_name=meta_file_name, data_transf=strong_tf)
+        strong_aug_dataset = load_from(root_path=strong_path, index_file_name=meta_file_name)
 
-    print(f'Foreach checking, datasize: {len(strong_aug_dataset)}')
-    for feature, label in tqdm(strong_aug_dataset):
-        pass
+        print(f'Foreach checking, datasize: {len(strong_aug_dataset)}')
+        for feature, label in tqdm(strong_aug_dataset):
+            pass
 
-    if args.cal_norm:
-        data_loader = DataLoader(dataset=strong_aug_dataset, batch_size=256, shuffle=False, drop_last=False)
-        mean, std = cal_norm(data_loader)
-        result = f'mean: {mean}, std: {std}'
-        print(result)
-        with open(os.path.join(strong_path, 'mean_std.txt'), 'w') as f:
-            f.write(result)
-            f.flush()
+        if args.cal_norm:
+            data_loader = DataLoader(dataset=strong_aug_dataset, batch_size=256, shuffle=False, drop_last=False)
+            mean, std = cal_norm(data_loader)
+            result = f'mean: {mean}, std: {std}'
+            print(result)
+            with open(os.path.join(strong_path, 'mean_std.txt'), 'w') as f:
+                f.write(result)
+                f.flush()

@@ -11,7 +11,7 @@ from torchvision import transforms as v_transforms
 from torch.utils.data import DataLoader
 import torch.nn as nn
 
-from lib.toolkit import print_argparse, cal_norm, parse_mean_std
+from lib.toolkit import print_argparse, cal_norm, parse_mean_std, count_ttl_params
 from lib.wavUtils import pad_trunc, Components
 from CoNMix.lib.prepare_dataset import ExpandChannel
 from lib.datasets import AudioMINST, load_datapath, load_from
@@ -81,7 +81,7 @@ if __name__ == '__main__':
 
     args = ap.parse_args()
     args.algorithm = 'ViT'
-    accu_record = pd.DataFrame(columns=['dataset', 'algorithm', 'tta-operation', 'corruption', 'accuracy', 'error', 'severity level'])
+    accu_record = pd.DataFrame(columns=['dataset', 'algorithm', 'tta-operation', 'corruption', 'accuracy', 'error', 'severity level', 'number of weight'])
     args.device = 'cuda' if torch.cuda.is_available() else 'cpu'
     args.full_output_path = os.path.join(args.output_path, args.dataset, 'CoNMix', 'analysis')
     try:
@@ -142,16 +142,18 @@ if __name__ == '__main__':
     
     print('Original Test')
     modelF, modelB, modelC = load_model(args)
+    ttl_weight_num = count_ttl_params(model=modelF) + count_ttl_params(model=modelB) + count_ttl_params(model=modelC)
     load_origin_stat(args, modelF=modelF, modelB=modelB, modelC=modelC)
     accuracy = inference(modelF=modelF, modelB=modelB, modelC=modelC, args=args, data_loader=test_loader)
     print(f'Oritinal Test -- data size is:{len(test_dataset)}, accuracy: {accuracy:.2f}%')
-    accu_record.loc[len(accu_record)] = [args.dataset, args.algorithm, 'N/A', 'N/A', accuracy, 100. - accuracy, 0.]
+    accu_record.loc[len(accu_record)] = [args.dataset, args.algorithm, 'N/A', 'N/A', accuracy, 100. - accuracy, 0., ttl_weight_num]
 
     print('Corrupted Test')
     modelF, modelB, modelC = load_model(args)
+    ttl_weight_num = count_ttl_params(model=modelF) + count_ttl_params(model=modelB) + count_ttl_params(model=modelC)
     load_origin_stat(args, modelF=modelF, modelB=modelB, modelC=modelC)
     accuracy = inference(modelF=modelF, modelB=modelB, modelC=modelC, args=args, data_loader=corrupted_test_loader)
     print(f'Corrupted Test -- data size is:{len(corrupted_test_dataset)}, accuracy: {accuracy:.2f}%')
-    accu_record.loc[len(accu_record)] = [args.dataset, args.algorithm, 'N/A', args.corruption, accuracy, 100. - accuracy, args.severity_level]
+    accu_record.loc[len(accu_record)] = [args.dataset, args.algorithm, 'N/A', args.corruption, accuracy, 100. - accuracy, args.severity_level, ttl_weight_num]
 
     accu_record.to_csv(os.path.join(args.full_output_path, args.output_csv_name))
