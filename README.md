@@ -24,42 +24,57 @@ conda install matplotlib==3.8.4 -y
 pip install wandb==0.17.1
 ```
 
-## Training
+## Procssing
 ### Tent & Norm Adaptation
+#### Pre-train
 ```shell
 sh script/pre_train.sh
 ```
 `Note`: try to modify the `--dataset_root_path ` for your dataset location.
+#### Analysis
+```shell
+sh script/analysis.sh
+```
+`Note`: try to modify the `--dataset_root_path ` for your dataset location.
 
 ### TTT Adaptation
+#### Pre-train
 ```shell
 sh script/ttt_pre_train.sh
 ```
 `Note`: try to modify the `--dataset_root_path ` for your dataset location.
 
-### CoNMix 
+#### Analysis
+```shell
+sh script/ttt_analysis.sh
+```
+`Note`: try to modify the `--dataset_root_path ` for your dataset location.
+
+### CoNMix for AudioMNIST
 Model download:
 ```shell
 wget https://storage.googleapis.com/vit_models/imagenet21k/R50+ViT-B_16.npz
 mkdir -p model/vit_checkpoint/imagenet21k
 mv R50+ViT-B_16.npz model/vit_checkpoint/imagenet21k/R50+ViT-B_16.npz
 ```
-
-## Analysis
-### Tent & Norm Adaptation
+#### Pre-train
 ```shell
-sh script/analysis.sh
+sh CoNMix/script/pre-train.sh
 ```
-`Note`: try to modify the `--dataset_root_path ` for your dataset location.
-
-
-### TTT Adaptation
+#### Prepare The Corruption Data
 ```shell
-sh script/ttt_analysis.sh
+sh CoNMix/script/prepare_dataset.sh
 ```
-`Note`: try to modify the `--dataset_root_path ` for your dataset location.
+#### STDA
+```shell
+sh CoNMix/script/STDA.sh
+```
+#### Analysis
+```shell
+sh CoNMix/script/analysis.sh
+```
 
-### Exhibition
+## Exhibition
 After that open and run the `analysis_exhibition.ipynb` to demonstrate the analysis feedback. 
 
 ## Dataset
