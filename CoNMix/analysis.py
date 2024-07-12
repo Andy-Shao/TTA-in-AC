@@ -44,6 +44,11 @@ def load_origin_stat(args: argparse.Namespace, modelF: nn.Module, modelB: nn.Mod
     modelB.load_state_dict(torch.load(args.modelB_weight_path))
     modelC.load_state_dict(torch.load(args.modelC_weight_path))
 
+def load_adapted_stat(args: argparse.Namespace, modelF: nn.Module, modelB: nn.Module, modelC: nn.Module) -> None:
+    modelF.load_state_dict(torch.load(args.adapted_modelF_weight_path))
+    modelB.load_state_dict(torch.load(args.adapted_modelB_weight_path))
+    modelC.load_state_dict(torch.load(args.adapted_modelC_weight_path))
+
 if __name__ == '__main__':
     ap = argparse.ArgumentParser()
     ap.add_argument('--dataset', type=str, default='audio-mnist', choices=['audio-mnist'])
@@ -54,6 +59,9 @@ if __name__ == '__main__':
     ap.add_argument('--modelB_weight_path', type=str)
     ap.add_argument('--modelC_weight_path', type=str)
     ap.add_argument('--output_csv_name', type=str, default='accuracy_record.csv')
+    ap.add_argument('--adapted_modelF_weight_path', type=str)
+    ap.add_argument('--adapted_modelB_weight_path', type=str)
+    ap.add_argument('--adapted_modelC_weight_path', type=str)
 
     ap.add_argument('--corruption', type=str, default='gaussian_noise')
     ap.add_argument('--severity_level', type=float, default=.0025)
@@ -117,11 +125,6 @@ if __name__ == '__main__':
         test_dataset = AudioMINST(data_trainsforms=test_tf, include_rate=False, data_paths=audio_minst_load_pathes)
         
         corrupted_test_tf = Components(transforms=[
-            a_transforms.MelSpectrogram(sample_rate=sample_rate, n_fft=1024, n_mels=n_mels, hop_length=hop_length),
-            a_transforms.AmplitudeToDB(top_db=80),
-            ExpandChannel(out_channel=3),
-            v_transforms.Resize((256, 256), antialias=False),
-            v_transforms.RandomCrop(224),
             v_transforms.Normalize(mean=parse_mean_std(args.corrupted_mean), std=parse_mean_std(args.corrupted_std))
         ])
         corrupted_test_dataset = load_from(root_path=args.temporary_path, index_file_name='audio_minst_meta.csv', data_tf=corrupted_test_tf)
@@ -153,6 +156,14 @@ if __name__ == '__main__':
     load_origin_stat(args, modelF=modelF, modelB=modelB, modelC=modelC)
     accuracy = inference(modelF=modelF, modelB=modelB, modelC=modelC, data_loader=corrupted_test_loader, device=args.device)
     print(f'Corrupted Test -- data size is:{len(corrupted_test_dataset)}, accuracy: {accuracy:.2f}%')
+    accu_record.loc[len(accu_record)] = [args.dataset, args.algorithm, 'N/A', args.corruption, accuracy, 100. - accuracy, args.severity_level, ttl_weight_num]
+
+    print('CoNMix Test')
+    modelF, modelB, modelC = load_model(args)
+    ttl_weight_num = count_ttl_params(model=modelF) + count_ttl_params(model=modelB) + count_ttl_params(model=modelC)
+    load_adapted_stat(args, modelF=modelF, modelB=modelB, modelC=modelC)
+    accuracy = inference(modelF=modelF, modelB=modelB, modelC=modelC, data_loader=corrupted_test_loader, device=args.device)
+    print(f'CoNMix Test -- data size is:{len(corrupted_test_dataset)}, accuracy:{accuracy:.2f}%')
     accu_record.loc[len(accu_record)] = [args.dataset, args.algorithm, 'N/A', args.corruption, accuracy, 100. - accuracy, args.severity_level, ttl_weight_num]
 
     accu_record.to_csv(os.path.join(args.full_output_path, args.output_csv_name))

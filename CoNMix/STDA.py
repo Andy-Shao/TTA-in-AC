@@ -169,7 +169,7 @@ def obtain_label(loader: DataLoader, modelF: nn.Module, modelB: nn.Module, model
         pred_label = labelset[pred_label]
     
     acc = np.sum(pred_label == all_label.float().numpy()) / len(all_feature)
-    wandb_run.log({"Accuracy/Pseudo Label Accuracy": acc*100})
+    wandb.log({"Accuracy/Pseudo Label Accuracy": acc*100})
 
     dd = F.softmax(torch.from_numpy(dd), dim=1)
     return pred_label, all_output.cpu().numpy(), dd.numpy().astype(np.float32), mean_all_output, all_label.cpu().numpy().astype(np.uint16)
@@ -276,8 +276,8 @@ if __name__ == "__main__":
     print_argparse(args)
     #################################################
 
-    wandb_run = wandb.init(
-        project='Audio Classification STDA (CoNMix)', name=args.dataset, mode='online' if args.wandb else 'disabled',
+    wandb.init(
+        project='Audio Classification STDA (CoNMix)', name=f'{args.dataset}_{args.severity_level}', mode='online' if args.wandb else 'disabled',
         config=args, tags=['Audio Classification', args.dataset, 'ViT'])
 
     test_dataset, weak_test_dataset, strong_test_dataset = build_dataset(args)
@@ -304,6 +304,7 @@ if __name__ == "__main__":
     modelB.train()
     modelC.train()
     max_accu = 0.
+    wandb.log({'Accuracy/classifier accuracy': 0., 'Accuracy/max classifier accuracy': 0.})
     for epoch in range(1, args.max_epoch+1):
         print(f'Epoch {epoch}/{args.max_epoch}')
         for weak_features, _, idxes in tqdm(weak_test_loader):
@@ -364,8 +365,8 @@ if __name__ == "__main__":
                 with torch.no_grad():
                     soft_label_norm = torch.norm(softmax_output[0:batch_size]*expectation_ratio,dim=1,keepdim=True) #Frobenius norm
                     soft_label = (softmax_output[0:batch_size]*expectation_ratio)/soft_label_norm
-                    consistency_loss = args.const_par*torch.mean(soft_CE(softmax_output[batch_size:],soft_label))
-                    cs_loss = consistency_loss.item()
+                consistency_loss = args.const_par*torch.mean(soft_CE(softmax_output[batch_size:],soft_label))
+                cs_loss = consistency_loss.item()
             else:
                 consistency_loss = torch.tensor(.0).cuda()
             total_loss = classifier_loss + fbnm_loss + consistency_loss
@@ -374,7 +375,7 @@ if __name__ == "__main__":
             total_loss.backward()
             optimizer.step()
 
-            wandb_run.log({"LOSS/total loss":total_loss.item(), "LOSS/Pseudo-label cross-entorpy loss":classifier_loss.item(), "LOSS/consistency loss":consistency_loss.item(), "LOSS/Nuclear-norm Maximization loss":fbnm_loss.item()})
+            wandb.log({"LOSS/total loss":total_loss.item(), "LOSS/Pseudo-label cross-entorpy loss":classifier_loss.item(), "LOSS/consistency loss":consistency_loss.item(), "LOSS/Nuclear-norm Maximization loss":fbnm_loss.item()})
 
             if iter % interval_iter == 0 or iter == max_iter:
                 if args.sdlr:
@@ -386,7 +387,7 @@ if __name__ == "__main__":
                     torch.save(modelF.state_dict(), os.path.join(args.full_output_path, args.STDA_modelF_weight_file_name))
                     torch.save(modelB.state_dict(), os.path.join(args.full_output_path, args.STDA_modelB_weight_file_name))
                     torch.save(modelC.state_dict(), os.path.join(args.full_output_path, args.STDA_modelC_weight_file_name))
-                wandb_run.log({'Accuracy/classifier accuracy': accuracy})
+                wandb.log({'Accuracy/classifier accuracy': accuracy, 'Accuracy/max classifier accuracy': max_accu})
                 modelF.train()
                 modelB.train()
                 modelC.train()
