@@ -107,3 +107,10 @@ def disply_PIL_image(img: Image):
     plt.ylabel('Frequency')
     plt.colorbar(format='%+2.0f dB')
     plt.show()
+
+class DoNothing(nn.Module):
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+
+    def forward(self, x):
+        return x

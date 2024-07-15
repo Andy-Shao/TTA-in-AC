@@ -2,6 +2,8 @@ import argparse
 import os
 from tqdm import tqdm
 import pandas as pd
+import random
+import numpy as np
 
 import torch 
 import torchaudio.transforms as a_transforms
@@ -11,7 +13,7 @@ import torch.nn as nn
 import torch.optim as optim
 
 from lib.datasets import AudioMINST, load_datapath, ClipDataset
-from lib.wavUtils import Components, pad_trunc, time_shift
+from lib.wavUtils import Components, pad_trunc, time_shift, DoNothing
 from lib.models import WavClassifier, ElasticRestNet50
 from lib.toolkit import print_argparse, count_ttl_params, parse_mean_std, cal_norm, store_model_structure_to_txt
 from CoNMix.lib.prepare_dataset import ExpandChannel
@@ -33,9 +35,10 @@ if __name__ == '__main__':
     ap.add_argument('--val_mean', type=str, default='0.,0.,0.')
     ap.add_argument('--val_std', type=str, default='1.,1.,1.')
     ap.add_argument('--cal_norm', action='store_true')
+    ap.add_argument('--normalized', action='store_true')
+    ap.add_argument('--seed', type=int, default=2024)
 
     args = ap.parse_args()
-    print_argparse(args=args)
     args.output_full_path = os.path.join(args.output_path, args.dataset, 'tent', 'pre_train')
     try:
         os.makedirs(args.output_full_path)
@@ -44,8 +47,13 @@ if __name__ == '__main__':
         
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     print(f'The device is: {device}')
-    import torch.backends.cudnn as cudnn
-    cudnn.benchmark = True
+    torch.backends.cudnn.benchmark = True
+
+    torch.manual_seed(args.seed)
+    torch.cuda.manual_seed(args.seed)
+    np.random.seed(args.seed)
+    random.seed(args.seed)
+    print_argparse(args=args)
 
     if args.dataset == 'audio-mnist' and args.model == 'cnn':
         data_pathes = load_datapath(root_path=args.dataset_root_path, filter_fn=lambda x: x['accent'] == 'German')
@@ -78,7 +86,7 @@ if __name__ == '__main__':
             v_transforms.Resize((256, 256), antialias=False),
             v_transforms.RandomCrop(224),
             v_transforms.RandomHorizontalFlip(),
-            v_transforms.Normalize(mean=parse_mean_std(args.train_mean), std=parse_mean_std(args.train_std))
+            v_transforms.Normalize(mean=parse_mean_std(args.train_mean), std=parse_mean_std(args.train_std)) if args.normalized else DoNothing()
         ])
         train_dataset = AudioMINST(data_paths=data_pathes, data_trainsforms=train_tf, include_rate=False)
         val_tf = Components(transforms=[
@@ -88,7 +96,7 @@ if __name__ == '__main__':
             ExpandChannel(out_channel=3),
             v_transforms.Resize((256, 256), antialias=False),
             v_transforms.RandomCrop(224),
-            v_transforms.Normalize(mean=parse_mean_std(args.val_mean), std=parse_mean_std(args.val_std))
+            v_transforms.Normalize(mean=parse_mean_std(args.val_mean), std=parse_mean_std(args.val_std)) if args.normalized else DoNothing()
         ])
         val_dataset = ClipDataset(dataset=AudioMINST(data_paths=data_pathes, data_trainsforms=val_tf, include_rate=False), rate=.3)
         model = ElasticRestNet50(class_num=10).to(device=device)
@@ -115,6 +123,7 @@ if __name__ == '__main__':
     train_step = 0
     val_step = 0
     record = pd.DataFrame(columns=['type', 'step', 'accuracy', 'loss'])
+    max_accu = 0.
     for epoch in range(args.max_epoch):
         print(f'Epoch {epoch}')
 
@@ -138,6 +147,9 @@ if __name__ == '__main__':
         print('validation')
         model.eval()
         val_loader_iter = iter(val_loader)
+        ttl_corr = 0
+        ttl_size = 0
+        ttl_loss = 0.
         for i in tqdm(range(len(val_loader))):
             inputs, labels = next(val_loader_iter)
             inputs, labels = inputs.to(device), labels.to(device)
@@ -146,8 +158,15 @@ if __name__ == '__main__':
                 _, preds = torch.max(outputs, dim=1)
                 loss = loss_fn(outputs, labels)
             val_accu = (preds == labels).sum().cpu().item()
-            record.loc[len(record)] = ['validation', val_step, val_accu/labels.shape[0] * 100., loss.cpu().item()]
+            ttl_corr += val_accu
+            ttl_size += labels.shape[0]
+            ttl_loss += loss.item()
+            record.loc[len(record)] = ['validation', val_step, val_accu/labels.shape[0] * 100., loss.item()]
             val_step += 1 
-        print(f'validation accuracy: {record.iloc[-1, 2]:.2f}%, validation loss: {record.iloc[-1, 3]:.2f}')
-        torch.save(model.state_dict(), os.path.join(args.output_full_path, args.output_weight_name))
+        ttl_accu = ttl_corr / ttl_size * 100.
+        ttl_loss = ttl_loss / ttl_size
+        print(f'validation accuracy: {ttl_accu:.2f}%, validation loss: {ttl_loss:.2f}')
+        if ttl_accu > max_accu:
+            max_accu = ttl_accu
+            torch.save(model.state_dict(), os.path.join(args.output_full_path, args.output_weight_name))
     record.to_csv(os.path.join(args.output_full_path, args.output_csv_name))
