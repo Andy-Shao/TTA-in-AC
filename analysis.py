@@ -50,7 +50,7 @@ if __name__ == '__main__':
     args = ap.parse_args()
     args.corruption = 'gaussian_noise'
     print_argparse(args=args)
-    args.output_full_path = os.path.join(args.output_path, args.dataset, args.model, 'analysis')
+    args.output_full_path = os.path.join(args.output_path, args.dataset, 'tent', 'analysis')
     try:
         os.makedirs(args.output_full_path)
     except:

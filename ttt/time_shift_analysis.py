@@ -120,7 +120,7 @@ if __name__ == '__main__':
     test_transf = test_transforms(args)
     ttl_weight_num = count_ttl_params(model=net) + count_ttl_params(model=ext) + count_ttl_params(model=head)
     original_test_accu = inference(model=net, loader=test_loader, test_transf=test_transf, device=args.device)
-    accu_record.loc[len(accu_record)] = [args.dataset, 'RestNet', 'N/A', 'N/A', original_test_accu, 100. - original_test_accu, 0., ttl_weight_num]
+    accu_record.loc[len(accu_record)] = [args.dataset, 'RestNet_base', 'N/A', 'N/A', original_test_accu, 100. - original_test_accu, 0., ttl_weight_num]
     print(f'original data size: {len(test_dataset)}, original accuracy: {original_test_accu:.2f}%')
 
     print('Corruption test')
@@ -132,7 +132,7 @@ if __name__ == '__main__':
     corrupted_test_transf = test_transforms(args)
     ttl_weight_num = count_ttl_params(model=net) + count_ttl_params(model=ext) + count_ttl_params(model=head)
     corrupted_test_accu = inference(model=net, loader=corrupted_test_loader, test_transf=corrupted_test_transf, device=args.device)
-    accu_record.loc[len(accu_record)] = [args.dataset, 'RestNet', 'N/A', args.corruption, corrupted_test_accu, 100. - corrupted_test_accu, args.severity_level, ttl_weight_num]
+    accu_record.loc[len(accu_record)] = [args.dataset, 'RestNet_base', 'N/A', args.corruption, corrupted_test_accu, 100. - corrupted_test_accu, args.severity_level, ttl_weight_num]
     print(f'corrupted data size: {len(test_dataset)}, corrupted accuracy: {corrupted_test_accu:.2f}%')
 
     print('Online ttt adaptation')
@@ -157,7 +157,7 @@ if __name__ == '__main__':
         ttt_corr += correctness
     ttt_accu = ttt_corr / len(test_dataset) * 100.
     print(f'Online TTT adaptation data size: {len(test_dataset)}, accuracy: {ttt_accu:.2f}%')
-    accu_record.loc[len(accu_record)] = [args.dataset, 'RestNet', args.ttt_operation + ', online', args.corruption, ttt_accu, 100. - ttt_accu, args.severity_level, ttl_weight_num]
+    accu_record.loc[len(accu_record)] = [args.dataset, 'RestNet_base', args.ttt_operation + ', online', args.corruption, ttt_accu, 100. - ttt_accu, args.severity_level, ttl_weight_num]
 
     # print('Slow ttt adaption')
     # if args.dataset == 'audio-mnist':

@@ -55,3 +55,14 @@ class WavClassifier(nn.Module):
         x = self.lin(x)
 
         return nn.functional.softmax(x, dim=1)
+    
+class ElasticRestNet50(nn.Module):
+    def __init__(self, class_num: int) -> None:
+        super().__init__()
+        from torchvision.models import resnet50, ResNet50_Weights
+        self.body = resnet50(weights=ResNet50_Weights.DEFAULT)
+        self.fc = nn.Linear(in_features=self.body.fc.out_features, out_features=class_num)
+
+    def forward(self, x):
+        x = self.body(x)
+        return self.fc(x)
