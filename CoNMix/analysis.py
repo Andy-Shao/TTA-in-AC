@@ -65,11 +65,13 @@ if __name__ == '__main__':
 
     ap.add_argument('--corruption', type=str, default='gaussian_noise')
     ap.add_argument('--severity_level', type=float, default=.0025)
-    ap.add_argument('--corrupted_mean', type=str)
-    ap.add_argument('--corrupted_std', type=str)
+    ap.add_argument('--corrupted_mean', type=str, default='0.,0.,0.')
+    ap.add_argument('--corrupted_std', type=str, default='1.,1.,1.')
+    ap.add_argument('--test_mean', type=str, default='0.,0.,0.')
+    ap.add_argument('--test_std', type=str, default='1.,1.,1.')
 
     ap.add_argument('--seed', type=int, default=2024, help='random seed')
-    ap.add_argument('--cal_norm', type=str, default='none', choices=['original', 'corrupted', 'none'])
+    ap.add_argument('--cal_norm', action='store_true')
 
     ap.add_argument('--max_epoch', type=int, default=200, help='max epoch')
     ap.add_argument('--interval', type=int, default=50, help='interval')
@@ -119,7 +121,7 @@ if __name__ == '__main__':
             ExpandChannel(out_channel=3),
             v_transforms.Resize((256, 256), antialias=False),
             v_transforms.RandomCrop(224),
-            v_transforms.Normalize(mean=[-51.259285, -51.259285, -51.259285], std=[19.166618, 19.166618, 19.166618])
+            v_transforms.Normalize(mean=parse_mean_std(args.test_mean), std=parse_mean_std(args.test_std))
         ])
         audio_minst_load_pathes = load_datapath(root_path=args.dataset_root_path, filter_fn=lambda x: x['accent'] != 'German')
         test_dataset = AudioMINST(data_trainsforms=test_tf, include_rate=False, data_paths=audio_minst_load_pathes)
@@ -134,12 +136,11 @@ if __name__ == '__main__':
     test_loader = DataLoader(dataset=test_dataset, batch_size=args.batch_size, shuffle=False, drop_last=False)
     corrupted_test_loader = DataLoader(dataset=corrupted_test_dataset, batch_size=args.batch_size, shuffle=False, drop_last=False)
 
-    if args.cal_norm != 'none':
-        if args.cal_norm == 'original':
-            mean, std = cal_norm(test_loader)
-        if args.cal_norm == 'corrupted':
-            mean, std = cal_norm(corrupted_test_loader)
-        print(f'mean is: {mean}, std is: {std}')
+    if args.cal_norm:
+        mean, std = cal_norm(test_loader)
+        print(f'test mean: {mean}, std: {std}')
+        mean, std = cal_norm(corrupted_test_loader)
+        print(f'corrupted mean is: {mean}, std is: {std}')
         exit()
     
     print('Original Test')
@@ -164,6 +165,6 @@ if __name__ == '__main__':
     load_adapted_stat(args, modelF=modelF, modelB=modelB, modelC=modelC)
     accuracy = inference(modelF=modelF, modelB=modelB, modelC=modelC, data_loader=corrupted_test_loader, device=args.device)
     print(f'CoNMix Test -- data size is:{len(corrupted_test_dataset)}, accuracy:{accuracy:.2f}%')
-    accu_record.loc[len(accu_record)] = [args.dataset, args.algorithm, 'N/A', args.corruption, accuracy, 100. - accuracy, args.severity_level, ttl_weight_num]
+    accu_record.loc[len(accu_record)] = [args.dataset, args.algorithm, 'CoNMix', args.corruption, accuracy, 100. - accuracy, args.severity_level, ttl_weight_num]
 
     accu_record.to_csv(os.path.join(args.full_output_path, args.output_csv_name))
