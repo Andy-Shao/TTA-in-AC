@@ -9,7 +9,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
-from lib.toolkit import print_argparse
+from lib.toolkit import print_argparse, count_ttl_params
 from lib.wavUtils import GuassianNoise
 from ttt.lib.test_helpers import build_mnist_model, time_shift_inference as inference
 from ttt.lib.prepare_dataset import prepare_test_data, test_transforms, TimeShiftOps, train_transforms, Components, pad_trunc
@@ -90,7 +90,7 @@ if __name__ == '__main__':
     except:
         pass
 
-    accu_record = pd.DataFrame(columns=['dataset', 'algorithm', 'tta-operation', 'corruption', 'accuracy', 'error', 'severity level'])
+    accu_record = pd.DataFrame(columns=['dataset', 'algorithm', 'tta-operation', 'corruption', 'accuracy', 'error', 'severity level', 'number of weight'])
     args.device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
     if args.dataset == 'audio-mnist':
@@ -118,8 +118,9 @@ if __name__ == '__main__':
     args.corruption = 'original'
     test_dataset, test_loader = prepare_test_data(args=args)
     test_transf = test_transforms(args)
+    ttl_weight_num = count_ttl_params(model=net) + count_ttl_params(model=ext) + count_ttl_params(model=head)
     original_test_accu = inference(model=net, loader=test_loader, test_transf=test_transf, device=args.device)
-    accu_record.loc[len(accu_record)] = [args.dataset, 'RestNet', 'N/A', 'N/A', original_test_accu, 100. - original_test_accu, 0.]
+    accu_record.loc[len(accu_record)] = [args.dataset, 'RestNet', 'N/A', 'N/A', original_test_accu, 100. - original_test_accu, 0., ttl_weight_num]
     print(f'original data size: {len(test_dataset)}, original accuracy: {original_test_accu:.2f}%')
 
     print('Corruption test')
@@ -129,8 +130,9 @@ if __name__ == '__main__':
         GuassianNoise(noise_level=args.severity_level),
     ]))
     corrupted_test_transf = test_transforms(args)
+    ttl_weight_num = count_ttl_params(model=net) + count_ttl_params(model=ext) + count_ttl_params(model=head)
     corrupted_test_accu = inference(model=net, loader=corrupted_test_loader, test_transf=corrupted_test_transf, device=args.device)
-    accu_record.loc[len(accu_record)] = [args.dataset, 'RestNet', 'N/A', args.corruption, corrupted_test_accu, 100. - corrupted_test_accu, args.severity_level]
+    accu_record.loc[len(accu_record)] = [args.dataset, 'RestNet', 'N/A', args.corruption, corrupted_test_accu, 100. - corrupted_test_accu, args.severity_level, ttl_weight_num]
     print(f'corrupted data size: {len(test_dataset)}, corrupted accuracy: {corrupted_test_accu:.2f}%')
 
     print('Online ttt adaptation')
@@ -143,6 +145,7 @@ if __name__ == '__main__':
     criterion_ssh = nn.CrossEntropyLoss().to(device=args.device)
     optimizer_ssh = optim.SGD(params=ssh.parameters(), lr=args.lr)
     ttt_corr = 0
+    ttl_weight_num = count_ttl_params(model=net) + count_ttl_params(model=ext) + count_ttl_params(model=head)
     for feature, label in tqdm(corrupted_test_dataset):
         input = corrupted_test_transf[TimeShiftOps.ORIGIN].tran_one(feature)
         input = input.to(args.device)
@@ -154,7 +157,7 @@ if __name__ == '__main__':
         ttt_corr += correctness
     ttt_accu = ttt_corr / len(test_dataset) * 100.
     print(f'Online TTT adaptation data size: {len(test_dataset)}, accuracy: {ttt_accu:.2f}%')
-    accu_record.loc[len(accu_record)] = [args.dataset, 'RestNet', args.ttt_operation + ', online', args.corruption, ttt_accu, 100. - ttt_accu, args.severity_level]
+    accu_record.loc[len(accu_record)] = [args.dataset, 'RestNet', args.ttt_operation + ', online', args.corruption, ttt_accu, 100. - ttt_accu, args.severity_level, ttl_weight_num]
 
     # print('Slow ttt adaption')
     # if args.dataset == 'audio-mnist':

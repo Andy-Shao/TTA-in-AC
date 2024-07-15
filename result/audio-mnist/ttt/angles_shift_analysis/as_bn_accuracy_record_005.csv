@@ -1,4 +1,4 @@
-,dataset,algorithm,tta-operation,corruption,accuracy,error,severity level
-0,audio-mnist,RestNet,N/A,N/A,98.47,1.5300000000000011,0.0
-1,audio-mnist,RestNet,N/A,gaussian_noise,35.6,64.4,0.005
-2,audio-mnist,RestNet,"TTT, as, bn, online",gaussian_noise,45.59,54.41,0.005
+,dataset,algorithm,tta-operation,corruption,accuracy,error,severity level,number of weight
+0,audio-mnist,RestNet,N/A,N/A,98.5,1.5,0.0,740078
+1,audio-mnist,RestNet,N/A,gaussian_noise,35.809999999999995,64.19,0.005,740078
+2,audio-mnist,RestNet,"TTT, as, bn, online",gaussian_noise,42.36,57.64,0.005,740078

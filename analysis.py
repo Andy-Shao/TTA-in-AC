@@ -14,7 +14,7 @@ from lib.tentAdapt import TentAdapt, get_params
 from lib.datasets import AudioMINST, load_datapath
 from lib.wavUtils import Components, pad_trunc, GuassianNoise
 from lib.models import WavClassifier
-from lib.toolkit import print_argparse
+from lib.toolkit import print_argparse, count_ttl_params
 
 def inference(model: nn.Module, loader: DataLoader, device: str) -> float:
     test_accu = 0.
@@ -56,7 +56,7 @@ if __name__ == '__main__':
     except:
         pass
 
-    accu_record = pd.DataFrame(columns=['dataset', 'algorithm', 'tta-operation', 'corruption', 'accuracy', 'error', 'severity level'])
+    accu_record = pd.DataFrame(columns=['dataset', 'algorithm', 'tta-operation', 'corruption', 'accuracy', 'error', 'severity level', 'number of weight'])
     running_device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
     print('Original test')
@@ -75,11 +75,11 @@ if __name__ == '__main__':
         raise Exception('No support')
     
     model = load_model(args, device=running_device)
-    
+    weight_num = count_ttl_params(model=model)
     model.eval()
     original_test_accuracy = inference(model=model, loader=test_loader, device=running_device)
     print(f'original test data size: {len(test_dataset)}, original test accuracy: {original_test_accuracy:.2f}%')
-    accu_record.loc[len(accu_record)] = [args.dataset, args.model, 'N/A', 'N/A', original_test_accuracy, 100. - original_test_accuracy, 0.]
+    accu_record.loc[len(accu_record)] = [args.dataset, args.model, 'N/A', 'N/A', original_test_accuracy, 100. - original_test_accuracy, 0., weight_num]
 
     print('Corruption test')
     if args.dataset == 'audio-mnist':
@@ -94,10 +94,11 @@ if __name__ == '__main__':
     else:
         raise Exception('No support')
     model = load_model(args, device=running_device)
+    weight_num = count_ttl_params(model=model)
     model.eval()
     corrupted_test_accuracy = inference(model=model, loader=corrupted_test_loader, device=running_device)
     print(f'corrupted test data size: {len(corrupted_test_dataset)}, corrupted test accuracy: {corrupted_test_accuracy:.2f}%')
-    accu_record.loc[len(accu_record)] = [args.dataset, args.model, 'N/A', args.corruption, corrupted_test_accuracy, 100. - corrupted_test_accuracy, args.severity_level]
+    accu_record.loc[len(accu_record)] = [args.dataset, args.model, 'N/A', args.corruption, corrupted_test_accuracy, 100. - corrupted_test_accuracy, args.severity_level, weight_num]
 
     print('Tent Adaptation')
     if args.dataset == 'audio-mnist':
@@ -105,18 +106,20 @@ if __name__ == '__main__':
     else:
         raise Exception('No support')
     model = load_model(args, running_device)
+    weight_num = count_ttl_params(model=model)
     tent_params, tent_param_names = get_params(model=model)
     tent_optimizer = optim.Adam(params=tent_params, lr=1e-3, betas=(.9,.99), weight_decay=0.)
     tent_model = TentAdapt(model=model, optimizer=tent_optimizer, steps=1, resetable=False).to(device=running_device)
     tent_accu = inference(model=tent_model, loader=tent_test_loader, device=running_device)
-    accu_record.loc[len(accu_record)] = [args.dataset, args.model, 'Tent Adaptation', args.corruption, tent_accu, 100. - tent_accu, args.severity_level]
+    accu_record.loc[len(accu_record)] = [args.dataset, args.model, 'Tent Adaptation', args.corruption, tent_accu, 100. - tent_accu, args.severity_level, weight_num]
     print(f'tent test data size: {len(corrupted_test_dataset)}, tent test accuracy:{tent_accu:.2f}%')
 
     print('Norm Adaptation')
     model = load_model(args, running_device)
+    weight_num = count_ttl_params(model=model)
     norm_model = NormAdapt(model=model).to(device=running_device)
     norm_accu = inference(model=norm_model, loader=tent_test_loader, device=running_device)
-    accu_record.loc[len(accu_record)] = [args.dataset, args.model, 'Norm Adaptation', args.corruption, norm_accu, 100. - norm_accu, args.severity_level]
+    accu_record.loc[len(accu_record)] = [args.dataset, args.model, 'Norm Adaptation', args.corruption, norm_accu, 100. - norm_accu, args.severity_level, weight_num]
     print(f'norm test data size: {len(corrupted_test_dataset)}, norm test accuracy: {norm_accu:.2f}%')
 
     # Stroe the record
