@@ -90,6 +90,15 @@ After that open and run the `analysis_exhibition.ipynb` to demonstrate the analy
   
 The dataset (1.4 GB) has 65,000 one-second long utterances of 30 short words by thousands of different people, contributed by public members through the AIY website. This is a set of one-second .wav audio files, each containing a single spoken English word.
 
+|backgroud noise type|sample rate|sample data shape|
+|--|--|--|
+|doing_the_dishes|-1|-1|
+|dude_miaowing|-1|-1|
+|exercise_bike|-1|-1|
+|pink_noise|-1|-1|
+|running_tap|-1|-1|
+|white_noise|-1|-1|
+
 [Speech Commands Dataset Link](https://research.google/blog/launching-the-speech-commands-dataset/)
 
 ## Code Reference
