@@ -108,7 +108,7 @@ The dataset consists of 5-second-long recordings organized into 50 semantical cl
 [ESC-50 Link](https://github.com/karolpiczak/ESC-50)
 
 ### Speech Commands Dataset
-+ Sample size: 65,000
++ Sample size: 65,000 (train: 51367, test: 6835, validation: 6798)
   
 The dataset (1.4 GB) has 65,000 one-second long utterances of 30 short words by thousands of different people, contributed by public members through the AIY website. This is a set of one-second .wav audio files, each containing a single spoken English word.
 
