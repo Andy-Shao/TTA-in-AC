@@ -85,28 +85,6 @@ After that open and run the `analysis_exhibition.ipynb` to demonstrate the analy
   
 [Audio MNIST Link](https://github.com/soerenab/AudioMNIST/tree/master)
 
-### ESC-50 Dataset for Environmental Sound Classification
-+ sample size: 2000
-
-The ESC-50 dataset is a labelled collection of 2000 environmental audio recordings suitable for benchmarking methods of environmental sound classification.
-  
-The dataset consists of 5-second-long recordings organized into 50 semantical classes (with 40 examples per class) loosely arranged into 5 major categories:
-
-| Animals | Natural soundscapes & water sounds | Human, non-speech sounds | Interior/domestic sounds | Exterior/urban noises |
-|--|--|--|--|--|
-|Dog|Rain|Crying baby|`Door knock`|Helicopter|
-|Rooster|Sea waves|Sneezing|Mouse click|Chainsaw|
-|Pig|Crackling fire|Clapping|`Keyboard typing`|Siren|
-|Cow|Crickets|Breathing|Door, wood creaks|Car horn|
-|Frog|Chirping birds|Coughing|Can opening|Engine|
-|Cat|Water drops|Footsteps|Washing machine|`Train`|
-|Hen|Wind|Laughing|Vacuum cleaner|`Church bells`|
-|Insects (flying)|Pouring water|Brushing teeth|Clock alarm|Airplane|
-|Sheep|Toilet flush|Snoring|Clock tick|Fireworks|
-|Crow|Thunderstorm|Drinking, sipping|Glass breaking|Hand saw|
-
-[ESC-50 Link](https://github.com/karolpiczak/ESC-50)
-
 ### Speech Commands Dataset
 + Sample size: 65,000 (train: 51367, test: 6835, validation: 6798)
   
