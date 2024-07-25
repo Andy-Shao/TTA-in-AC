@@ -94,13 +94,13 @@ The dataset consists of 5-second-long recordings organized into 50 semantical cl
 
 | Animals | Natural soundscapes & water sounds | Human, non-speech sounds | Interior/domestic sounds | Exterior/urban noises |
 |--|--|--|--|--|
-|Dog|Rain|Crying baby|Door knock|Helicopter|
+|Dog|Rain|Crying baby|`Door knock`|Helicopter|
 |Rooster|Sea waves|Sneezing|Mouse click|Chainsaw|
-|Pig|Crackling fire|Clapping|Keyboard typing|Siren|
+|Pig|Crackling fire|Clapping|`Keyboard typing`|Siren|
 |Cow|Crickets|Breathing|Door, wood creaks|Car horn|
 |Frog|Chirping birds|Coughing|Can opening|Engine|
-|Cat|Water drops|Footsteps|Washing machine|Train|
-|Hen|Wind|Laughing|Vacuum cleaner|Church bells|
+|Cat|Water drops|Footsteps|Washing machine|`Train`|
+|Hen|Wind|Laughing|Vacuum cleaner|`Church bells`|
 |Insects (flying)|Pouring water|Brushing teeth|Clock alarm|Airplane|
 |Sheep|Toilet flush|Snoring|Clock tick|Fireworks|
 |Crow|Thunderstorm|Drinking, sipping|Glass breaking|Hand saw|
