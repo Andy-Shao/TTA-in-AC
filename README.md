@@ -86,7 +86,7 @@ After that open and run the `analysis_exhibition.ipynb` to demonstrate the analy
 [Audio MNIST Link](https://github.com/soerenab/AudioMNIST/tree/master)
 
 ### ESC-50 Dataset for Environmental Sound Classification
-+ sample size: $50 (\text{classes}) \times 40 (\text{samples})$
++ sample size: 2000
 
 The ESC-50 dataset is a labelled collection of 2000 environmental audio recordings suitable for benchmarking methods of environmental sound classification.
   
