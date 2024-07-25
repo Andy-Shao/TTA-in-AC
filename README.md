@@ -105,6 +105,11 @@ The dataset consists of 5-second-long recordings organized into 50 semantical cl
 
 [ESC-50 Link](https://github.com/karolpiczak/ESC-50)
 
+### Speech Commands Dataset
+The dataset (1.4 GB) has 65,000 one-second long utterances of 30 short words by thousands of different people, contributed by public members through the AIY website. This is a set of one-second .wav audio files, each containing a single spoken English word.
+
+[Speech Commands Dataset Link](https://research.google/blog/launching-the-speech-commands-dataset/)
+
 ## Code Reference
 + [tent](https://github.com/DequanWang/tent)
 + [ttt_cifar_release](https://github.com/yueatsprograms/ttt_cifar_release/tree/master)
