@@ -87,18 +87,20 @@ After that open and run the `analysis_exhibition.ipynb` to demonstrate the analy
 [Audio MNIST Link](https://github.com/soerenab/AudioMNIST/tree/master)
 
 ### Speech Commands Dataset
-+ Sample size: 65,000 (train: 51367, test: 6835, validation: 6798)
-  
 The dataset (1.4 GB) has 65,000 one-second long utterances of 30 short words by thousands of different people, contributed by public members through the AIY website. This is a set of one-second .wav audio files, each containing a single spoken English word.
+
++ Sample size: 64721 (train: 51088, test: 6835, validation: 6798)
++ sample rate: 16000
++ sampel data shape: [1, 5945 - 16000]
 
 |backgroud noise type|sample rate|sample data shape|
 |--|--|--|
-|doing_the_dishes|-1|-1|
-|dude_miaowing|-1|-1|
-|exercise_bike|-1|-1|
-|pink_noise|-1|-1|
-|running_tap|-1|-1|
-|white_noise|-1|-1|
+|doing_the_dishes|[1, 1522930]|16000|
+|dude_miaowing|[1, 988891]|16000|
+|exercise_bike|[1, 980062]|16000|
+|pink_noise|[1, 960000]|16000|
+|running_tap|[1, 978488]|16000|
+|white_noise|[1, 960000]|16000|
 
 [Speech Commands Dataset Link](https://research.google/blog/launching-the-speech-commands-dataset/)
 
