@@ -6,14 +6,21 @@ import torch
 import torch.nn as nn
 
 class BackgroundNoise(nn.Module):
-    def __init__(self, noise_level: float, noise: torch.Tensor):
+    def __init__(self, noise_level: float, noise: torch.Tensor, is_random=False):
         super().__init__()
         self.noise_level = noise_level
         self.noise = noise
+        self.is_random = is_random
 
     def forward(self, wavform: torch.Tensor) -> torch.Tensor:
         import torchaudio.functional as ta_f
-        noised_wavform = ta_f.add_noise(waveform=wavform, noise=self.noise, snr=torch.tensor([self.noise_levels]))
+        wav_len = wavform.shape[1]
+        if self.is_random:
+            start_point = np.random.randint(low=0, high=self.noise.shape[1]-wav_len)
+            noise_period = self.noise[:, start_point:start_point+wav_len]
+        else:
+            noise_period = self.noise
+        noised_wavform = ta_f.add_noise(waveform=wavform, noise=noise_period, snr=torch.tensor([self.noise_level]))
         return noised_wavform
 
 class GuassianNoise(nn.Module):

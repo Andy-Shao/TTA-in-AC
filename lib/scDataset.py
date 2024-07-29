@@ -65,7 +65,7 @@ class SpeechCommandsDataset(Dataset):
             audio = self.data_tfs(audio)
         if self.include_rate:
             return audio, label, sample_rate
-        return audio, label
+        return audio, int(label)
 
     def __cal_audio_path_label__(self, meta_data: str) -> tuple[str, float]:
         label = meta_data.strip().split('/')[0]
