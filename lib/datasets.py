@@ -96,3 +96,21 @@ class ClipDataset(Dataset):
     
     def __getitem__(self, index) -> Any:
         return self.dataset[self.indexes[index]]
+    
+class TransferDataset(Dataset):
+    def __init__(self, dataset: Dataset, data_tf=None, label_tf=None) -> None:
+        super().__init__()
+        self.dataset = dataset
+        self.data_tf = data_tf
+        self.label_tf = label_tf
+
+    def __len__(self):
+        return len(self.dataset)
+    
+    def __getitem__(self, index) -> tuple[torch.Tensor, int]:
+        feature, label = self.dataset[index]
+        if self.data_tf is not None:
+            feature = self.data_tf(feature)
+        if self.label_tf is not None:
+            label = self.label_tf(label)
+        return feature, label
