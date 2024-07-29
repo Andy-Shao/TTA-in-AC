@@ -5,6 +5,17 @@ import numpy as np
 import torch 
 import torch.nn as nn
 
+class BackgroundNoise(nn.Module):
+    def __init__(self, noise_level: float, noise: torch.Tensor):
+        super().__init__()
+        self.noise_level = noise_level
+        self.noise = noise
+
+    def forward(self, wavform: torch.Tensor) -> torch.Tensor:
+        import torchaudio.functional as ta_f
+        noised_wavform = ta_f.add_noise(waveform=wavform, noise=self.noise, snr=torch.tensor([self.noise_levels]))
+        return noised_wavform
+
 class GuassianNoise(nn.Module):
     def __init__(self, noise_level=.05):
         super().__init__()

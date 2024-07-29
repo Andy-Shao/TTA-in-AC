@@ -16,13 +16,14 @@ class SpeechCommandsDataset(Dataset):
         'wow': 29.
     }
 
-    def __init__(self, root_path: str, mode: str, include_rate=True) -> None:
+    def __init__(self, root_path: str, mode: str, include_rate=True, data_tfs=None) -> None:
         super().__init__()
         self.root_path = root_path
         assert mode in ['train', 'validation', 'test', 'full'], 'mode type is incorrect'
         self.mode = mode
         self.include_rate = include_rate
         self.data_list = self.__cal_data_list__(mode=mode)
+        self.data_tfs = data_tfs
 
     def __cal_data_list__(self, mode: str) -> list[str]:
         if mode == 'validation':
@@ -60,6 +61,8 @@ class SpeechCommandsDataset(Dataset):
     def __getitem__(self, index) -> torch.Tensor:
         audio_path, label = self.__cal_audio_path_label__(self.data_list[index])
         audio, sample_rate = torchaudio.load(audio_path)
+        if self.data_tfs is not None:
+            audio = self.data_tfs(audio)
         if self.include_rate:
             return audio, label, sample_rate
         return audio, label
