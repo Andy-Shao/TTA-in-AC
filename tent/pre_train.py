@@ -8,7 +8,7 @@ import numpy as np
 import torch 
 import torchaudio.transforms as a_transforms
 import torchvision.transforms as v_transforms
-from torch.utils.data import random_split, DataLoader
+from torch.utils.data import DataLoader
 import torch.nn as nn
 import torch.optim as optim
 
@@ -59,10 +59,8 @@ if __name__ == '__main__':
         data_pathes = load_datapath(root_path=args.dataset_root_path, filter_fn=lambda x: x['accent'] == 'German')
         sample_rate = 48000
         n_mels = 64
-        data_transforms = Components(transforms=[
-            pad_trunc(max_ms=1000, sample_rate=sample_rate)
-        ])
         train_transforms = Components(transforms=[
+            pad_trunc(max_ms=1000, sample_rate=sample_rate),
             time_shift(shift_limit=.1),
             a_transforms.MelSpectrogram(sample_rate=sample_rate, n_fft=1024, n_mels=n_mels),
             a_transforms.AmplitudeToDB(top_db=80),
@@ -70,13 +68,12 @@ if __name__ == '__main__':
             a_transforms.TimeMasking(time_mask_param=.1)
         ])
         val_transforms = Components(transforms=[
+            pad_trunc(max_ms=1000, sample_rate=sample_rate),
             a_transforms.MelSpectrogram(sample_rate=sample_rate, n_fft=1024, n_mels=n_mels),
             a_transforms.AmplitudeToDB(top_db=80),
         ])
-        dataset = AudioMINST(data_paths=data_pathes, data_trainsforms=data_transforms, include_rate=False)
-        train_dataset, val_dataset = random_split(dataset=dataset, lengths=[.7, .3])
-        train_dataset = TransferDataset(dataset=train_dataset, data_tf=train_transforms)
-        val_dataset = TransferDataset(dataset=val_dataset, data_tf=val_transforms)
+        train_dataset = AudioMINST(data_paths=data_pathes, data_trainsforms=train_transforms, include_rate=False)
+        val_dataset = ClipDataset(dataset=AudioMINST(data_paths=data_pathes, data_trainsforms=val_transforms, include_rate=False), rate=.3)
         model = WavClassifier(class_num=10, l1_in_features=64, c1_in_channels=1).to(device=device)
     elif args.dataset == 'audio-mnist' and args.model == 'restnet50':
         data_pathes = load_datapath(root_path=args.dataset_root_path, filter_fn=lambda x: x['accent'] == 'German')
