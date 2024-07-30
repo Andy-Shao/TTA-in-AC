@@ -1,0 +1,4 @@
+,dataset,algorithm,tta-operation,corruption,accuracy,error,severity level,number of weight
+0,speech-commands,cnn,N/A,N/A,64.9743964886613,35.0256035113387,1.0,26704
+1,speech-commands,cnn,N/A,pink_noise,27.256766642282372,72.74323335771763,1.0,26704
+2,speech-commands,cnn,Tent Adaptation,pink_noise,13.07973664959766,86.92026335040234,1.0,26704

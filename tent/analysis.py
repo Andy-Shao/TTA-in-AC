@@ -107,8 +107,7 @@ if __name__ == '__main__':
             a_transforms.MelSpectrogram(sample_rate=sample_rate, n_fft=1024, n_mels=n_mels),
             a_transforms.AmplitudeToDB(top_db=80),
             ExpandChannel(out_channel=3),
-            v_transforms.Resize((256, 256), antialias=False),
-            v_transforms.RandomCrop(224),
+            v_transforms.Resize((224, 224), antialias=False),
             v_transforms.Normalize(mean=parse_mean_std(args.test_mean), std=parse_mean_std(args.test_std)) if args.normalized else DoNothing()
         ])
         test_dataset = AudioMINST(data_paths=test_datapathes, data_trainsforms=test_tf, include_rate=False)

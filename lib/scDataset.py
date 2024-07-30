@@ -73,7 +73,7 @@ class SpeechCommandsDataset(Dataset):
         audio_path = os.path.join(self.root_path, meta_data)
         return audio_path, label
     
-class BackgroundNoise(Dataset):
+class BackgroundNoiseDataset(Dataset):
     base_path = '_background_noise_'
 
     def __init__(self, root_path: str) -> None:

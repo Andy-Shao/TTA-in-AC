@@ -1,13 +1,53 @@
 import argparse
 import os
+import pandas as pd
+from tqdm import tqdm
 
 import torch 
 from torchaudio import transforms as a_transforms
+from torchvision import transforms as v_transforms
 from torch.utils.data import DataLoader
+import torch.nn as nn
+import torch.optim as optim
 
-from lib.toolkit import print_argparse
-from lib.scDataset import BackgroundNoise, SpeechCommandsDataset
+from lib.toolkit import print_argparse, count_ttl_params, cal_norm
+from lib.scDataset import BackgroundNoiseDataset, SpeechCommandsDataset
 from lib.wavUtils import Components, pad_trunc, BackgroundNoise
+from lib.models import WavClassifier, ElasticRestNet50
+from lib.tentAdapt import get_params, TentAdapt
+from CoNMix.lib.prepare_dataset import ExpandChannel
+
+def cal_normalize(tf_array: list, args: argparse.Namespace) -> tuple:
+    batch_size = 256
+    data_tf = Components(transforms=tf_array)
+    target_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='test', include_rate=False, data_tfs=data_tf)
+    target_loader = DataLoader(dataset=target_dataset, batch_size=batch_size, shuffle=False, drop_last=False)
+    test_mean, test_std = cal_norm(loader=target_loader)
+    return test_mean, test_std
+
+def inference(model: nn.Module, args: argparse.Namespace, data_loader: DataLoader) -> float:
+    ttl_corr = 0
+    ttl_num = 0
+    for features, labels in tqdm(data_loader):
+        features, labels = features.to(args.device), labels.to(args.device)
+        outputs = model(features)
+        _, preds = torch.max(outputs.detach(), dim=1)
+        ttl_corr += (preds == labels).sum().cpu().item()
+        ttl_num += labels.shape[0]
+    ttl_accu = ttl_corr / ttl_num * 100.
+    return ttl_accu
+
+def load_model(args: argparse.Namespace) -> nn.Module:
+    if args.model == 'cnn':
+        model = WavClassifier(class_num=30, l1_in_features=64, c1_in_channels=1)
+    elif args.model == 'restnet50':
+        model = ElasticRestNet50(class_num=args.class_num)
+    else:
+        raise Exception('No support')
+    model_stat = torch.load(f=args.model_weight_file_path)
+    model.load_state_dict(model_stat)
+    model = model.to(device=args.device)
+    return model
 
 if __name__ == '__main__':
     ap = argparse.ArgumentParser(description='SHOT')
@@ -18,18 +58,19 @@ if __name__ == '__main__':
     ap.add_argument('--dataset_root_path', type=str)
     ap.add_argument('--severity_level', default=1., type=float)
     ap.add_argument('--output_csv_name', type=str, default='accuracy_record.csv')
-    ap.add_argument('--test_mean', type=str, default='0., 0., 0.')
-    ap.add_argument('--test_std', type=str, default='1., 1., 1.')
-    ap.add_argument('--noise_type', type=str, choices=['doing_the_dishes', 'dude_miaowing', 'exercise_bike', 'pink_noise', 'running_tap', 'white_noise'])
-    ap.add_argument('--corrupted_test_mean', type=str, default='0., 0., 0.')
-    ap.add_argument('--corrupted_test_std', type=str, default='1., 1., 1.')
+    # ap.add_argument('--test_mean', type=str, default='0., 0., 0.')
+    # ap.add_argument('--test_std', type=str, default='1., 1., 1.')
+    # ap.add_argument('--noise_type', type=str, choices=['doing_the_dishes', 'dude_miaowing', 'exercise_bike', 'pink_noise', 'running_tap', 'white_noise'])
+    # ap.add_argument('--corrupted_test_mean', type=str, default='0., 0., 0.')
+    # ap.add_argument('--corrupted_test_std', type=str, default='1., 1., 1.')
     ap.add_argument('--batch_size', type=int, default=64)
     ap.add_argument('--tent_batch_size', type=int, default=200)
-    ap.add_argument('--cal_norm', action='store_true')
+    # ap.add_argument('--cal_norm', action='store_true')
     ap.add_argument('--normalized', action='store_true')
 
     args = ap.parse_args()
     args.device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    args.class_num = 30
     args.output_full_path = os.path.join(args.output_path, args.dataset, 'tent', 'analysis')
     try:
         os.makedirs(args.output_full_path)
@@ -39,12 +80,7 @@ if __name__ == '__main__':
     print_argparse(args=args)
 
     sample_rate = 16000
-    background_noise_dataset = BackgroundNoise(root_path=args.dataset_root_path)
-    noise_audio = None
-    for noise_type, noise, _ in background_noise_dataset:
-        if noise_type == args.noise_type:
-            noise_audio = noise
-    assert noise_audio is None, 'without choiced noise'
+    background_noise_dataset = BackgroundNoiseDataset(root_path=args.dataset_root_path)
     if args.model == 'cnn':
         n_mels = 64
         data_transforms = Components(transforms=[
@@ -53,17 +89,87 @@ if __name__ == '__main__':
             a_transforms.AmplitudeToDB(top_db=80),
         ])
         test_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='test', include_rate=False, data_tfs=data_transforms)
-        corrupted_transforms = Components(transforms=[
+    elif args.model == 'restnet50':
+        n_mels=128
+        hop_length=377
+        tf_array = [
             pad_trunc(max_ms=1000, sample_rate=sample_rate),
-            BackgroundNoise(noise_level=args.severity_level, noise=noise_audio, is_random=True),
             a_transforms.MelSpectrogram(sample_rate=sample_rate, n_fft=1024, n_mels=n_mels),
             a_transforms.AmplitudeToDB(top_db=80),
-        ])
-        corrupted_dataset = SpeechCommandsDataset(root_path=args.data_root_path, mode='test', include_rate=False, data_tfs=corrupted_transforms)
+            ExpandChannel(out_channel=3),
+            v_transforms.Resize((224, 224), antialias=False),
+        ]
+        if args.normalized:
+            print('calculate mean and standard deviation')
+            test_mean, test_std = cal_normalize(tf_array=tf_array, args=args)
+            tf_array.append(v_transforms.Normalize(mean=test_mean, std=test_std))
+        test_tf = Components(transforms=tf_array)
+        test_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='test', include_rate=False, data_tfs=test_tf)
     else: 
         raise Exception('No support')
     
     test_loader = DataLoader(dataset=test_dataset, batch_size=args.batch_size, shuffle=False, drop_last=False)
-    corrupted_loader = DataLoader(dataset=corrupted_dataset, batch_size=args.batch_size, shuffle=False, drop_last=False)
+
+    records = pd.DataFrame(columns=['dataset', 'algorithm', 'tta-operation', 'corruption', 'accuracy', 'error', 'severity level', 'number of weight'])
 
     print('Original test')
+    model = load_model(args)
+    number_of_weight = count_ttl_params(model=model)
+    model.eval()
+    test_accuracy = inference(model=model, data_loader=test_loader, args=args)
+    print(f'Original test accuracy: {test_accuracy:.2f}%')
+    records.loc[len(records)] = [args.dataset, args.model, 'N/A', 'N/A', test_accuracy, 100. - test_accuracy, args.severity_level, number_of_weight]
+
+    for noise_type, noise, _ in background_noise_dataset:
+        if args.model == 'cnn':
+            corrupted_tf = Components(transforms=[
+                pad_trunc(max_ms=1000, sample_rate=sample_rate),
+                BackgroundNoise(noise_level=args.severity_level, noise=noise, is_random=True),
+                a_transforms.MelSpectrogram(sample_rate=sample_rate, n_fft=1024, n_mels=n_mels),
+                a_transforms.AmplitudeToDB(top_db=80),
+            ])
+        elif args.model == 'restnet50':
+            tf_array = [
+                pad_trunc(max_ms=1000, sample_rate=sample_rate),
+                BackgroundNoise(noise_level=args.severity_level, noise=noise, is_random=True),
+                a_transforms.MelSpectrogram(sample_rate=sample_rate, n_fft=1024, n_mels=n_mels),
+                a_transforms.AmplitudeToDB(top_db=80),
+                ExpandChannel(out_channel=3),
+                v_transforms.Resize((224, 224), antialias=False),
+                v_transforms.RandomCrop(224),
+            ]
+            if args.normalized:
+                print('calculate mean and standard deviation')
+                test_mean, test_std = cal_normalize(tf_array=tf_array, args=args)
+                tf_array.append(v_transforms.Normalize(mean=test_mean, std=test_std))
+            corrupted_tf = Components(transforms=tf_array)
+        corrupted_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='test', include_rate=False, data_tfs=corrupted_tf)
+        
+        print(f'{noise_type} corruption test')
+        model = load_model(args)
+        number_of_weight = count_ttl_params(model=model)
+        corrupted_loader = DataLoader(dataset=corrupted_dataset, batch_size=args.batch_size, shuffle=False, drop_last=False)
+        model.eval()
+        test_accuracy = inference(model=model, data_loader=corrupted_loader, args=args)
+        print(f'{noise_type} corruption test accuracy: {test_accuracy:.2f}%')
+        records.loc[len(records)] = [args.dataset, args.model, 'N/A', noise_type, test_accuracy, 100.-test_accuracy, args.severity_level, number_of_weight]
+
+        print(f'{noise_type} tent test')
+        model = load_model(args)
+        number_of_weight = count_ttl_params(model=model)
+        corrupted_loader = DataLoader(dataset=corrupted_dataset, batch_size=args.tent_batch_size, shuffle=False, drop_last=False)
+        tent_params, tent_param_names = get_params(model=model)
+        tent_optimizer = optim.Adam(params=tent_params, lr=1e-6, betas=(.9,.99), weight_decay=0.)
+        tent_model = TentAdapt(model=model, optimizer=tent_optimizer, steps=1, resetable=False).to(device=args.device)
+        test_accuracy = inference(model=tent_model, data_loader=corrupted_loader, args=args)
+        print(f'{noise_type} tent adaptation test accuracy: {test_accuracy:.2f}%')
+        records.loc[len(records)] = [args.dataset, args.model, 'Tent Adaptation' if not args.normalized else 'Tent Adaptation + normalized', noise_type, test_accuracy, 100.-test_accuracy, args.severity_level, number_of_weight]
+        model = None
+        tent_model = None
+        tent_params = None
+        tent_param_names = None
+
+        break
+        
+
+    records.to_csv(os.path.join(args.output_full_path, args.output_csv_name))
