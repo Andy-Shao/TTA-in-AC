@@ -1,5 +1,5 @@
 ,dataset,algorithm,tta-operation,corruption,accuracy,error,severity level,number of weight
-0,audio-mnist,restnet50,N/A,N/A,97.3,2.700000000000003,0.0,25567042
-1,audio-mnist,restnet50,N/A,gaussian_noise,40.64,59.36,0.005,25567042
-2,audio-mnist,restnet50,Tent Adaptation,gaussian_noise,81.07,18.930000000000007,0.005,25567042
-3,audio-mnist,restnet50,Norm Adaptation,gaussian_noise,77.91,22.090000000000003,0.005,25567042
+0,audio-mnist,restnet50,N/A,N/A,96.3,3.700000000000003,0.0,25567042
+1,audio-mnist,restnet50,N/A,gaussian_noise,38.74,61.26,0.005,25567042
+2,audio-mnist,restnet50,Tent Adaptation,gaussian_noise,80.64,19.36,0.005,25567042
+3,audio-mnist,restnet50,Norm Adaptation,gaussian_noise,78.28,21.72,0.005,25567042
