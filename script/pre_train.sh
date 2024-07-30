@@ -1,6 +1,6 @@
 # export PYTHONPATH=$PYTHONPATH:$(pwd)
 
-python -m tent.pre_train --dataset_root_path '/root/data/AudioMNIST/data' --output_path './result' --max_epoch 5 
+# python -m tent.pre_train --dataset_root_path '/root/data/AudioMNIST/data' --output_path './result' --max_epoch 5 
 
 # python -m tent.pre_train --dataset_root_path '/root/data/AudioMNIST/data' --output_path './result' --batch_size 256\
 #     --model 'restnet50' --cal_norm
