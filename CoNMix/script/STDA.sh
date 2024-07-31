@@ -28,8 +28,8 @@ python CoNMix/STDA.py --dataset 'audio-mnist' --weak_aug_dataset_root_path '/roo
     --modelF_weight_path './result/audio-mnist/CoNMix/pre_train/audio-mnist_best_modelF.pt' \
     --modelB_weight_path './result/audio-mnist/CoNMix/pre_train/audio-mnist_best_modelB.pt' \
     --modelC_weight_path './result/audio-mnist/CoNMix/pre_train/audio-mnist_best_modelC.pt' \
-    --weak_corrupted_mean '-30.824112, -30.824112, -30.824112' --weak_corrupted_std '7.765734, 7.765734, 7.765734' \
-    --strong_corrupted_mean '-35.46536, -35.46536, -35.46536' --strong_corrupted_std '8.530085, 8.530085, 8.530085' \
+    --weak_corrupted_mean '-30.82497, -30.82497, -30.82497' --weak_corrupted_std '7.73306, 7.73306, 7.73306' \
+    --strong_corrupted_mean '-35.46575, -35.46575, -35.46575' --strong_corrupted_std '8.521461, 8.521461, 8.521461' \
     --STDA_modelF_weight_file_name 'audio-mnist_modelF_0025.pt' \
     --STDA_modelB_weight_file_name 'audio-mnist_modelB_0025.pt' \
     --STDA_modelC_weight_file_name 'audio-mnist_modelC_0025.pt' --wandb
