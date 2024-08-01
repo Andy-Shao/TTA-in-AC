@@ -23,7 +23,7 @@ if __name__ == '__main__':
     ap.add_argument('--dataset_root_path', type=str)
     ap.add_argument('--output_path', type=str, default='./result')
     ap.add_argument('--output_csv_name', type=str, default='training_records.csv')
-    ap.add_argument('--output_weight_prefix', type=str, default='audio-mnist')
+    ap.add_argument('--output_weight_prefix', type=str, default='speech-commands')
     ap.add_argument('--temporary_path', type=str)
     ap.add_argument('--wandb', action='store_true')
 
