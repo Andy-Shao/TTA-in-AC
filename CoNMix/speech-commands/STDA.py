@@ -51,8 +51,8 @@ def build_dataset(args: argparse.Namespace) -> tuple[Dataset, Dataset, Dataset]:
         tf_array = [
             a_transforms.MelSpectrogram(sample_rate=sample_rate, n_fft=1024, n_mels=n_mels, hop_length=hop_length),
             a_transforms.AmplitudeToDB(top_db=80),
-            a_transforms.FrequencyMasking(freq_mask_param=.05),
-            a_transforms.TimeMasking(time_mask_param=.05),
+            a_transforms.FrequencyMasking(freq_mask_param=.02),
+            a_transforms.TimeMasking(time_mask_param=.02),
             ExpandChannel(out_channel=3),
             # v_transforms.Resize((256, 256), antialias=False),
             # v_transforms.RandomCrop(224)
@@ -76,8 +76,8 @@ def build_dataset(args: argparse.Namespace) -> tuple[Dataset, Dataset, Dataset]:
             time_shift(shift_limit=.25, is_random=True, is_bidirection=True),
             a_transforms.MelSpectrogram(sample_rate=sample_rate, n_fft=1024, n_mels=n_mels, hop_length=hop_length),
             a_transforms.AmplitudeToDB(top_db=80),
-            # a_transforms.FrequencyMasking(freq_mask_param=.1),
-            # a_transforms.TimeMasking(time_mask_param=.1),
+            a_transforms.FrequencyMasking(freq_mask_param=.07),
+            a_transforms.TimeMasking(time_mask_param=.07),
             ExpandChannel(out_channel=3),
             # v_transforms.Resize((256, 256), antialias=False),
             # v_transforms.RandomCrop(224)

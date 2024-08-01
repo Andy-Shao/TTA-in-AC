@@ -43,8 +43,8 @@ class SpeechCommandsDataset(Dataset):
                         full_meta_data.append(f'{k}/{p}')
             return full_meta_data
         elif mode == 'test+val':
-            val_meta_data = self.__cal_audio_path_label__(mode='validation')
-            test_meta_data = self.__cal_audio_path_label__(mode='test')
+            val_meta_data = self.__cal_data_list__(mode='validation')
+            test_meta_data = self.__cal_data_list__(mode='test')
             for it in val_meta_data:
                 test_meta_data.append(it)
             return test_meta_data
