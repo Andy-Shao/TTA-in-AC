@@ -19,7 +19,7 @@ class SpeechCommandsDataset(Dataset):
     def __init__(self, root_path: str, mode: str, include_rate=True, data_tfs=None) -> None:
         super().__init__()
         self.root_path = root_path
-        assert mode in ['train', 'validation', 'test', 'full'], 'mode type is incorrect'
+        assert mode in ['train', 'validation', 'test', 'full', 'test+val'], 'mode type is incorrect'
         self.mode = mode
         self.include_rate = include_rate
         self.data_list = self.__cal_data_list__(mode=mode)
@@ -42,6 +42,12 @@ class SpeechCommandsDataset(Dataset):
                     if p.endswith('.wav'):
                         full_meta_data.append(f'{k}/{p}')
             return full_meta_data
+        elif mode == 'test+val':
+            val_meta_data = self.__cal_audio_path_label__(mode='validation')
+            test_meta_data = self.__cal_audio_path_label__(mode='test')
+            for it in val_meta_data:
+                test_meta_data.append(it)
+            return test_meta_data
         else:
             val_meta_data = self.__cal_data_list__(mode='validation')
             test_meta_data = self.__cal_data_list__(mode='test')

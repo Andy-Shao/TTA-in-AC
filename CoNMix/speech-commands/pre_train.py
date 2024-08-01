@@ -16,6 +16,7 @@ from CoNMix.lib.prepare_dataset import ExpandChannel
 from lib.scDataset import SpeechCommandsDataset
 from CoNMix.pre_train import load_models, build_optimizer, lr_scheduler
 from CoNMix.lib.loss import CrossEntropyLabelSmooth
+from lib.datasets import ClipDataset
 
 if __name__ == '__main__':
     ap = argparse.ArgumentParser()
@@ -29,7 +30,7 @@ if __name__ == '__main__':
 
     ap.add_argument('--seed', type=int, default=2024, help='random seed')
     ap.add_argument('--normalized', action='store_true')
-    # ap.add_argument('--test_rate', type=float, default=.3)
+    ap.add_argument('--test_rate', type=float, default=.3)
 
     ap.add_argument('--max_epoch', type=int, default=200, help='max epoch')
     ap.add_argument('--interval', type=int, default=50, help='interval')
@@ -73,10 +74,12 @@ if __name__ == '__main__':
         time_shift(shift_limit=.25, is_random=True, is_bidirection=True),
         a_transforms.MelSpectrogram(sample_rate=sample_rate, n_fft=1024, n_mels=n_mels, hop_length=hop_length),
         a_transforms.AmplitudeToDB(top_db=80),
+        # a_transforms.FrequencyMasking(freq_mask_param=.1),
+        # a_transforms.TimeMasking(time_mask_param=.1),
         ExpandChannel(out_channel=3),
-        v_transforms.Resize((256, 256), antialias=False),
-        v_transforms.RandomCrop(224),
-        v_transforms.RandomHorizontalFlip(), 
+        v_transforms.Resize((224, 224), antialias=False),
+        # v_transforms.RandomCrop(224),
+        # v_transforms.RandomHorizontalFlip(), 
     ]
     if args.normalized:
         print('calculate the train dataset mean and standard deviation')
@@ -99,12 +102,13 @@ if __name__ == '__main__':
     if args.normalized:
         print('calculate the validation dataset mean and standard deviation')
         val_tf = Components(transforms=tf_array)
-        val_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='validation', include_rate=False, data_tfs=val_tf)
+        val_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='train', include_rate=False, data_tfs=val_tf)
         val_loader = DataLoader(dataset=val_dataset, batch_size=256, shuffle=False, drop_last=False)
         val_mean, val_std = cal_norm(loader=val_loader)
         tf_array.append(v_transforms.Normalize(mean=val_mean, std=val_std))
     val_tf = Components(transforms=tf_array)
-    val_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='validation', include_rate=False, data_tfs=val_tf)
+    val_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='train', include_rate=False, data_tfs=val_tf)
+    val_dataset = ClipDataset(dataset=val_dataset, rate=args.test_rate)
     val_loader = DataLoader(dataset=val_dataset, batch_size=args.batch_size, shuffle=False, drop_last=False)
 
     modelF, modelB, modelC = load_models(args)

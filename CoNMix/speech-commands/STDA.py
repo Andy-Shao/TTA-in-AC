@@ -12,7 +12,7 @@ from torchvision import transforms as v_transforms
 import torch.nn as nn
 
 from lib.toolkit import print_argparse, cal_norm
-from lib.wavUtils import DoNothing, Components
+from lib.wavUtils import DoNothing, Components, time_shift
 from CoNMix.lib.prepare_dataset import ExpandChannel, Dataset_Idx
 from lib.datasets import load_from
 from CoNMix.analysis import load_model, load_origin_stat
@@ -44,16 +44,19 @@ def build_dataset(args: argparse.Namespace) -> tuple[Dataset, Dataset, Dataset]:
     # weak augmentation dataset build
     if args.data_type == 'final':
         tf_array = [
-            v_transforms.RandomHorizontalFlip(),
+            # v_transforms.RandomHorizontalFlip(),
+            DoNothing(),
         ]
     elif args.data_type == 'raw':
         tf_array = [
             a_transforms.MelSpectrogram(sample_rate=sample_rate, n_fft=1024, n_mels=n_mels, hop_length=hop_length),
             a_transforms.AmplitudeToDB(top_db=80),
+            a_transforms.FrequencyMasking(freq_mask_param=.05),
+            a_transforms.TimeMasking(time_mask_param=.05),
             ExpandChannel(out_channel=3),
-            v_transforms.Resize((256, 256), antialias=False),
-            v_transforms.RandomCrop(224),
-            v_transforms.RandomHorizontalFlip(),
+            # v_transforms.Resize((256, 256), antialias=False),
+            # v_transforms.RandomCrop(224)
+            v_transforms.Resize((224, 224), antialias=False),
         ]
     else:
         raise Exception('No support')
@@ -69,11 +72,16 @@ def build_dataset(args: argparse.Namespace) -> tuple[Dataset, Dataset, Dataset]:
         tf_array = [DoNothing()]
     elif args.data_type == 'raw':
         tf_array = [
+            a_transforms.PitchShift(sample_rate=sample_rate, n_steps=4, n_fft=512),
+            time_shift(shift_limit=.25, is_random=True, is_bidirection=True),
             a_transforms.MelSpectrogram(sample_rate=sample_rate, n_fft=1024, n_mels=n_mels, hop_length=hop_length),
             a_transforms.AmplitudeToDB(top_db=80),
+            # a_transforms.FrequencyMasking(freq_mask_param=.1),
+            # a_transforms.TimeMasking(time_mask_param=.1),
             ExpandChannel(out_channel=3),
-            v_transforms.Resize((256, 256), antialias=False),
-            v_transforms.RandomCrop(224),
+            # v_transforms.Resize((256, 256), antialias=False),
+            # v_transforms.RandomCrop(224)
+            v_transforms.Resize((224, 224), antialias=False),
         ]
     else:
         raise Exception('No support')
@@ -138,7 +146,7 @@ if __name__ == "__main__":
 
     args = ap.parse_args()
     args.class_num = 30
-    args.test_batch_size = args.batch_size * 3
+    args.test_batch_size = args.batch_size * 2
     args.device = 'cuda' if torch.cuda.is_available() else 'cpu'
     args.full_output_path = os.path.join(args.output_path, args.dataset, 'CoNMix', 'STDA')
     try:

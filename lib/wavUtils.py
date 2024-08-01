@@ -19,7 +19,7 @@ class BackgroundNoise(nn.Module):
             start_point = np.random.randint(low=0, high=self.noise.shape[1]-wav_len)
             noise_period = self.noise[:, start_point:start_point+wav_len]
         else:
-            noise_period = self.noise
+            noise_period = self.noise[:, 0:wav_len]
         noised_wavform = ta_f.add_noise(waveform=wavform, noise=noise_period, snr=torch.tensor([self.noise_level]))
         return noised_wavform
 

@@ -9,4 +9,4 @@ python -m CoNMix.speech-commands.STDA --weak_aug_dataset_root_path '/root/tmp/sp
     --STDA_modelF_weight_file_name 'speech-commands_modelF-doing_the_dishes-1.0.pt' \
     --STDA_modelB_weight_file_name 'speech-commands_modelB-doing_the_dishes-1.0.pt' \
     --STDA_modelC_weight_file_name 'speech-commands_modelC-doing_the_dishes-1.0.pt' --normalized \
-    --data_type 'raw' --wandb
+    --data_type 'raw' --wandb --const_par 0.2 --fbnm_par 4.0 --cls_par 0.2
