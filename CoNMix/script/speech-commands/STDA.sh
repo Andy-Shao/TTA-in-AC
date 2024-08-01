@@ -1,11 +1,11 @@
 python -m CoNMix.speech-commands.STDA --weak_aug_dataset_root_path '/root/tmp/speech_commands_7.0-doing_the_dishes-weak' \
-    --strong_aug_dataset_root_path '/root/tmp/speech_commands_7.0-doing_the_dishes-strong' \
-    --test_dataset_root_path '/root/tmp/speech_commands_7.0-doing_the_dishes' \
-    --batch_size 32 --severity_level 7.0 --max_epoch 50 --interval 50 --lr '1e-5'\
+    --strong_aug_dataset_root_path '/root/tmp/speech_commands_10.0-doing_the_dishes-strong' \
+    --test_dataset_root_path '/root/tmp/speech_commands_10.0-doing_the_dishes' \
+    --batch_size 32 --severity_level 10.0 --max_epoch 50 --interval 50 --lr '1e-5'\
     --modelF_weight_path './result/speech-commands/CoNMix/pre_train/speech-commands_best_modelF.pt' \
     --modelB_weight_path './result/speech-commands/CoNMix/pre_train/speech-commands_best_modelB.pt' \
     --modelC_weight_path './result/speech-commands/CoNMix/pre_train/speech-commands_best_modelC.pt' \
-    --STDA_modelF_weight_file_name 'speech-commands_modelF-doing_the_dishes-7.0.pt' \
-    --STDA_modelB_weight_file_name 'speech-commands_modelB-doing_the_dishes-7.0.pt' \
-    --STDA_modelC_weight_file_name 'speech-commands_modelC-doing_the_dishes-7.0.pt' --normalized \
+    --STDA_modelF_weight_file_name 'speech-commands_modelF-doing_the_dishes-10.0.pt' \
+    --STDA_modelB_weight_file_name 'speech-commands_modelB-doing_the_dishes-10.0.pt' \
+    --STDA_modelC_weight_file_name 'speech-commands_modelC-doing_the_dishes-10.0.pt' --normalized \
     --data_type 'raw' --wandb --const_par 0.2 --fbnm_par 4.0 --cls_par 0.2
