@@ -19,7 +19,7 @@ if __name__ == '__main__':
     ap.add_argument('--data_type', type=str, choices=['raw', 'final'], default='final')
 
     ap.add_argument('--corruption', type=str, choices=['doing_the_dishes', 'dude_miaowing', 'exercise_bike', 'pink_noise', 'running_tap', 'white_noise'])
-    ap.add_argument('--severity_level', type=float, default=0.005)
+    ap.add_argument('--severity_level', type=float, default=20)
     # ap.add_argument('--cal_norm', action='store_true')
     ap.add_argument('--cal_strong', action='store_true')
 
@@ -46,7 +46,7 @@ if __name__ == '__main__':
         print(f'Generate the corrupted dataset by {noise_type}')
         output_path = f'{args.output_path}-{noise_type}'
         corrupted_test_tf = Components(transforms=[
-            BackgroundNoise(noise_level=1.0/args.severity_level, noise=noise, is_random=True),
+            BackgroundNoise(noise_level=args.severity_level, noise=noise, is_random=True),
             pad_trunc(max_ms=max_ms, sample_rate=sample_rate),
         ])
         corrupted_test_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='test+val', include_rate=False, data_tfs=corrupted_test_tf)
@@ -61,8 +61,8 @@ if __name__ == '__main__':
             weak_tf = Components(transforms=[
                 a_transforms.MelSpectrogram(sample_rate=sample_rate, n_fft=1024, n_mels=n_mels, hop_length=hop_length),
                 a_transforms.AmplitudeToDB(top_db=80),
-                a_transforms.FrequencyMasking(freq_mask_param=.02),
-                a_transforms.TimeMasking(time_mask_param=.02),
+                # a_transforms.FrequencyMasking(freq_mask_param=.02),
+                # a_transforms.TimeMasking(time_mask_param=.02),
                 ExpandChannel(out_channel=3),
                 # v_transforms.Resize((256, 256), antialias=False),
                 # v_transforms.RandomCrop(224)
@@ -88,8 +88,8 @@ if __name__ == '__main__':
                     time_shift(shift_limit=.25, is_random=True, is_bidirection=True),
                     a_transforms.MelSpectrogram(sample_rate=sample_rate, n_fft=1024, n_mels=n_mels, hop_length=hop_length),
                     a_transforms.AmplitudeToDB(top_db=80),
-                    a_transforms.FrequencyMasking(freq_mask_param=.07),
-                    a_transforms.TimeMasking(time_mask_param=.07),
+                    # a_transforms.FrequencyMasking(freq_mask_param=.07),
+                    # a_transforms.TimeMasking(time_mask_param=.07),
                     ExpandChannel(out_channel=3),
                     # v_transforms.Resize((256, 256), antialias=False),
                     # v_transforms.RandomCrop(224)

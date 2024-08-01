@@ -12,7 +12,7 @@ from torchvision import transforms as v_transforms
 import torch.nn as nn
 
 from lib.toolkit import print_argparse, cal_norm
-from lib.wavUtils import DoNothing, Components, time_shift
+from lib.wavUtils import DoNothing, Components
 from CoNMix.lib.prepare_dataset import ExpandChannel, Dataset_Idx
 from lib.datasets import load_from
 from CoNMix.analysis import load_model, load_origin_stat
@@ -51,8 +51,8 @@ def build_dataset(args: argparse.Namespace) -> tuple[Dataset, Dataset, Dataset]:
         tf_array = [
             a_transforms.MelSpectrogram(sample_rate=sample_rate, n_fft=1024, n_mels=n_mels, hop_length=hop_length),
             a_transforms.AmplitudeToDB(top_db=80),
-            a_transforms.FrequencyMasking(freq_mask_param=.02),
-            a_transforms.TimeMasking(time_mask_param=.02),
+            # a_transforms.FrequencyMasking(freq_mask_param=.02),
+            # a_transforms.TimeMasking(time_mask_param=.02),
             ExpandChannel(out_channel=3),
             # v_transforms.Resize((256, 256), antialias=False),
             # v_transforms.RandomCrop(224)
@@ -72,12 +72,10 @@ def build_dataset(args: argparse.Namespace) -> tuple[Dataset, Dataset, Dataset]:
         tf_array = [DoNothing()]
     elif args.data_type == 'raw':
         tf_array = [
-            a_transforms.PitchShift(sample_rate=sample_rate, n_steps=4, n_fft=512),
-            time_shift(shift_limit=.25, is_random=True, is_bidirection=True),
             a_transforms.MelSpectrogram(sample_rate=sample_rate, n_fft=1024, n_mels=n_mels, hop_length=hop_length),
             a_transforms.AmplitudeToDB(top_db=80),
-            a_transforms.FrequencyMasking(freq_mask_param=.07),
-            a_transforms.TimeMasking(time_mask_param=.07),
+            # a_transforms.FrequencyMasking(freq_mask_param=.07),
+            # a_transforms.TimeMasking(time_mask_param=.07),
             ExpandChannel(out_channel=3),
             # v_transforms.Resize((256, 256), antialias=False),
             # v_transforms.RandomCrop(224)
@@ -146,7 +144,7 @@ if __name__ == "__main__":
 
     args = ap.parse_args()
     args.class_num = 30
-    args.test_batch_size = args.batch_size * 2
+    args.test_batch_size = args.batch_size * 3
     args.device = 'cuda' if torch.cuda.is_available() else 'cpu'
     args.full_output_path = os.path.join(args.output_path, args.dataset, 'CoNMix', 'STDA')
     try:
@@ -170,7 +168,7 @@ if __name__ == "__main__":
     test_dataset, weak_test_dataset, strong_test_dataset = build_dataset(args)
     test_loader = DataLoader(dataset=test_dataset, batch_size=args.test_batch_size, shuffle=False, drop_last=False)
     weak_test_dataset = Dataset_Idx(dataset=weak_test_dataset)
-    weak_test_loader = DataLoader(dataset=weak_test_dataset, batch_size=args.batch_size, shuffle=True, drop_last=False)
+    weak_test_loader = DataLoader(dataset=weak_test_dataset, batch_size=args.batch_size, shuffle=True, drop_last=True)
 
     # build mode & load pre-train weight
     modelF, modelB, modelC = load_model(args)
@@ -186,7 +184,7 @@ if __name__ == "__main__":
     modelB.train()
     modelC.train()
     max_accu = 0.
-    wandb.log({'Accuracy/classifier accuracy': 0., 'Accuracy/max classifier accuracy': 0.})
+    # wandb.log({'Accuracy/classifier accuracy': 0., 'Accuracy/max classifier accuracy': 0.})
     for epoch in range(1, args.max_epoch+1):
         print(f'Epoch {epoch}/{args.max_epoch}')
         for weak_features, _, idxes in tqdm(weak_test_loader):
@@ -227,7 +225,7 @@ if __name__ == "__main__":
                 with torch.no_grad():
                     pred = mem_label[idxes]
                 classifier_loss = SoftCrossEntropyLoss(outputs[0:batch_size], pred)
-                classifier_loss = torch.mean(classifier_loss)
+                classifier_loss = args.cls_par*torch.mean(classifier_loss)
             else:
                 classifier_loss = torch.tensor(.0).cuda()
 
