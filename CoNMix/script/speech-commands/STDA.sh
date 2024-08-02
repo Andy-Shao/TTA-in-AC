@@ -8,7 +8,7 @@ python -m CoNMix.speech-commands.STDA --weak_aug_dataset_root_path '/home/andysh
     --STDA_modelF_weight_file_name 'speech-commands_modelF-0.005-gaussian_noise.pt' \
     --STDA_modelB_weight_file_name 'speech-commands_modelB-0.005-gaussian_noise.pt' \
     --STDA_modelC_weight_file_name 'speech-commands_modelC-0.005-gaussian_noise.pt' --normalized \
-    --data_type 'final' --wandb --const_par 0.2 --fbnm_par 4.0 --cls_par 1.0
+    --data_type 'final' --wandb --const_par 0.2 --fbnm_par 4.0 --cls_par 1.0 --corruption 'gaussian_noise'
 
 
 # python -m CoNMix.speech-commands.STDA --weak_aug_dataset_root_path '/home/andyshao/tmp/speech_commands_10.0-doing_the_dishes-weak' \
