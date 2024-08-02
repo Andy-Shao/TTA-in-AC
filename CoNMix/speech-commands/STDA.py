@@ -180,10 +180,11 @@ if __name__ == "__main__":
     iter = 0
 
     print('STDA Training Started')
+    max_accu = inference(modelF=modelF, modelB=modelB, modelC=modelC, data_loader=test_loader, device=args.device)
+    wandb.log({'Accuracy/classifier accuracy': max_accu, 'Accuracy/max classifier accuracy': max_accu})
     modelF.train()
     modelB.train()
     modelC.train()
-    max_accu = 0.
     for epoch in range(1, args.max_epoch+1):
         print(f'Epoch {epoch}/{args.max_epoch}')
         ttl_loss = 0.
@@ -276,11 +277,12 @@ if __name__ == "__main__":
                     torch.save(modelB.state_dict(), os.path.join(args.full_output_path, args.STDA_modelB_weight_file_name))
                     torch.save(modelC.state_dict(), os.path.join(args.full_output_path, args.STDA_modelC_weight_file_name))
                 wandb.log({'Accuracy/classifier accuracy': accuracy, 'Accuracy/max classifier accuracy': max_accu})
-                ttl_loss = ttl_loss / ttl_num * 100.
-                ttl_cls_loss = ttl_cls_loss / ttl_num * 100.
-                ttl_const_loss = ttl_const_loss / ttl_num * 100.
-                ttl_fbnm_loss = ttl_fbnm_loss / ttl_num * 100.
-                wandb.log({"LOSS/total loss":ttl_loss, "LOSS/Pseudo-label cross-entorpy loss":ttl_cls_loss, "LOSS/consistency loss":ttl_const_loss, "LOSS/Nuclear-norm Maximization loss":ttl_fbnm_loss})
+                wandb.log({
+                    "LOSS/total loss":ttl_loss / ttl_num * 100., 
+                    "LOSS/Pseudo-label cross-entorpy loss":ttl_cls_loss / ttl_num * 100., 
+                    "LOSS/consistency loss":ttl_const_loss / ttl_num * 100., 
+                    "LOSS/Nuclear-norm Maximization loss":ttl_fbnm_loss / ttl_num * 100.
+                })
                 modelF.train()
                 modelB.train()
                 modelC.train()

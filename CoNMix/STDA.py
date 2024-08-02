@@ -277,7 +277,7 @@ if __name__ == "__main__":
     #################################################
 
     wandb.init(
-        project='Audio Classification STDA (CoNMix)', name=f'{args.dataset}_{args.severity_level}', mode='online' if args.wandb else 'disabled',
+        project=f'Audio Classification CoNMix-STDA ({args.dataset})', name=f'{args.corruption}_{args.severity_level}', mode='online' if args.wandb else 'disabled',
         config=args, tags=['Audio Classification', args.dataset, 'ViT'])
 
     test_dataset, weak_test_dataset, strong_test_dataset = build_dataset(args)
@@ -300,13 +300,18 @@ if __name__ == "__main__":
     iter = 0
 
     print('STDA Training Started')
+    max_accu = inference(modelF=modelF, modelB=modelB, modelC=modelC, data_loader=test_loader, device=args.device)
+    wandb.log({'Accuracy/classifier accuracy': max_accu, 'Accuracy/max classifier accuracy': max_accu})
     modelF.train()
     modelB.train()
     modelC.train()
-    max_accu = 0.
-    wandb.log({'Accuracy/classifier accuracy': 0., 'Accuracy/max classifier accuracy': 0.})
     for epoch in range(1, args.max_epoch+1):
         print(f'Epoch {epoch}/{args.max_epoch}')
+        ttl_loss = 0.
+        ttl_cls_loss = 0.
+        ttl_const_loss = 0.
+        ttl_fbnm_loss = 0.
+        ttl_num = 0
         for weak_features, _, idxes in tqdm(weak_test_loader):
             batch_size = weak_features.shape[0]
             if iter % interval_iter == 0 and args.cls_par >= 0:
@@ -375,7 +380,11 @@ if __name__ == "__main__":
             total_loss.backward()
             optimizer.step()
 
-            wandb.log({"LOSS/total loss":total_loss.item(), "LOSS/Pseudo-label cross-entorpy loss":classifier_loss.item(), "LOSS/consistency loss":consistency_loss.item(), "LOSS/Nuclear-norm Maximization loss":fbnm_loss.item()})
+            ttl_loss += total_loss.item()
+            ttl_cls_loss += classifier_loss.item()
+            ttl_const_loss += consistency_loss.item()
+            ttl_fbnm_loss += fbnm_loss.item()
+            ttl_num += weak_features.shape[0]
 
             if iter % interval_iter == 0 or iter == max_iter:
                 if args.sdlr:
@@ -388,6 +397,12 @@ if __name__ == "__main__":
                     torch.save(modelB.state_dict(), os.path.join(args.full_output_path, args.STDA_modelB_weight_file_name))
                     torch.save(modelC.state_dict(), os.path.join(args.full_output_path, args.STDA_modelC_weight_file_name))
                 wandb.log({'Accuracy/classifier accuracy': accuracy, 'Accuracy/max classifier accuracy': max_accu})
+                wandb.log({
+                    "LOSS/total loss":ttl_loss/ttl_num*100., 
+                    "LOSS/Pseudo-label cross-entorpy loss":ttl_cls_loss/ttl_num*100., 
+                    "LOSS/consistency loss":ttl_const_loss/ttl_num*100., 
+                    "LOSS/Nuclear-norm Maximization loss":ttl_fbnm_loss/ttl_num*100.
+                })
                 modelF.train()
                 modelB.train()
                 modelC.train()
