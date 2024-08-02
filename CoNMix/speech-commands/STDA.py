@@ -74,8 +74,8 @@ def build_dataset(args: argparse.Namespace) -> tuple[Dataset, Dataset, Dataset]:
         tf_array = [
             a_transforms.MelSpectrogram(sample_rate=sample_rate, n_fft=1024, n_mels=n_mels, hop_length=hop_length),
             a_transforms.AmplitudeToDB(top_db=80),
-            a_transforms.FrequencyMasking(freq_mask_param=.1),
-            a_transforms.TimeMasking(time_mask_param=.1),
+            # a_transforms.FrequencyMasking(freq_mask_param=.1),
+            # a_transforms.TimeMasking(time_mask_param=.1),
             ExpandChannel(out_channel=3),
             # v_transforms.Resize((256, 256), antialias=False),
             # v_transforms.RandomCrop(224)
@@ -108,7 +108,7 @@ if __name__ == "__main__":
     ap.add_argument('--wandb', action='store_true')
     ap.add_argument('--data_type', type=str, choices=['raw', 'final'], default='final')
 
-    ap.add_argument('--corruption', type=str, choices=['doing_the_dishes', 'dude_miaowing', 'exercise_bike', 'pink_noise', 'running_tap', 'white_noise'])
+    ap.add_argument('--corruption', type=str, choices=['doing_the_dishes', 'dude_miaowing', 'exercise_bike', 'pink_noise', 'running_tap', 'white_noise', 'gaussian_noise'])
     ap.add_argument('--severity_level', type=float, default=1.0)
 
     ap.add_argument('--seed', type=int, default=2024, help='random seed')
@@ -162,7 +162,7 @@ if __name__ == "__main__":
     #################################################
 
     wandb.init(
-        project='Audio Classification CoNMix (STDA)', name=f'{args.dataset}_{args.severity_level}', mode='online' if args.wandb else 'disabled',
+        project=f'Audio Classification CoNMix-STDA ({args.dataset})', name=f'{args.corruption}_{args.severity_level}', mode='online' if args.wandb else 'disabled',
         config=args, tags=['Audio Classification', args.dataset, 'ViT'])
     
     test_dataset, weak_test_dataset, strong_test_dataset = build_dataset(args)
