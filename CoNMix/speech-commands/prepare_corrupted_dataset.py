@@ -88,8 +88,8 @@ if __name__ == '__main__':
                     time_shift(shift_limit=.25, is_random=True, is_bidirection=True),
                     a_transforms.MelSpectrogram(sample_rate=sample_rate, n_fft=1024, n_mels=n_mels, hop_length=hop_length),
                     a_transforms.AmplitudeToDB(top_db=80),
-                    # a_transforms.FrequencyMasking(freq_mask_param=.07),
-                    # a_transforms.TimeMasking(time_mask_param=.07),
+                    a_transforms.FrequencyMasking(freq_mask_param=.1),
+                    a_transforms.TimeMasking(time_mask_param=.1),
                     ExpandChannel(out_channel=3),
                     # v_transforms.Resize((256, 256), antialias=False),
                     # v_transforms.RandomCrop(224)
