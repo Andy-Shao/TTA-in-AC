@@ -74,8 +74,8 @@ def build_dataset(args: argparse.Namespace) -> tuple[Dataset, Dataset, Dataset]:
         tf_array = [
             a_transforms.MelSpectrogram(sample_rate=sample_rate, n_fft=1024, n_mels=n_mels, hop_length=hop_length),
             a_transforms.AmplitudeToDB(top_db=80),
-            # a_transforms.FrequencyMasking(freq_mask_param=.07),
-            # a_transforms.TimeMasking(time_mask_param=.07),
+            a_transforms.FrequencyMasking(freq_mask_param=.1),
+            a_transforms.TimeMasking(time_mask_param=.1),
             ExpandChannel(out_channel=3),
             # v_transforms.Resize((256, 256), antialias=False),
             # v_transforms.RandomCrop(224)
@@ -162,7 +162,7 @@ if __name__ == "__main__":
     #################################################
 
     wandb.init(
-        project='Audio Classification STDA (CoNMix)', name=f'{args.dataset}_{args.severity_level}', mode='online' if args.wandb else 'disabled',
+        project='Audio Classification CoNMix (STDA)', name=f'{args.dataset}_{args.severity_level}', mode='online' if args.wandb else 'disabled',
         config=args, tags=['Audio Classification', args.dataset, 'ViT'])
     
     test_dataset, weak_test_dataset, strong_test_dataset = build_dataset(args)
@@ -184,9 +184,13 @@ if __name__ == "__main__":
     modelB.train()
     modelC.train()
     max_accu = 0.
-    # wandb.log({'Accuracy/classifier accuracy': 0., 'Accuracy/max classifier accuracy': 0.})
     for epoch in range(1, args.max_epoch+1):
         print(f'Epoch {epoch}/{args.max_epoch}')
+        ttl_loss = 0.
+        ttl_cls_loss = 0.
+        ttl_const_loss = 0.
+        ttl_fbnm_loss = 0.
+        ttl_num = 0
         for weak_features, _, idxes in tqdm(weak_test_loader):
             batch_size = weak_features.shape[0]
             if iter % interval_iter == 0 and args.cls_par >= 0:
@@ -255,7 +259,11 @@ if __name__ == "__main__":
             total_loss.backward()
             optimizer.step()
 
-            wandb.log({"LOSS/total loss":total_loss.item(), "LOSS/Pseudo-label cross-entorpy loss":classifier_loss.item(), "LOSS/consistency loss":consistency_loss.item(), "LOSS/Nuclear-norm Maximization loss":fbnm_loss.item()})
+            ttl_loss += total_loss.item()
+            ttl_cls_loss += classifier_loss.item()
+            ttl_const_loss += consistency_loss.item()
+            ttl_fbnm_loss += fbnm_loss.item()
+            ttl_num += weak_features.shape[0]
 
             if iter % interval_iter == 0 or iter == max_iter:
                 if args.sdlr:
@@ -268,6 +276,11 @@ if __name__ == "__main__":
                     torch.save(modelB.state_dict(), os.path.join(args.full_output_path, args.STDA_modelB_weight_file_name))
                     torch.save(modelC.state_dict(), os.path.join(args.full_output_path, args.STDA_modelC_weight_file_name))
                 wandb.log({'Accuracy/classifier accuracy': accuracy, 'Accuracy/max classifier accuracy': max_accu})
+                ttl_loss = ttl_loss / ttl_num * 100.
+                ttl_cls_loss = ttl_cls_loss / ttl_num * 100.
+                ttl_const_loss = ttl_const_loss / ttl_num * 100.
+                ttl_fbnm_loss = ttl_fbnm_loss / ttl_num * 100.
+                wandb.log({"LOSS/total loss":ttl_loss, "LOSS/Pseudo-label cross-entorpy loss":ttl_cls_loss, "LOSS/consistency loss":ttl_const_loss, "LOSS/Nuclear-norm Maximization loss":ttl_fbnm_loss})
                 modelF.train()
                 modelB.train()
                 modelC.train()
