@@ -9,14 +9,25 @@ import torch
 from torchaudio import transforms as a_transforms
 from torchvision import transforms as v_transforms
 from torch.utils.data import DataLoader
+from torch import optim
 
 from lib.toolkit import print_argparse, cal_norm, store_model_structure_to_txt
 from lib.wavUtils import pad_trunc, time_shift, Components
 from CoNMix.lib.prepare_dataset import ExpandChannel
 from lib.scDataset import SpeechCommandsDataset
-from CoNMix.pre_train import load_models, build_optimizer, lr_scheduler
+from CoNMix.pre_train import load_models, build_optimizer
 from CoNMix.lib.loss import CrossEntropyLabelSmooth
 from lib.datasets import ClipDataset
+
+def lr_scheduler(optimizer: torch.optim.Optimizer, iter_num: int, max_iter: int, step:int, gamma=10, power=0.75) -> optim.Optimizer:
+    decay = (1 + gamma * iter_num / max_iter) ** (-power)
+    for param_group in optimizer.param_groups:
+        param_group['lr'] = param_group['lr0'] * decay
+        param_group['weight_decay'] = 1e-3
+        param_group['momentum'] = .9
+        param_group['nestenv'] = True
+    wandb.log({'Train/learning_rate': param_group['lr']}, step=step)
+    return optimizer
 
 if __name__ == '__main__':
     ap = argparse.ArgumentParser()
@@ -68,7 +79,7 @@ if __name__ == '__main__':
     max_ms = 1000
     sample_rate = 16000
     n_mels=128
-    hop_length=377
+    hop_length=125
     tf_array = [
         pad_trunc(max_ms=max_ms, sample_rate=sample_rate),
         time_shift(shift_limit=.25, is_random=True, is_bidirection=True),
@@ -145,7 +156,7 @@ if __name__ == '__main__':
             outputs = None
 
             if iter % interval == 0 or iter == max_iter-1:
-                lr_scheduler(optimizer=optimizer, iter_num=iter, max_iter=max_iter)
+                lr_scheduler(optimizer=optimizer, iter_num=iter, max_iter=max_iter, step=iter//interval)
 
                 modelF.eval()
                 modelB.eval()
