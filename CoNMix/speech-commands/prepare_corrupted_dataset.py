@@ -49,15 +49,15 @@ if __name__ == '__main__':
         is_background_noise = False
         noise_type = args.corruption
         corrupted_test_tf = Components(transforms=[
+            pad_trunc(max_ms=max_ms, sample_rate=sample_rate),
             GuassianNoise(noise_level=args.severity_level),
-            pad_trunc(max_ms=max_ms, sample_rate=sample_rate)
         ])
     else:
         is_background_noise = True
         noise_type, noise = find_background_noise(args)
         corrupted_test_tf = Components(transforms=[
-            BackgroundNoise(noise_level=args.severity_level, noise=noise, is_random=True),
             pad_trunc(max_ms=max_ms, sample_rate=sample_rate),
+            BackgroundNoise(noise_level=args.severity_level, noise=noise, is_random=True),
         ])
 
     print(f'Generate the corrupted dataset by {noise_type}')

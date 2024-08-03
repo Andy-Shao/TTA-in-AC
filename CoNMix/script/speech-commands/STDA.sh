@@ -1,14 +1,14 @@
-python -m CoNMix.speech-commands.STDA --weak_aug_dataset_root_path '/home/andyshao/tmp/speech_commands/0.005-gaussian_noise-weak' \
-    --strong_aug_dataset_root_path '/home/andyshao/tmp/speech_commands/0.005-gaussian_noise-strong' \
-    --test_dataset_root_path '/home/andyshao/tmp/speech_commands/0.005-gaussian_noise' \
-    --batch_size 32 --severity_level 0.005 --max_epoch 50 --interval 50 --lr '1e-4'\
+python -m CoNMix.speech-commands.STDA --weak_aug_dataset_root_path '/root/tmp/speech_commands/0.05-gaussian_noise-weak' \
+    --strong_aug_dataset_root_path '/root/tmp/speech_commands/0.05-gaussian_noise-strong' \
+    --test_dataset_root_path '/root/tmp/speech_commands/0.05-gaussian_noise' \
+    --batch_size 32 --severity_level 0.05 --max_epoch 50 --interval 50 --lr '5e-4'\
     --modelF_weight_path './result/speech-commands/CoNMix/pre_train/speech-commands_best_modelF.pt' \
     --modelB_weight_path './result/speech-commands/CoNMix/pre_train/speech-commands_best_modelB.pt' \
     --modelC_weight_path './result/speech-commands/CoNMix/pre_train/speech-commands_best_modelC.pt' \
     --STDA_modelF_weight_file_name 'speech-commands_modelF-0.005-gaussian_noise.pt' \
     --STDA_modelB_weight_file_name 'speech-commands_modelB-0.005-gaussian_noise.pt' \
     --STDA_modelC_weight_file_name 'speech-commands_modelC-0.005-gaussian_noise.pt' --normalized \
-    --data_type 'final' --wandb --const_par 0.2 --fbnm_par 4.0 --cls_par 1.0 --corruption 'gaussian_noise'
+    --data_type 'final' --wandb --const_par 0.2 --fbnm_par 8.0 --cls_par 1.0 --corruption 'gaussian_noise'
 
 
 # python -m CoNMix.speech-commands.STDA --weak_aug_dataset_root_path '/home/andyshao/tmp/speech_commands_10.0-doing_the_dishes-weak' \

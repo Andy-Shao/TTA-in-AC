@@ -77,9 +77,9 @@ if __name__ == '__main__':
         # a_transforms.FrequencyMasking(freq_mask_param=.1),
         # a_transforms.TimeMasking(time_mask_param=.1),
         ExpandChannel(out_channel=3),
-        v_transforms.Resize((224, 224), antialias=False),
-        # v_transforms.RandomCrop(224),
-        # v_transforms.RandomHorizontalFlip(), 
+        v_transforms.Resize((256, 256), antialias=False),
+        v_transforms.RandomCrop(224),
+        v_transforms.RandomHorizontalFlip(), 
     ]
     if args.normalized:
         print('calculate the train dataset mean and standard deviation')
@@ -128,6 +128,8 @@ if __name__ == '__main__':
     interval = max_iter // args.interval
     for epoch in range(1, args.max_epoch+1):
         print(f'Epoch [{epoch}/{args.max_epoch}]')
+        ttl_train_loss = 0.
+        ttl_train_num = 0
         for features, labels in tqdm(train_loader):
             features, labels = features.to(args.device), labels.to(args.device)
             outputs = modelC(modelB(modelF(features)))
@@ -135,7 +137,8 @@ if __name__ == '__main__':
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-            wandb_run.log({'Train/classifier_loss': loss.cpu().item()}, step=iter)
+            ttl_train_loss += loss.cpu().item()
+            ttl_train_num += labels.shape[0]
             features = None
             labels = None
             loss = None
@@ -157,7 +160,8 @@ if __name__ == '__main__':
                     ttl_corr += (preds == labels).sum().cpu().item()
                     ttl_size += labels.shape[0]
                 curr_accu = ttl_corr / ttl_size * 100.
-                wandb_run.log({'Train/Accuracy': curr_accu}, step=iter)
+                wandb_run.log({'Train/Accuracy': curr_accu}, step=iter//interval)
+                wandb_run.log({'Train/classifier_loss': ttl_train_loss/ttl_train_num}, step=iter//interval)
                 if curr_accu > best_accuracy:
                     best_accuracy = curr_accu
                     best_modelF = modelF.state_dict()
