@@ -90,11 +90,11 @@ if __name__ == '__main__':
         ])
         test_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='test', include_rate=False, data_tfs=data_transforms)
     elif args.model == 'restnet50':
-        n_mels=128
-        hop_length=377
+        n_mels=129
+        hop_length=125
         tf_array = [
             pad_trunc(max_ms=1000, sample_rate=sample_rate),
-            a_transforms.MelSpectrogram(sample_rate=sample_rate, n_fft=1024, n_mels=n_mels),
+            a_transforms.MelSpectrogram(sample_rate=sample_rate, n_fft=1024, n_mels=n_mels, hop_length=hop_length),
             a_transforms.AmplitudeToDB(top_db=80),
             ExpandChannel(out_channel=3),
             v_transforms.Resize((224, 224), antialias=False),

@@ -75,12 +75,12 @@ if __name__ == '__main__':
         val_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='validation', include_rate=False, data_tfs=val_transforms)
         model = WavClassifier(class_num=30, l1_in_features=64, c1_in_channels=1).to(device=args.device)
     elif args.model == 'restnet50':
-        n_mels=128
-        hop_length=377
+        n_mels=129
+        hop_length=125
         train_tf = Components(transforms=[
             pad_trunc(max_ms=1000, sample_rate=sample_rate),
             time_shift(shift_limit=.25, is_bidirection=True),
-            a_transforms.MelSpectrogram(sample_rate=sample_rate, n_fft=1024, n_mels=n_mels),
+            a_transforms.MelSpectrogram(sample_rate=sample_rate, n_fft=1024, n_mels=n_mels, hop_length=hop_length),
             a_transforms.AmplitudeToDB(top_db=80),
             a_transforms.FrequencyMasking(freq_mask_param=.1),
             a_transforms.TimeMasking(time_mask_param=.1),
@@ -92,7 +92,7 @@ if __name__ == '__main__':
         ])
         val_tf = Components(transforms=[
             pad_trunc(max_ms=1000, sample_rate=sample_rate),
-            a_transforms.MelSpectrogram(sample_rate=sample_rate, n_fft=1024, n_mels=n_mels),
+            a_transforms.MelSpectrogram(sample_rate=sample_rate, n_fft=1024, n_mels=n_mels, hop_length=hop_length),
             a_transforms.AmplitudeToDB(top_db=80),
             ExpandChannel(out_channel=3),
             v_transforms.Resize((224, 224), antialias=False),
