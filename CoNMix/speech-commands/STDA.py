@@ -93,22 +93,13 @@ def build_dataset(args: argparse.Namespace) -> tuple[Dataset, Dataset, Dataset]:
     meta_file_name = 'speech_commands_meta.csv'
 
     # test dataset build
-    if args.data_type == 'final':
-        tf_array = [DoNothing()]
-    elif args.data_type == 'raw':
-        tf_array = [
-            a_transforms.MelSpectrogram(sample_rate=sample_rate, n_fft=1024, n_mels=n_mels, hop_length=hop_length),
-            a_transforms.AmplitudeToDB(top_db=80),
-            # a_transforms.FrequencyMasking(freq_mask_param=.02),
-            # a_transforms.TimeMasking(time_mask_param=.02),
-            ExpandChannel(out_channel=3),
-            v_transforms.Resize((256, 256), antialias=False),
-            v_transforms.RandomCrop(224),
-            # v_transforms.RandomHorizontalFlip(),
-            # v_transforms.Resize((224, 224), antialias=False),
-        ]
-    else:
-        raise Exception('No support')
+    # tf_array = [
+    #     a_transforms.MelSpectrogram(sample_rate=sample_rate, n_fft=1024, n_mels=n_mels, hop_length=hop_length),
+    #     a_transforms.AmplitudeToDB(top_db=80),
+    #     ExpandChannel(out_channel=3),
+    #     v_transforms.Resize((224, 224), antialias=False),
+    # ]
+    tf_array = [DoNothing()]
     if args.normalized:
         print('test dataset mean and standard deviation calculation')
         test_dataset = load_from(root_path=args.weak_aug_dataset_root_path, index_file_name=meta_file_name, data_tf=Components(transforms=tf_array))
