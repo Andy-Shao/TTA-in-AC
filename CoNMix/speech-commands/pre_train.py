@@ -101,7 +101,6 @@ if __name__ == '__main__':
         tf_array.append(v_transforms.Normalize(mean=train_mean, std=train_std))
     train_tf = Components(transforms=tf_array)
     train_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='train', include_rate=False, data_tfs=train_tf)
-    train_dataset = ClipDataset(dataset=train_dataset, rate=.3)
     train_loader = DataLoader(dataset=train_dataset, batch_size=args.batch_size, shuffle=True, drop_last=False)
 
     tf_array = [
@@ -120,7 +119,6 @@ if __name__ == '__main__':
         tf_array.append(v_transforms.Normalize(mean=val_mean, std=val_std))
     val_tf = Components(transforms=tf_array)
     val_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='validation', include_rate=False, data_tfs=val_tf)
-    val_dataset = ClipDataset(dataset=val_dataset, rate=.5)
     val_loader = DataLoader(dataset=val_dataset, batch_size=args.batch_size, shuffle=False, drop_last=False)
 
     modelF, modelB, modelC = load_models(args)
@@ -142,6 +140,7 @@ if __name__ == '__main__':
         print(f'Epoch [{epoch}/{args.max_epoch}]')
         ttl_train_loss = 0.
         ttl_train_num = 0
+        ttl_train_corr = 0
         for features, labels in tqdm(train_loader):
             features, labels = features.to(args.device), labels.to(args.device)
             outputs = modelC(modelB(modelF(features)))
@@ -149,6 +148,8 @@ if __name__ == '__main__':
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
+            _, preds = torch.max(outputs.detach(), dim=1)
+            ttl_train_corr += (preds == labels).sum().cpu().item()
             ttl_train_loss += loss.cpu().item()
             ttl_train_num += labels.shape[0]
             features = None
@@ -172,7 +173,8 @@ if __name__ == '__main__':
                     ttl_corr += (preds == labels).sum().cpu().item()
                     ttl_size += labels.shape[0]
                 curr_accu = ttl_corr / ttl_size * 100.
-                wandb_run.log({'Train/Accuracy': curr_accu}, step=iter//interval)
+                wandb_run.log({'Train/Accuracy': ttl_train_corr/ttl_train_num*100.})
+                wandb_run.log({'Val/Accuracy': curr_accu}, step=iter//interval)
                 wandb_run.log({'Train/classifier_loss': ttl_train_loss/ttl_train_num}, step=iter//interval)
                 if curr_accu > best_accuracy:
                     best_accuracy = curr_accu
