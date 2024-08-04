@@ -120,9 +120,10 @@ def build_dataset(args: argparse.Namespace) -> tuple[Dataset, Dataset, Dataset]:
             # a_transforms.FrequencyMasking(freq_mask_param=.02),
             # a_transforms.TimeMasking(time_mask_param=.02),
             ExpandChannel(out_channel=3),
-            # v_transforms.Resize((256, 256), antialias=False),
-            # v_transforms.RandomCrop(224)
-            v_transforms.Resize((224, 224), antialias=False),
+            v_transforms.Resize((256, 256), antialias=False),
+            v_transforms.RandomCrop(224),
+            # v_transforms.RandomHorizontalFlip(),
+            # v_transforms.Resize((224, 224), antialias=False),
         ]
     else:
         raise Exception('No support')
@@ -143,9 +144,9 @@ def build_dataset(args: argparse.Namespace) -> tuple[Dataset, Dataset, Dataset]:
             # a_transforms.FrequencyMasking(freq_mask_param=.1),
             # a_transforms.TimeMasking(time_mask_param=.1),
             ExpandChannel(out_channel=3),
-            # v_transforms.Resize((256, 256), antialias=False),
-            # v_transforms.RandomCrop(224)
-            v_transforms.Resize((224, 224), antialias=False),
+            v_transforms.Resize((256, 256), antialias=False),
+            v_transforms.RandomCrop(224)
+            # v_transforms.Resize((224, 224), antialias=False),
         ]
     else:
         raise Exception('No support')
