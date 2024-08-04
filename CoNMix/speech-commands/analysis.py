@@ -81,10 +81,10 @@ if __name__ == '__main__':
     ]
     if args.normalized:
         print('calculate the test dataset mean and standard deviation')
-        test_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='test+val', include_rate=False, data_tfs=Components(transforms=tf_array))
+        test_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='test', include_rate=False, data_tfs=Components(transforms=tf_array))
         test_mean, test_std = cal_norm(loader=DataLoader(dataset=test_dataset, batch_size=256, shuffle=False, drop_last=False))
         tf_array.append(v_transforms.Normalize(mean=test_mean, std=test_std))
-    test_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='test+val', include_rate=False, data_tfs=Components(transforms=tf_array))
+    test_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='test', include_rate=False, data_tfs=Components(transforms=tf_array))
     test_loader = DataLoader(dataset=test_dataset, batch_size=args.batch_size, shuffle=False, drop_last=False)
 
     tf_array = [

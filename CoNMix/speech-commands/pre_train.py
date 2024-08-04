@@ -78,7 +78,7 @@ if __name__ == '__main__':
     
     max_ms = 1000
     sample_rate = 16000
-    n_mels=128
+    n_mels=129
     hop_length=125
     tf_array = [
         pad_trunc(max_ms=max_ms, sample_rate=sample_rate),
@@ -101,6 +101,7 @@ if __name__ == '__main__':
         tf_array.append(v_transforms.Normalize(mean=train_mean, std=train_std))
     train_tf = Components(transforms=tf_array)
     train_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='train', include_rate=False, data_tfs=train_tf)
+    train_dataset = ClipDataset(dataset=train_dataset, rate=.3)
     train_loader = DataLoader(dataset=train_dataset, batch_size=args.batch_size, shuffle=True, drop_last=False)
 
     tf_array = [
@@ -113,13 +114,13 @@ if __name__ == '__main__':
     if args.normalized:
         print('calculate the validation dataset mean and standard deviation')
         val_tf = Components(transforms=tf_array)
-        val_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='train', include_rate=False, data_tfs=val_tf)
+        val_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='validation', include_rate=False, data_tfs=val_tf)
         val_loader = DataLoader(dataset=val_dataset, batch_size=256, shuffle=False, drop_last=False)
         val_mean, val_std = cal_norm(loader=val_loader)
         tf_array.append(v_transforms.Normalize(mean=val_mean, std=val_std))
     val_tf = Components(transforms=tf_array)
-    val_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='train', include_rate=False, data_tfs=val_tf)
-    val_dataset = ClipDataset(dataset=val_dataset, rate=args.test_rate)
+    val_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='validation', include_rate=False, data_tfs=val_tf)
+    val_dataset = ClipDataset(dataset=val_dataset, rate=.5)
     val_loader = DataLoader(dataset=val_dataset, batch_size=args.batch_size, shuffle=False, drop_last=False)
 
     modelF, modelB, modelC = load_models(args)

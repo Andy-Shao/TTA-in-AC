@@ -41,8 +41,8 @@ if __name__ == '__main__':
 
     max_ms = 1000
     sample_rate = 16000
-    n_mels=128
-    hop_length=377
+    n_mels=129
+    hop_length=125
     meta_file_name = 'speech_commands_meta.csv'
 
     if args.corruption == 'gaussian_noise':
@@ -63,7 +63,7 @@ if __name__ == '__main__':
     print(f'Generate the corrupted dataset by {noise_type}')
     output_path = f'{args.output_path}-{noise_type}'
     
-    corrupted_test_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='test+val', include_rate=False, data_tfs=corrupted_test_tf)
+    corrupted_test_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='test', include_rate=False, data_tfs=corrupted_test_tf)
     store_to(dataset=corrupted_test_dataset, root_path=output_path, index_file_name=meta_file_name)
     corrupted_test_dataset = load_from(root_path=output_path, index_file_name=meta_file_name)
 
@@ -78,9 +78,9 @@ if __name__ == '__main__':
             # a_transforms.FrequencyMasking(freq_mask_param=.02),
             # a_transforms.TimeMasking(time_mask_param=.02),
             ExpandChannel(out_channel=3),
-            # v_transforms.Resize((256, 256), antialias=False),
-            # v_transforms.RandomCrop(224)
-            v_transforms.Resize((224, 224), antialias=False),
+            v_transforms.Resize((256, 256), antialias=False),
+            v_transforms.RandomCrop(224),
+            # v_transforms.Resize((224, 224), antialias=False),
         ])
     store_to(dataset=corrupted_test_dataset, root_path=weak_path, index_file_name=meta_file_name, data_transf=weak_tf)
     weak_aug_dataset = load_from(root_path=weak_path, index_file_name=meta_file_name)
@@ -105,9 +105,9 @@ if __name__ == '__main__':
                 # a_transforms.FrequencyMasking(freq_mask_param=.1),
                 # a_transforms.TimeMasking(time_mask_param=.1),
                 ExpandChannel(out_channel=3),
-                # v_transforms.Resize((256, 256), antialias=False),
-                # v_transforms.RandomCrop(224)
-                v_transforms.Resize((224, 224), antialias=False),
+                v_transforms.Resize((256, 256), antialias=False),
+                v_transforms.RandomCrop(224),
+                # v_transforms.Resize((224, 224), antialias=False),
             ])
         store_to(dataset=corrupted_test_dataset, root_path=strong_path, index_file_name=meta_file_name, data_transf=strong_tf)
         strong_aug_dataset = load_from(root_path=strong_path, index_file_name=meta_file_name)

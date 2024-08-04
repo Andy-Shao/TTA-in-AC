@@ -16,15 +16,80 @@ from lib.wavUtils import DoNothing, Components
 from CoNMix.lib.prepare_dataset import ExpandChannel, Dataset_Idx
 from lib.datasets import load_from
 from CoNMix.analysis import load_model, load_origin_stat
-from CoNMix.STDA import build_optim, obtain_label, lr_scheduler, inference
-from CoNMix.lib.loss import SoftCrossEntropyLoss, soft_CE
+from CoNMix.STDA import build_optim, lr_scheduler, inference
+from CoNMix.lib.loss import SoftCrossEntropyLoss, soft_CE, Entropy
 from CoNMix.lib.plr import plr
+
+def obtain_label(loader: DataLoader, modelF: nn.Module, modelB: nn.Module, modelC: nn.Module, args: argparse.Namespace, step:int) -> tuple:
+    # Accumulate feat, logint and gt labels
+    with torch.no_grad():
+        for idx, (inputs, labels) in enumerate(loader):
+            inputs = inputs.to(args.device)
+            features = modelB(modelF(inputs))
+            outputs = modelC(features)
+            if idx == 0:
+                all_feature = features.float().cpu()
+                all_output = outputs.float().cpu()
+                all_label = labels.float()
+            else:
+                all_feature = torch.cat((all_feature, features.float().cpu()), dim=0)
+                all_output = torch.cat((all_output, outputs.float().cpu()), dim=0)
+                all_label = torch.cat((all_label, labels.float()), dim=0)
+        inputs = None
+        features = None
+        outputs = None
+    ##################### Done ##################################
+    # print('Clustering')
+    all_output = nn.Softmax(dim=1)(all_output)
+
+    mean_all_output = torch.mean(all_output, dim=0).numpy()
+    _, predict = torch.max(all_output, dim=1)
+
+    # find accuracy on test sampels
+    accuracy = torch.sum(torch.squeeze(predict).float() == all_label).item() / float(all_label.size()[0])
+    # find centroid per class
+    if args.distance == 'cosine': 
+        ######### Not Clear (looks like feature normalization though)#######
+        all_feature = torch.cat((all_feature, torch.ones(all_feature.size(0), 1)), dim=1)
+        all_feature = (all_feature.t() / torch.norm(all_feature, p=2, dim=1)).t() # here is L2 norm
+    ### all_fea: extractor feature [bs,N]. all_feature is g_t in paper
+    all_feature = all_feature.float().cpu().numpy()
+    K = all_output.size(1) # number of classes
+    aff = all_output.float().cpu().numpy() ### aff: softmax output [bs,c]
+
+    # got the initial normalized centroid (k*(d+1))
+    initc = aff.transpose().dot(all_feature)
+    initc = initc / (1e-8 + aff.sum(axis=0)[:, None])
+
+    cls_count = np.eye(K)[predict].sum(axis=0) # total number of prediction per class
+    labelset = np.where(cls_count >= args.threshold) ### index of classes for which same sampeled have been detected # returns tuple
+    labelset = labelset[0] # index of classes for which samples per class greater than threshold
+    
+    dd = all_feature @ initc[labelset].T # <g_t, initc>
+    dd = np.exp(dd) # amplify difference
+    pred_label = dd.argmax(axis=1) # predicted class based on the minimum distance
+    pred_label = labelset[pred_label] # this will be the actual class
+    
+    for round in range(args.initc_num): # calculate initc and pseduo label multi-times
+        aff = np.eye(K)[pred_label]
+        initc = aff.transpose().dot(all_feature)
+        initc = initc / (1e-8 + aff.sum(axis=0)[:, None])
+        dd = all_feature @ initc[labelset].T
+        dd = np.exp(dd)
+        pred_label = dd.argmax(axis=1)
+        pred_label = labelset[pred_label]
+    
+    acc = np.sum(pred_label == all_label.float().numpy()) / len(all_feature)
+    wandb.log({"Accuracy/Pseudo Label Accuracy": acc*100}, step=step, commit=True)
+
+    dd = nn.functional.softmax(torch.from_numpy(dd), dim=1)
+    return pred_label, all_output.cpu().numpy(), dd.numpy().astype(np.float32), mean_all_output, all_label.cpu().numpy().astype(np.uint16)
 
 def build_dataset(args: argparse.Namespace) -> tuple[Dataset, Dataset, Dataset]:
     max_ms = 1000
     sample_rate = 16000
-    n_mels=128
-    hop_length=377
+    n_mels=129
+    hop_length=125
     meta_file_name = 'speech_commands_meta.csv'
 
     # test dataset build
@@ -45,8 +110,8 @@ def build_dataset(args: argparse.Namespace) -> tuple[Dataset, Dataset, Dataset]:
     # weak augmentation dataset build
     if args.data_type == 'final':
         tf_array = [
-            v_transforms.RandomHorizontalFlip(),
-            # DoNothing(),
+            # v_transforms.RandomHorizontalFlip(),
+            DoNothing(),
         ]
     elif args.data_type == 'raw':
         tf_array = [
@@ -118,7 +183,7 @@ if __name__ == "__main__":
     ap.add_argument('--max_epoch', type=int, default=100, help="max iterations")
     ap.add_argument('--interval', type=int, default=100)
     ap.add_argument('--batch_size', type=int, default=48, help="batch_size")
-    # ap.add_argument('--test_batch_size', type=int, default=128, help="batch_size")
+    ap.add_argument('--test_batch_size', type=int, default=128, help="batch_size")
     ap.add_argument('--lr', type=float, default=1e-3, help="learning rate")
 
     ap.add_argument('--consist', type=bool, default=True, help='Consist loss -> soft cross-entropy loss')
@@ -127,10 +192,11 @@ if __name__ == "__main__":
     ap.add_argument('--threshold', type=int, default=0)
     ap.add_argument('--cls_par', type=float, default=0.2, help='lambda 2 | Pseudo-label loss capable')
     ap.add_argument('--alpha', type=float, default=0.9)
-
     ap.add_argument('--const_par', type=float, default=0.2, help='lambda 3')
     ap.add_argument('--ent_par', type=float, default=1.3)
     ap.add_argument('--fbnm_par', type=float, default=4.0, help='lambda 1')
+    ap.add_argument('--ent', action='store_true')
+    ap.add_argument('--gent', action='store_true')
 
     ap.add_argument('--lr_decay1', type=float, default=0.1)
     ap.add_argument('--lr_decay2', type=float, default=1.0)
@@ -142,10 +208,11 @@ if __name__ == "__main__":
     ap.add_argument('--distance', type=str, default='cosine', choices=["euclidean", "cosine"])
     ap.add_argument('--plr', type=int, default=1, help='Pseudo-label refinement')
     ap.add_argument('--sdlr', type=int, default=1, help='lr_scheduler capable')
+    ap.add_argument('--initc_num', type=int, default=1)
 
     args = ap.parse_args()
     args.class_num = 30
-    args.test_batch_size = args.batch_size * 3
+    # args.test_batch_size = args.batch_size * 3
     args.device = 'cuda' if torch.cuda.is_available() else 'cpu'
     args.full_output_path = os.path.join(args.output_path, args.dataset, 'CoNMix', 'STDA')
     try:
@@ -192,6 +259,7 @@ if __name__ == "__main__":
         ttl_cls_loss = 0.
         ttl_const_loss = 0.
         ttl_fbnm_loss = 0.
+        ttl_im_loss = 0.
         ttl_num = 0
         for weak_features, _, idxes in tqdm(weak_test_loader):
             batch_size = weak_features.shape[0]
@@ -230,8 +298,11 @@ if __name__ == "__main__":
             if args.cls_par > 0:
                 with torch.no_grad():
                     pred = mem_label[idxes]
-                classifier_loss = SoftCrossEntropyLoss(outputs[0:batch_size], pred)
-                classifier_loss = args.cls_par*torch.mean(classifier_loss)
+                # classifier_loss = SoftCrossEntropyLoss(outputs[0:batch_size], pred)
+                # classifier_loss = args.cls_par*torch.mean(classifier_loss)
+                cls_outputs = nn.functional.softmax(outputs[0:batch_size])
+                classifier_loss = args.cls_par*nn.functional.cross_entropy(cls_outputs, pred)
+                
             else:
                 classifier_loss = torch.tensor(.0).cuda()
 
@@ -243,6 +314,27 @@ if __name__ == "__main__":
                 fbnm_loss = args.fbnm_par*fbnm_loss
             else:
                 fbnm_loss = torch.tensor(.0).cuda()
+
+            if args.ent:
+                softmax_out = nn.Softmax(dim=1)(outputs)		# find number of psuedo sample per class for handling class imbalance for entropy maximization
+                entropy_loss = torch.mean(Entropy(softmax_out))#softmax_outputs_stg = nn.Softmax(dim=1)(outputs_stg)
+                #entropy_loss = torch.mean(loss.soft_CE(softmax_outputs_stg,gt_w))
+                en_loss = entropy_loss.item()
+                #entropy_loss = dist_loss(outputs_test, outputs_test,T=1.0)
+                #entropy_loss = torch.mean(loss.Entropy(softmax_out))
+                if args.gent:
+                    #softmax_out = nn.Softmax(dim=1)(outputs)
+                    msoftmax = softmax_out.mean(dim=0)
+                    #msoftmax_stg = softmax_outputs_stg.mean(dim=0)
+                    gentropy_loss = torch.sum(-msoftmax * torch.log(msoftmax + args.epsilon))
+                    gen_loss = gentropy_loss.item()
+                    entropy_loss -= gentropy_loss
+                #m = 0.9*np.sin(np.minimum(np.pi/2,np.pi*iter_num/max_iter))
+                im_loss = entropy_loss * args.ent_par
+                #print("cls loss:{} en loss:{} gen loss:{} im_loss:{}".format(classifier_loss.item(), en_loss, gen_loss, im_loss.item()))
+                #im_loss = entropy_loss * m
+            else:
+                im_loss = torch.tensor(0.0).cuda()
             
             # Consist loss -> soft cross-entropy loss
             if args.consist:
@@ -255,7 +347,7 @@ if __name__ == "__main__":
                 cs_loss = consistency_loss.item()
             else:
                 consistency_loss = torch.tensor(.0).cuda()
-            total_loss = classifier_loss + fbnm_loss + consistency_loss
+            total_loss = classifier_loss + fbnm_loss + im_loss + consistency_loss
 
             optimizer.zero_grad()
             total_loss.backward()
@@ -265,6 +357,7 @@ if __name__ == "__main__":
             ttl_cls_loss += classifier_loss.item()
             ttl_const_loss += consistency_loss.item()
             ttl_fbnm_loss += fbnm_loss.item()
+            ttl_im_loss += im_loss.item()
             ttl_num += weak_features.shape[0]
 
             if iter % interval_iter == 0 or iter == max_iter:
@@ -282,7 +375,8 @@ if __name__ == "__main__":
                     "LOSS/total loss":ttl_loss / ttl_num * 100., 
                     "LOSS/Pseudo-label cross-entorpy loss":ttl_cls_loss / ttl_num * 100., 
                     "LOSS/consistency loss":ttl_const_loss / ttl_num * 100., 
-                    "LOSS/Nuclear-norm Maximization loss":ttl_fbnm_loss / ttl_num * 100.
+                    "LOSS/Nuclear-norm Maximization loss":ttl_fbnm_loss / ttl_num * 100.,
+                    "LOSS/IM loss":ttl_im_loss / ttl_num * 100.,
                 }, step=iter // interval_iter)
                 modelF.train()
                 modelB.train()
