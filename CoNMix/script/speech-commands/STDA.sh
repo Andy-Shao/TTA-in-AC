@@ -11,9 +11,10 @@
 #     --alpha 0.9 --initc_num 1
 
 
-python -m CoNMix.speech-commands.STDA --weak_aug_dataset_root_path '/root/tmp/speech_commands/bg-10.0-doing_the_dishes-weak' \
-    --strong_aug_dataset_root_path '/root/tmp/speech_commands/bg-10.0-doing_the_dishes-strong' \
-    --batch_size 32 --severity_level 10.0 --max_epoch 50 --interval 50 --lr '2.5e-4'\
+python -m CoNMix.speech-commands.STDA \
+    --weak_aug_dataset_root_path '/root/tmp/speech_commands/doing_the_dishes-bg/10.0-doing_the_dishes-weak' \
+    --strong_aug_dataset_root_path '/root/tmp/speech_commands/doing_the_dishes-bg/10.0-doing_the_dishes-strong' \
+    --batch_size 32 --severity_level 10.0 --max_epoch 50 --interval 50 --lr '1e-4'\
     --modelF_weight_path './result/speech-commands/CoNMix/pre_train/speech-commands_best_modelF.pt' \
     --modelB_weight_path './result/speech-commands/CoNMix/pre_train/speech-commands_best_modelB.pt' \
     --modelC_weight_path './result/speech-commands/CoNMix/pre_train/speech-commands_best_modelC.pt' \

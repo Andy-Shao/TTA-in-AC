@@ -76,8 +76,6 @@ if __name__ == '__main__':
             a_transforms.MelSpectrogram(sample_rate=sample_rate, n_fft=1024, n_mels=n_mels, hop_length=hop_length),
             a_transforms.AmplitudeToDB(top_db=80),
             ExpandChannel(out_channel=3),
-            # v_transforms.Resize((256, 256), antialias=False),
-            # v_transforms.RandomCrop(224),
             v_transforms.Resize((224, 224), antialias=False),
         ])
     store_to(dataset=corrupted_test_dataset, root_path=weak_path, index_file_name=meta_file_name, data_transf=weak_tf)
@@ -105,7 +103,6 @@ if __name__ == '__main__':
                 ExpandChannel(out_channel=3),
                 v_transforms.Resize((256, 256), antialias=False),
                 v_transforms.RandomCrop(224),
-                # v_transforms.Resize((224, 224), antialias=False),
             ])
         store_to(dataset=corrupted_test_dataset, root_path=strong_path, index_file_name=meta_file_name, data_transf=strong_tf)
         strong_aug_dataset = load_from(root_path=strong_path, index_file_name=meta_file_name)

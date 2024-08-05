@@ -173,7 +173,7 @@ if __name__ == '__main__':
                     ttl_corr += (preds == labels).sum().cpu().item()
                     ttl_size += labels.shape[0]
                 curr_accu = ttl_corr / ttl_size * 100.
-                wandb_run.log({'Train/Accuracy': ttl_train_corr/ttl_train_num*100.})
+                wandb_run.log({'Train/Accuracy': ttl_train_corr/ttl_train_num*100.}, step=iter//interval)
                 wandb_run.log({'Val/Accuracy': curr_accu}, step=iter//interval)
                 wandb_run.log({'Train/classifier_loss': ttl_train_loss/ttl_train_num}, step=iter//interval)
                 if curr_accu > best_accuracy:
