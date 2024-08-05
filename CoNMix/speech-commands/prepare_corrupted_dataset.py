@@ -75,12 +75,10 @@ if __name__ == '__main__':
         weak_tf = Components(transforms=[
             a_transforms.MelSpectrogram(sample_rate=sample_rate, n_fft=1024, n_mels=n_mels, hop_length=hop_length),
             a_transforms.AmplitudeToDB(top_db=80),
-            # a_transforms.FrequencyMasking(freq_mask_param=.02),
-            # a_transforms.TimeMasking(time_mask_param=.02),
             ExpandChannel(out_channel=3),
-            v_transforms.Resize((256, 256), antialias=False),
-            v_transforms.RandomCrop(224),
-            # v_transforms.Resize((224, 224), antialias=False),
+            # v_transforms.Resize((256, 256), antialias=False),
+            # v_transforms.RandomCrop(224),
+            v_transforms.Resize((224, 224), antialias=False),
         ])
     store_to(dataset=corrupted_test_dataset, root_path=weak_path, index_file_name=meta_file_name, data_transf=weak_tf)
     weak_aug_dataset = load_from(root_path=weak_path, index_file_name=meta_file_name)
