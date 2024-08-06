@@ -10,13 +10,14 @@ from torch.utils.data import Dataset, DataLoader
 from torchaudio import transforms as a_transforms
 from torchvision import transforms as v_transforms
 import torch.nn as nn
+from torch import optim
 
 from lib.toolkit import print_argparse, cal_norm
 from lib.wavUtils import DoNothing, Components
 from CoNMix.lib.prepare_dataset import ExpandChannel, Dataset_Idx
 from lib.datasets import load_from
 from CoNMix.analysis import load_model, load_origin_stat
-from CoNMix.STDA import build_optim, lr_scheduler, inference
+from CoNMix.STDA import build_optim, inference, lr_scheduler
 from CoNMix.lib.loss import SoftCrossEntropyLoss, soft_CE, Entropy
 from CoNMix.lib.plr import plr
 
@@ -341,7 +342,7 @@ if __name__ == "__main__":
 
             if iter % interval_iter == 0 or iter == max_iter:
                 if args.sdlr:
-                    lr_scheduler(optimizer, iter_num=iter, max_iter=max_iter)
+                    lr_scheduler(optimizer, iter_num=iter, max_iter=max_iter, step=iter//interval_iter, gamma=50)
 
                 accuracy = inference(modelF=modelF, modelB=modelB, modelC=modelC, data_loader=test_loader, device=args.device)
                 if accuracy > max_accu:

@@ -42,7 +42,7 @@ export BASE_PATH='/root'
 python -m CoNMix.speech-commands.STDA \
     --weak_aug_dataset_root_path $BASE_PATH'/tmp/speech_commands/running_tap-bg/10.0-running_tap-weak' \
     --strong_aug_dataset_root_path $BASE_PATH'/tmp/speech_commands/running_tap-bg/10.0-running_tap-strong' \
-    --batch_size 32 --test_batch_size 96 --severity_level 10.0 --max_epoch 50 --interval 50 --lr '5e-5'\
+    --batch_size 32 --test_batch_size 96 --severity_level 10.0 --max_epoch 50 --interval 50 --lr '1e-4'\
     --modelF_weight_path './result/speech-commands/CoNMix/pre_train/speech-commands_best_modelF.pt' \
     --modelB_weight_path './result/speech-commands/CoNMix/pre_train/speech-commands_best_modelB.pt' \
     --modelC_weight_path './result/speech-commands/CoNMix/pre_train/speech-commands_best_modelC.pt' \
