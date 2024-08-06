@@ -275,11 +275,13 @@ if __name__ == "__main__":
             if args.cls_par > 0:
                 with torch.no_grad():
                     pred = mem_label[idxes]
+                if iter == 1:
+                    cls_softmax_line = nn.Softmax(dim=1)
+                    clss_loss_fn = nn.CrossEntropyLoss().to(device=args.device)
                 # classifier_loss = SoftCrossEntropyLoss(outputs[0:batch_size], pred)
                 # classifier_loss = args.cls_par*torch.mean(classifier_loss)
-                cls_outputs = nn.functional.softmax(outputs[0:batch_size])
-                classifier_loss = args.cls_par*nn.functional.cross_entropy(cls_outputs, pred)
-                
+                cls_outputs = cls_softmax_line(outputs[0:batch_size])
+                classifier_loss = clss_loss_fn(cls_outputs, pred)
             else:
                 classifier_loss = torch.tensor(.0).cuda()
 
