@@ -65,6 +65,7 @@ def obtain_label(loader: DataLoader, modelF: nn.Module, modelB: nn.Module, model
     cls_count = np.eye(K)[predict].sum(axis=0) # total number of prediction per class
     labelset = np.where(cls_count >= args.threshold) ### index of classes for which same sampeled have been detected # returns tuple
     labelset = labelset[0] # index of classes for which samples per class greater than threshold
+    # labelset == [0, 1, 2, ..., 29]
     
     dd = all_feature @ initc[labelset].T # <g_t, initc>
     dd = np.exp(dd) # amplify difference
@@ -276,13 +277,11 @@ if __name__ == "__main__":
             if args.cls_par > 0:
                 with torch.no_grad():
                     pred = mem_label[idxes]
-                if iter == 1:
-                    cls_softmax_line = nn.Softmax(dim=1)
-                    clss_loss_fn = nn.CrossEntropyLoss().to(device=args.device)
                 # classifier_loss = SoftCrossEntropyLoss(outputs[0:batch_size], pred)
-                # classifier_loss = args.cls_par*torch.mean(classifier_loss)
-                cls_outputs = cls_softmax_line(outputs[0:batch_size])
-                classifier_loss = clss_loss_fn(cls_outputs, pred)
+                # classifier_loss = torch.mean(classifier_loss)
+                softmax_output = nn.Softmax(dim=1)(outputs[0:batch_size])
+                classifier_loss = nn.CrossEntropyLoss()(softmax_output, pred)
+                classifier_loss = args.cls_par * classifier_loss
             else:
                 classifier_loss = torch.tensor(.0).cuda()
 
@@ -342,7 +341,7 @@ if __name__ == "__main__":
 
             if iter % interval_iter == 0 or iter == max_iter:
                 if args.sdlr:
-                    lr_scheduler(optimizer, iter_num=iter, max_iter=max_iter, step=iter//interval_iter, gamma=50)
+                    lr_scheduler(optimizer, iter_num=iter, max_iter=max_iter, gamma=30)
 
                 accuracy = inference(modelF=modelF, modelB=modelB, modelC=modelC, data_loader=test_loader, device=args.device)
                 if accuracy > max_accu:
