@@ -2,11 +2,18 @@ import argparse
 import os
 import random
 import numpy as np
+import wandb
+from tqdm import tqdm
 
 import torch 
+from torch import optim
+from torch import nn
 
 from lib.toolkit import print_argparse, count_ttl_params
 from ttt.lib.test_helpers import build_sc_model
+from ttt.lib.speech_commands.prepare_dataset import prepare_train_data, train_transforms, val_transforms
+from ttt.lib.prepare_dataset import TimeShiftOps
+from ttt.lib.time_shift_rotation import rotate_batch
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='SHOT')
@@ -40,10 +47,10 @@ if __name__ == '__main__':
         pass
 
     if args.dataset == 'speech-commands':
-        args.class_num = 10
+        args.class_num = 30
         args.sample_rate = 16000
         args.n_mels = 64
-        args.final_full_line_in = 384
+        args.final_full_line_in = 256
         args.hop_length = 253
         args.ssh_class_num = 3
     else:
@@ -56,8 +63,76 @@ if __name__ == '__main__':
     torch.cuda.manual_seed(args.seed)
     print_argparse(args=args)
     # Finished args prepare
-################################################################
+    #############################################################
 
     net, ext, head, ssh = build_sc_model(args=args)
     print(f'net weight number is: {count_ttl_params(net)}, ssh weight number is: {count_ttl_params(ssh)}, ext weight number is: {count_ttl_params(ext)}')
     print((f'total weight number is: {count_ttl_params(net) + count_ttl_params(head)}'))
+    train_dataset, train_loader = prepare_train_data(args=args)
+    tran_transfs = train_transforms(args=args)
+    val_dataset, val_loader = prepare_train_data(args=args, mode='validation')
+    val_transfs = val_transforms(args=args)
+
+    parameters = list(net.parameters()) + list(head.parameters())
+    optimizer = optim.SGD(params=parameters, lr=args.lr, momentum=.9, weight_decay=5e-4)
+    """
+    # Assuming optimizer uses lr = 0.05 for all groups
+    # lr = 0.05     if epoch < 30
+    # lr = 0.005    if 30 <= epoch < 80
+    # lr = 0.0005   if epoch >= 80
+    scheduler = MultiStepLR(optimizer, milestones=[30,80], gamma=0.1)
+    """
+    scheduler = optim.lr_scheduler.MultiStepLR(optimizer=optimizer, milestones=[args.milestone_1, args.milestone_2], gamma=.1, last_epoch=-1)
+    criterion = nn.CrossEntropyLoss().to(device=args.device)
+
+    wandb_run = wandb.init(
+        project=f'Audio Classification Pre-Training ({args.dataset})', name=f'TTT', mode='online' if args.wandb else 'disabled',
+        config=args, tags=['Audio Classification', args.dataset, 'Test-time Adaptation'])
+    
+    for epoch in range(args.max_epoch):
+        net.train()
+        ssh.train()
+        ttl_corr = 0
+        ttl_size = 0
+        ttl_loss = 0
+        ttl_ssh_corr = 0
+        ttl_ssh_size = 0
+        print(f'{epoch+1}/{args.max_epoch} training...')
+        for features, labels in tqdm(train_loader):
+            optimizer.zero_grad()
+            features_cls = tran_transfs[TimeShiftOps.ORIGIN].transf(features).to(args.device)
+            labels_cls = labels.to(args.device)
+            outputs_cls = net(features_cls)
+            loss = criterion(outputs_cls, labels_cls)
+            _, preds_cls = torch.max(outputs_cls.detach(), dim=1)
+            ttl_corr += (preds_cls == labels_cls).sum().cpu().item()
+            ttl_size += labels_cls.size(0)
+            ttl_loss += loss.cpu().item()
+
+            if args.shared is not None:
+                features_ssh, labels_ssh = rotate_batch(features, args.rotation_type, data_transforms=tran_transfs)
+                features_ssh, labels_ssh = features_ssh.to(args.device), labels_ssh.to(args.device)
+                outputs_ssh = ssh(features_ssh)
+                loss_ssh = criterion(outputs_ssh, labels_ssh)
+                loss += loss_ssh
+                _, preds_ssh = torch.max(outputs_ssh.detach(), dim=1)
+                ttl_ssh_corr += (preds_ssh == labels_ssh).sum().cpu().item()
+                ttl_ssh_size += labels_ssh.size(0)
+            loss.backward()
+            optimizer.step()
+        scheduler.step()
+        wandb.log({'Train/Accuracy':ttl_corr/ttl_size*100., 'Train/classifier_loss':ttl_loss/ttl_size}, step=epoch)
+        net.eval()
+        ssh.eval()
+        ttl_corr = 0
+        ttl_size = 0
+        print(f'{epoch+1}/{args.max_epoch} validating...')
+        for features, labels in tqdm(val_loader):
+            features_cls = val_transfs[TimeShiftOps.ORIGIN].transf(features).to(args.device)
+            labels_cls = labels.to(args.device)
+            with torch.no_grad():
+                outputs_cls = net(features_cls)
+            _, preds_cls = torch.max(outputs_cls.detach(), dim=1)
+            ttl_corr += (preds_cls == labels_cls).sum().cpu().item()
+            ttl_size += labels.shape[0]
+        wandb.log({'Val/Accuracy':ttl_corr/ttl_size*100.}, step=epoch)
