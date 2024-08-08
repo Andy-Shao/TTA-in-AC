@@ -11,7 +11,7 @@ from torch import nn
 
 from lib.toolkit import print_argparse, count_ttl_params
 from ttt.lib.test_helpers import build_sc_model
-from ttt.lib.speech_commands.prepare_dataset import prepare_train_data, train_transforms, val_transforms
+from ttt.lib.speech_commands.prepare_dataset import prepare_data, train_transforms, val_transforms
 from ttt.lib.prepare_dataset import TimeShiftOps
 from ttt.lib.time_shift_rotation import rotate_batch
 
@@ -68,9 +68,9 @@ if __name__ == '__main__':
     net, ext, head, ssh = build_sc_model(args=args)
     print(f'net weight number is: {count_ttl_params(net)}, ssh weight number is: {count_ttl_params(ssh)}, ext weight number is: {count_ttl_params(ext)}')
     print((f'total weight number is: {count_ttl_params(net) + count_ttl_params(head)}'))
-    train_dataset, train_loader = prepare_train_data(args=args)
+    train_dataset, train_loader = prepare_data(args=args, mode='train')
     tran_transfs = train_transforms(args=args)
-    val_dataset, val_loader = prepare_train_data(args=args, mode='validation')
+    val_dataset, val_loader = prepare_data(args=args, mode='validation')
     val_transfs = val_transforms(args=args)
 
     parameters = list(net.parameters()) + list(head.parameters())
@@ -89,6 +89,7 @@ if __name__ == '__main__':
         project=f'Audio Classification Pre-Training ({args.dataset})', name=f'TTT', mode='online' if args.wandb else 'disabled',
         config=args, tags=['Audio Classification', args.dataset, 'Test-time Adaptation'])
     
+    max_val_accu = 0.
     for epoch in range(args.max_epoch):
         net.train()
         ssh.train()
@@ -135,4 +136,9 @@ if __name__ == '__main__':
             _, preds_cls = torch.max(outputs_cls.detach(), dim=1)
             ttl_corr += (preds_cls == labels_cls).sum().cpu().item()
             ttl_size += labels.shape[0]
-        wandb.log({'Val/Accuracy':ttl_corr/ttl_size*100.}, step=epoch)
+        val_accu = ttl_corr/ttl_size*100.
+        wandb.log({'Val/Accuracy':val_accu}, step=epoch)
+        if max_val_accu < val_accu:
+            max_val_accu = val_accu
+            state = {'net': net.state_dict(), 'head': head.state_dict(), 'optimizer': optimizer.state_dict()}
+            torch.save(state, os.path.join(args.output_full_path, args.output_weight_name))

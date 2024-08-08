@@ -8,7 +8,7 @@ from lib.scDataset import SpeechCommandsDataset
 from lib.toolkit import BatchTransform
 from ttt.lib.prepare_dataset import TimeShiftOps
 
-def prepare_train_data(args: argparse.Namespace, data_transforms=None, mode='train') -> tuple[Dataset, DataLoader]:
+def prepare_data(args: argparse.Namespace, data_transforms=None, mode='train') -> tuple[Dataset, DataLoader]:
     if data_transforms is None:
         data_transforms = pad_trunc(max_ms=1000, sample_rate=args.sample_rate)
     dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode=mode, include_rate=False, data_tfs=data_transforms)
