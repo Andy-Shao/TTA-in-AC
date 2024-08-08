@@ -12,10 +12,18 @@ import torch.optim as optim
 
 from lib.toolkit import print_argparse, count_ttl_params, cal_norm
 from lib.scDataset import BackgroundNoiseDataset, SpeechCommandsDataset
-from lib.wavUtils import Components, pad_trunc, BackgroundNoise
+from lib.wavUtils import Components, pad_trunc, BackgroundNoise, GuassianNoise
 from lib.models import WavClassifier, ElasticRestNet50
 from lib.tentAdapt import get_params, TentAdapt
+from lib.normAdapt import NormAdapt
 from CoNMix.lib.prepare_dataset import ExpandChannel
+
+def find_noise(noise_type: str) -> torch.Tensor:
+    background_noise_dataset = BackgroundNoiseDataset(root_path=args.dataset_root_path)
+    for _noise_type, noise, _ in background_noise_dataset:
+        if noise_type == _noise_type:
+            return noise
+    return None
 
 def cal_normalize(tf_array: list, args: argparse.Namespace) -> tuple:
     batch_size = 256
@@ -58,17 +66,14 @@ if __name__ == '__main__':
     ap.add_argument('--dataset_root_path', type=str)
     ap.add_argument('--severity_level', default=1., type=float)
     ap.add_argument('--output_csv_name', type=str, default='accuracy_record.csv')
-    # ap.add_argument('--test_mean', type=str, default='0., 0., 0.')
-    # ap.add_argument('--test_std', type=str, default='1., 1., 1.')
-    # ap.add_argument('--noise_type', type=str, choices=['doing_the_dishes', 'dude_miaowing', 'exercise_bike', 'pink_noise', 'running_tap', 'white_noise'])
-    # ap.add_argument('--corrupted_test_mean', type=str, default='0., 0., 0.')
-    # ap.add_argument('--corrupted_test_std', type=str, default='1., 1., 1.')
+    ap.add_argument('--corruptions', type=str)
     ap.add_argument('--batch_size', type=int, default=64)
     ap.add_argument('--tent_batch_size', type=int, default=200)
-    # ap.add_argument('--cal_norm', action='store_true')
     ap.add_argument('--normalized', action='store_true')
 
     args = ap.parse_args()
+    args.corruption_types = ['doing_the_dishes', 'dude_miaowing', 'exercise_bike', 'pink_noise', 'running_tap', 'white_noise', 'gaussian_noise']
+    args.corruptions = args.corruptions.strip().split(sep=',')
     args.device = 'cuda' if torch.cuda.is_available() else 'cpu'
     args.class_num = 30
     args.output_full_path = os.path.join(args.output_path, args.dataset, 'tent', 'analysis')
@@ -80,7 +85,6 @@ if __name__ == '__main__':
     print_argparse(args=args)
 
     sample_rate = 16000
-    background_noise_dataset = BackgroundNoiseDataset(root_path=args.dataset_root_path)
     if args.model == 'cnn':
         n_mels = 64
         data_transforms = Components(transforms=[
@@ -120,24 +124,44 @@ if __name__ == '__main__':
     print(f'Original test accuracy: {test_accuracy:.2f}%')
     records.loc[len(records)] = [args.dataset, args.model, 'N/A', 'N/A', test_accuracy, 100. - test_accuracy, args.severity_level, number_of_weight]
 
-    for noise_type, noise, _ in background_noise_dataset:
+    for noise_type in args.corruptions:
+        assert noise_type in args.corruption_types, 'No support'
         if args.model == 'cnn':
-            corrupted_tf = Components(transforms=[
-                pad_trunc(max_ms=1000, sample_rate=sample_rate),
-                BackgroundNoise(noise_level=args.severity_level, noise=noise, is_random=True),
+            if noise_type == 'gaussian_noise':
+                tf_array = [
+                    pad_trunc(max_ms=1000, sample_rate=sample_rate),
+                    GuassianNoise(noise_level=args.severity_level),
+                ]
+            else:
+                noise = find_noise(noise_type)
+                tf_array = [
+                    pad_trunc(max_ms=1000, sample_rate=sample_rate),
+                    BackgroundNoise(noise_level=args.severity_level, noise=noise, is_random=True),
+                ]
+            tf_array.extend([
                 a_transforms.MelSpectrogram(sample_rate=sample_rate, n_fft=1024, n_mels=n_mels),
                 a_transforms.AmplitudeToDB(top_db=80),
             ])
+            corrupted_tf = Components(transforms=tf_array)
         elif args.model == 'restnet50':
-            tf_array = [
-                pad_trunc(max_ms=1000, sample_rate=sample_rate),
-                BackgroundNoise(noise_level=args.severity_level, noise=noise, is_random=True),
-                a_transforms.MelSpectrogram(sample_rate=sample_rate, n_fft=1024, n_mels=n_mels),
+            if noise_type == 'gaussian_noise':
+                tf_array = [
+                    pad_trunc(max_ms=1000, sample_rate=sample_rate),
+                    GuassianNoise(noise_level=args.severity_level),
+                ]
+            else:
+                noise = find_noise(noise_type)
+                tf_array = [
+                    pad_trunc(max_ms=1000, sample_rate=sample_rate),
+                    BackgroundNoise(noise_level=args.severity_level, noise=noise, is_random=True),
+                ]
+            tf_array.extend([
+                a_transforms.MelSpectrogram(sample_rate=sample_rate, n_fft=1024, n_mels=n_mels, hop_length=hop_length),
                 a_transforms.AmplitudeToDB(top_db=80),
                 ExpandChannel(out_channel=3),
                 v_transforms.Resize((224, 224), antialias=False),
                 v_transforms.RandomCrop(224),
-            ]
+            ])
             if args.normalized:
                 print('calculate mean and standard deviation')
                 test_mean, test_std = cal_normalize(tf_array=tf_array, args=args)
@@ -159,7 +183,7 @@ if __name__ == '__main__':
         number_of_weight = count_ttl_params(model=model)
         corrupted_loader = DataLoader(dataset=corrupted_dataset, batch_size=args.tent_batch_size, shuffle=False, drop_last=False)
         tent_params, tent_param_names = get_params(model=model)
-        tent_optimizer = optim.Adam(params=tent_params, lr=1e-6, betas=(.9,.99), weight_decay=0.)
+        tent_optimizer = optim.Adam(params=tent_params, lr=1e-3, betas=(.9,.99), weight_decay=0.)
         tent_model = TentAdapt(model=model, optimizer=tent_optimizer, steps=1, resetable=False).to(device=args.device)
         test_accuracy = inference(model=tent_model, data_loader=corrupted_loader, args=args)
         print(f'{noise_type} tent adaptation test accuracy: {test_accuracy:.2f}%')
@@ -169,7 +193,14 @@ if __name__ == '__main__':
         tent_params = None
         tent_param_names = None
 
-        break
-        
+        print(f'{noise_type} norm test')
+        if args.model == 'restnet50':
+            corrupted_loader = DataLoader(dataset=corrupted_dataset, batch_size=100, shuffle=False, drop_last=False)
+        model = load_model(args)
+        number_of_weight = count_ttl_params(model=model)
+        norm_model = NormAdapt(model=model, momentum=.9).to(device=args.device)
+        test_accuracy = inference(model=norm_model, data_loader=corrupted_loader, args=args)
+        print(f'{noise_type} norm adaptation test accuracy:{test_accuracy:.2f}%')
+        records.loc[len(records)] = [args.dataset, args.model, 'Norm Adaptation' if not args.normalized else 'Norm Adaptation + normalized', noise_type, test_accuracy, 100. - test_accuracy, args.severity_level, number_of_weight]
 
     records.to_csv(os.path.join(args.output_full_path, args.output_csv_name))
