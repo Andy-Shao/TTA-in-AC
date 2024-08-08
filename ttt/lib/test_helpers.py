@@ -8,6 +8,9 @@ from torch.utils.data import DataLoader
 from lib.toolkit import BatchTransform
 from ttt.lib.prepare_dataset import TimeShiftOps
 
+def build_sc_model(args: argparse.Namespace) -> tuple[nn.Module, nn.Module, nn.Module, nn.Module]:
+    return build_mnist_model(args)
+
 def build_mnist_model(args: argparse.Namespace) -> tuple[nn.Module, nn.Module, nn.Module, nn.Module]:
     from ttt.models.RestNet import ResNetMNIST as ResNet
     from ttt.models.SSHead import ExtractorHead
