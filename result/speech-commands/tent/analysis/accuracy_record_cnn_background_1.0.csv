@@ -1,0 +1,11 @@
+,dataset,algorithm,tta-operation,corruption,accuracy,error,severity level,number of weight
+0,speech-commands,cnn,N/A,N/A,63.23335771762984,36.76664228237016,1.0,26704
+1,speech-commands,cnn,N/A,doing_the_dishes,21.653255303584494,78.3467446964155,1.0,26704
+2,speech-commands,cnn,Tent Adaptation,doing_the_dishes,9.568397951719094,90.43160204828091,1.0,26704
+3,speech-commands,cnn,Norm Adaptation,doing_the_dishes,10.241404535479152,89.75859546452085,1.0,26704
+4,speech-commands,cnn,N/A,exercise_bike,18.84418434528164,81.15581565471837,1.0,26704
+5,speech-commands,cnn,Tent Adaptation,exercise_bike,10.212143379663496,89.7878566203365,1.0,26704
+6,speech-commands,cnn,Norm Adaptation,exercise_bike,10.35844915874177,89.64155084125824,1.0,26704
+7,speech-commands,cnn,N/A,running_tap,30.065837600585223,69.93416239941477,1.0,26704
+8,speech-commands,cnn,Tent Adaptation,running_tap,12.713972201901974,87.28602779809802,1.0,26704
+9,speech-commands,cnn,Norm Adaptation,running_tap,12.670080468178494,87.3299195318215,1.0,26704
