@@ -30,11 +30,6 @@ if __name__ == '__main__':
     ap.add_argument('--output_path', type=str, default='./result')
     ap.add_argument('--output_csv_name', type=str, default='training_records.csv')
     ap.add_argument('--output_weight_name', type=str, default='model_weights.pt')
-    ap.add_argument('--train_mean', type=str, default='0.,0.,0.')
-    ap.add_argument('--train_std', type=str, default='1.,1.,1.')
-    ap.add_argument('--val_mean', type=str, default='0.,0.,0.')
-    ap.add_argument('--val_std', type=str, default='1.,1.,1.')
-    ap.add_argument('--cal_norm', action='store_true')
     ap.add_argument('--normalized', action='store_true')
     ap.add_argument('--seed', type=int, default=2024)
 
@@ -77,7 +72,7 @@ if __name__ == '__main__':
     elif args.model == 'restnet50':
         n_mels=129
         hop_length=125
-        train_tf = Components(transforms=[
+        train_tf = [
             pad_trunc(max_ms=1000, sample_rate=sample_rate),
             time_shift(shift_limit=.25, is_bidirection=True),
             a_transforms.MelSpectrogram(sample_rate=sample_rate, n_fft=1024, n_mels=n_mels, hop_length=hop_length),
@@ -88,18 +83,28 @@ if __name__ == '__main__':
             v_transforms.Resize((256, 256), antialias=False),
             v_transforms.RandomCrop(224),
             v_transforms.RandomHorizontalFlip(),
-            v_transforms.Normalize(mean=parse_mean_std(args.train_mean), std=parse_mean_std(args.train_std)) if args.normalized else DoNothing()
-        ])
-        val_tf = Components(transforms=[
+        ]
+        if args.normalized:
+            print('calculate the train mean and standard deviation')
+            train_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='train', include_rate=False, data_tfs=Components(transforms=train_tf))
+            train_loader = DataLoader(dataset=train_dataset, batch_size=256, shuffle=False, drop_last=True)
+            train_mean, train_std = cal_norm(loader=train_loader)
+            train_tf.append(v_transforms.Normalize(mean=train_mean, std=train_std))
+        train_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='train', include_rate=False, data_tfs=Components(transforms=train_tf))
+        val_tf = [
             pad_trunc(max_ms=1000, sample_rate=sample_rate),
             a_transforms.MelSpectrogram(sample_rate=sample_rate, n_fft=1024, n_mels=n_mels, hop_length=hop_length),
             a_transforms.AmplitudeToDB(top_db=80),
             ExpandChannel(out_channel=3),
             v_transforms.Resize((224, 224), antialias=False),
-            v_transforms.Normalize(mean=parse_mean_std(args.val_mean), std=parse_mean_std(args.val_std)) if args.normalized else DoNothing()
-        ])
-        train_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='train', include_rate=False, data_tfs=train_tf)
-        val_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='validation', include_rate=False, data_tfs=val_tf)
+        ]
+        if args.normalized:
+            print('calculate the validation mean and standard deviation')
+            val_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='validation', include_rate=False, data_tfs=Components(transforms=val_tf))
+            val_loader = DataLoader(dataset=val_dataset, batch_size=256, shuffle=False, drop_last=True)
+            val_mean, val_std = cal_norm(loader=val_loader)
+            val_tf.append(v_transforms.Normalize(mean=val_mean, std=val_std))
+        val_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='validation', include_rate=False, data_tfs=Components(transforms=val_tf))
         model = ElasticRestNet50(class_num=class_num).to(device=args.device)
     else:
         raise Exception('No support')
@@ -109,14 +114,6 @@ if __name__ == '__main__':
     print(f'train dataset size: {len(train_dataset)}, number of batches: {len(train_loader)}')
     print(f'val dataset size: {len(val_dataset)}, number of batches: {len(val_loader)}')
     store_model_structure_to_txt(model=model, output_path=os.path.join(args.output_full_path, f'{args.model}.txt'))
-
-    if args.cal_norm:
-        print('calculate mean and standard deviation')
-        mean, std = cal_norm(loader=train_loader)
-        print(f'train: mean:{mean}, std:{std}')
-        mean, std = cal_norm(loader=val_loader)
-        print(f'val: mean:{mean}, std:{std}')
-        exit()
 
     wandb_run = wandb.init(
         project=f'Audio Classification Pre-Training ({args.dataset})', name=f'Tent/Norm {args.model}', mode='online' if args.wandb else 'disabled',
