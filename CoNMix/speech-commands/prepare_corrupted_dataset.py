@@ -20,7 +20,7 @@ def find_background_noise(args: argparse.Namespace) -> tuple[str, torch.Tensor]:
 
 if __name__ == '__main__':
     ap = argparse.ArgumentParser()
-    ap.add_argument('--dataset', type=str, default='speech-commands', choices=['speech-commands'])
+    ap.add_argument('--dataset', type=str, default='speech-commands', choices=['speech-commands', 'speech-commands-purity'])
     ap.add_argument('--dataset_root_path', type=str)
     ap.add_argument('--output_path', type=str, default='./result')
     ap.add_argument('--data_type', type=str, choices=['raw', 'final'], default='final')
@@ -44,6 +44,12 @@ if __name__ == '__main__':
     n_mels=129
     hop_length=125
     meta_file_name = 'speech_commands_meta.csv'
+    if args.dataset == 'speech-commands':
+        dataset_type = 'all'
+    elif args.dataset == 'speech-commands-purity':
+        dataset_type = 'commands'
+    else:
+        raise Exception('No support')
 
     if args.corruption == 'gaussian_noise':
         is_background_noise = False
@@ -63,7 +69,7 @@ if __name__ == '__main__':
     print(f'Generate the corrupted dataset by {noise_type}')
     output_path = f'{args.output_path}-{noise_type}'
     
-    corrupted_test_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='test', include_rate=False, data_tfs=corrupted_test_tf)
+    corrupted_test_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='test', include_rate=False, data_tfs=corrupted_test_tf, data_type=dataset_type)
     store_to(dataset=corrupted_test_dataset, root_path=output_path, index_file_name=meta_file_name)
     corrupted_test_dataset = load_from(root_path=output_path, index_file_name=meta_file_name)
 

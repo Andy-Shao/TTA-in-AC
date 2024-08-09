@@ -86,7 +86,7 @@ After that open and run the `analysis_exhibition.ipynb` to demonstrate the analy
   
 [Audio MNIST Link](https://github.com/soerenab/AudioMNIST/tree/master)
 
-### Speech Commands Dataset
+### Speech Commands Dataset v0.01
 The dataset (1.4 GB) has 65,000 one-second long utterances of 30 short words by thousands of different people, contributed by public members through the AIY website. This is a set of one-second .wav audio files, each containing a single spoken English word.
 
 In both versions, ten of them are used as commands by convention: "Yes", "No", "Up", "Down", "Left",
