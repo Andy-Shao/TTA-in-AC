@@ -105,8 +105,8 @@ def obtain_label(loader: DataLoader, modelF: nn.Module, modelB: nn.Module, model
 def build_dataset(args: argparse.Namespace) -> tuple[Dataset, Dataset, Dataset]:
     max_ms = 1000
     sample_rate = 16000
-    n_mels=129
-    hop_length=125
+    n_mels=81
+    hop_length=200
     meta_file_name = 'speech_commands_meta.csv'
 
     # test dataset build

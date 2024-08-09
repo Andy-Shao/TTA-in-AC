@@ -1,4 +1,4 @@
-export BASE_PATH='/home/andyshao'
+export BASE_PATH='/root'
 
 # python -m CoNMix.speech-commands.STDA --weak_aug_dataset_root_path '/root/tmp/speech_commands/0.05-gaussian_noise-weak' \
 #     --strong_aug_dataset_root_path '/root/tmp/speech_commands/0.05-gaussian_noise-strong' \

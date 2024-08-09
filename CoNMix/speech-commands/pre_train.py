@@ -83,8 +83,8 @@ if __name__ == '__main__':
     
     max_ms = 1000
     sample_rate = 16000
-    n_mels=129
-    hop_length=125
+    n_mels=81
+    hop_length=200
     tf_array = [
         pad_trunc(max_ms=max_ms, sample_rate=sample_rate),
         time_shift(shift_limit=.25, is_random=True, is_bidirection=True),

@@ -1,5 +1,5 @@
 
-export BASE_PATH='/home/andyshao'
+export BASE_PATH='/root'
 
 # python -m CoNMix.speech-commands.prepare_corrupted_dataset --dataset_root_path '/root/data/speech_commands' \
 #     --output_path '/root/tmp/speech_commands/guassian_noise/0.05' --severity_level 0.05 --corruption 'gaussian_noise' \
