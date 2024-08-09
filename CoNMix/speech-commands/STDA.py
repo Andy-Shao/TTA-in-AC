@@ -17,9 +17,24 @@ from lib.wavUtils import DoNothing, Components
 from CoNMix.lib.prepare_dataset import ExpandChannel, Dataset_Idx
 from lib.datasets import load_from
 from CoNMix.analysis import load_model, load_origin_stat
-from CoNMix.STDA import build_optim, inference, lr_scheduler
+from CoNMix.STDA import build_optim, lr_scheduler
 from CoNMix.lib.loss import SoftCrossEntropyLoss, soft_CE, Entropy
 from CoNMix.lib.plr import plr
+
+def inference(modelF: nn.Module, modelB: nn.Module, modelC: nn.Module, data_loader: DataLoader, device='cpu') -> float:
+    modelF.eval()
+    modelB.eval()
+    modelC.eval()
+    ttl_corr = 0.
+    ttl_size = 0.
+    for features, labels in tqdm(data_loader):
+        features, labels = features.to(device), labels.to(device)
+        with torch.no_grad():
+            outputs = modelC(modelB(modelF(features)))
+        _, preds = torch.max(outputs, dim=1)
+        ttl_corr += (preds == labels).sum().cpu().item()
+        ttl_size += labels.shape[0]
+    return ttl_corr / ttl_size * 100.
 
 def obtain_label(loader: DataLoader, modelF: nn.Module, modelB: nn.Module, modelC: nn.Module, args: argparse.Namespace, step:int) -> tuple:
     # Accumulate feat, logint and gt labels
@@ -82,7 +97,7 @@ def obtain_label(loader: DataLoader, modelF: nn.Module, modelB: nn.Module, model
         pred_label = labelset[pred_label]
     
     acc = np.sum(pred_label == all_label.float().numpy()) / len(all_feature)
-    wandb.log({"Accuracy/Pseudo Label Accuracy": acc*100}, step=step, commit=True)
+    wandb.log({"Accuracy/Pseudo Label Accuracy": acc*100}, step=step)
 
     dd = nn.functional.softmax(torch.from_numpy(dd), dim=1)
     return pred_label, all_output.cpu().numpy(), dd.numpy().astype(np.float32), mean_all_output, all_label.cpu().numpy().astype(np.uint16)
@@ -232,13 +247,12 @@ if __name__ == "__main__":
     iter = 0
 
     print('STDA Training Started')
-    max_accu = inference(modelF=modelF, modelB=modelB, modelC=modelC, data_loader=test_loader, device=args.device)
-    wandb.log({'Accuracy/classifier accuracy': max_accu, 'Accuracy/max classifier accuracy': max_accu}, step=0)
     modelF.train()
     modelB.train()
     modelC.train()
-    for epoch in range(1, args.max_epoch+1):
-        print(f'Epoch {epoch}/{args.max_epoch}')
+    max_accu = 0.
+    for epoch in range(args.max_epoch):
+        print(f'Epoch {epoch+1}/{args.max_epoch}')
         ttl_loss = 0.
         ttl_cls_loss = 0.
         ttl_const_loss = 0.
@@ -246,6 +260,7 @@ if __name__ == "__main__":
         ttl_im_loss = 0.
         ttl_num = 0
         epoch_flag = True
+        print('Training...')
         for weak_features, _, idxes in tqdm(weak_test_loader):
             batch_size = weak_features.shape[0]
             if epoch_flag and args.cls_par >= 0:
@@ -350,6 +365,7 @@ if __name__ == "__main__":
                 if args.sdlr:
                     lr_scheduler(optimizer, iter_num=iter, max_iter=max_iter, gamma=30)
 
+        print('Inferecing...')
         accuracy = inference(modelF=modelF, modelB=modelB, modelC=modelC, data_loader=test_loader, device=args.device)
         if accuracy > max_accu:
             max_accu = accuracy
