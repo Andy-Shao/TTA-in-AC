@@ -68,12 +68,12 @@ export BASE_PATH='/home/andyshao'
 python -m CoNMix.speech-commands.STDA \
     --weak_aug_dataset_root_path $BASE_PATH'/tmp/speech_commands_purity/running_tap-bg/1.0-running_tap-weak' \
     --strong_aug_dataset_root_path $BASE_PATH'/tmp/speech_commands_purity/running_tap-bg/1.0-running_tap-strong' \
-    --batch_size 32 --test_batch_size 96 --severity_level 1.0 --max_epoch 100 --interval 30 --lr '1e-4'\
+    --batch_size 32 --test_batch_size 96 --severity_level 1.0 --max_epoch 100 --interval 50 --lr '1e-4'\
     --modelF_weight_path './result/speech-commands-purity/CoNMix/pre_train/speech-commands-purity_best_modelF.pt' \
     --modelB_weight_path './result/speech-commands-purity/CoNMix/pre_train/speech-commands-purity_best_modelB.pt' \
     --modelC_weight_path './result/speech-commands-purity/CoNMix/pre_train/speech-commands-purity_best_modelC.pt' \
     --STDA_modelF_weight_file_name 'speech-commands-purity_modelF-bg-1.0-running_tap.pt' \
     --STDA_modelB_weight_file_name 'speech-commands-purity_modelB-bg-1.0-running_tap.pt' \
     --STDA_modelC_weight_file_name 'speech-commands-purity_modelC-bg-1.0-running_tap.pt' --normalized \
-    --data_type 'final' --const_par 0.2 --fbnm_par 6.0 --cls_par 1.0 --corruption 'running_tap' \
-    --alpha 0.9 --initc_num 1 --dataset 'speech-commands-purity' --wandb
+    --data_type 'final' --const_par 0.2 --fbnm_par 6.0 --cls_par 0.2 --corruption 'running_tap' \
+    --alpha 0.9 --initc_num 1 --dataset 'speech-commands-purity' --cls_mode 'logsoft_nll' --wandb

@@ -185,6 +185,7 @@ if __name__ == "__main__":
 
     ap.add_argument('--threshold', type=int, default=0)
     ap.add_argument('--cls_par', type=float, default=0.2, help='lambda 2 | Pseudo-label loss capable')
+    ap.add_argument('--cls_mode', type=str, default='soft_ce', choices=['logsoft_ce', 'soft_ce', 'logsoft_nll'])
     ap.add_argument('--alpha', type=float, default=0.9)
     ap.add_argument('--const_par', type=float, default=0.2, help='lambda 3')
     ap.add_argument('--ent_par', type=float, default=1.3)
@@ -299,10 +300,16 @@ if __name__ == "__main__":
             if args.cls_par > 0:
                 with torch.no_grad():
                     pred = mem_label[idxes]
-                # classifier_loss = SoftCrossEntropyLoss(outputs[0:batch_size], pred)
-                # classifier_loss = torch.mean(classifier_loss)
-                softmax_output = nn.Softmax(dim=1)(outputs[0:batch_size])
-                classifier_loss = nn.CrossEntropyLoss()(softmax_output, pred)
+                if args.cls_mode == 'logsoft_ce':
+                    classifier_loss = SoftCrossEntropyLoss(outputs[0:batch_size], pred)
+                    classifier_loss = torch.mean(classifier_loss)
+                elif args.cls_mode == 'soft_ce':
+                    softmax_output = nn.Softmax(dim=1)(outputs[0:batch_size])
+                    classifier_loss = nn.CrossEntropyLoss()(softmax_output, pred)
+                elif args.cls_mode == 'logsoft_nll':
+                    softmax_output = nn.LogSoftmax(dim=1)(outputs[0:batch_size])
+                    _, pred = torch.max(pred, dim=1)
+                    classifier_loss = nn.NLLLoss(reduction='mean')(softmax_output, pred)
                 classifier_loss = args.cls_par * classifier_loss
             else:
                 classifier_loss = torch.tensor(.0).cuda()
