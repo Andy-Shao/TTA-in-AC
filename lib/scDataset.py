@@ -15,15 +15,40 @@ class SpeechCommandsDataset(Dataset):
         'stop': 22., 'tree': 23., 'cat': 24., 'go': 25., 'left': 26., 'no': 27., 'sheila': 28., 
         'wow': 29.
     }
+    commands = ['yes', 'no', 'up', 'down', 'left', 'right', 'on', 'off', 'stop', 'go']
+    no_commands = [
+        'zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'bed', 'dog', 'happy',
+        'marvin', 'bird', 'house', 'tree', 'cat', 'sheila', 'wow'
+    ]
 
-    def __init__(self, root_path: str, mode: str, include_rate=True, data_tfs=None) -> None:
+    def __init__(self, root_path: str, mode: str, include_rate=True, data_tfs=None, data_type='all') -> None:
         super().__init__()
         self.root_path = root_path
         assert mode in ['train', 'validation', 'test', 'full', 'test+val'], 'mode type is incorrect'
         self.mode = mode
+        assert data_type in ['all', 'commands', 'no_commands']
+        self.data_type = data_type
         self.include_rate = include_rate
-        self.data_list = self.__cal_data_list__(mode=mode)
+        data_list = self.__cal_data_list__(mode=mode)
+        self.data_list = self.__filter_data_list__(data_list=data_list)
         self.data_tfs = data_tfs
+    
+    def __filter_data_list__(self, data_list:list[str]) -> list[str]:
+        if self.data_type == 'all':
+            return data_list
+        elif self.data_type == 'commands':
+            filter_list = self.commands
+        elif self.data_type == 'no_commands':
+            filter_list = self.no_commands
+        else:
+            raise Exception('No support')
+        new_data_list = []
+        for it in data_list:
+            label = it.strip().split('/')[0]
+            if label in filter_list:
+                new_data_list.append(it)
+        return new_data_list
+
 
     def __cal_data_list__(self, mode: str) -> list[str]:
         if mode == 'validation':
