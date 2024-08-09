@@ -103,6 +103,7 @@ The dataset (1.4 GB) has 65,000 one-second long utterances of 30 short words by 
 |white_noise|[1, 960000]|16000|
 
 [Speech Commands Dataset Link](https://research.google/blog/launching-the-speech-commands-dataset/)
+[Download path](http://download.tensorflow.org/data/speech_commands_v0.01.tar.gz)
 
 ## Code Reference
 + [tent](https://github.com/DequanWang/tent)
