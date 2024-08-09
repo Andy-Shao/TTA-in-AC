@@ -163,37 +163,37 @@ if __name__ == '__main__':
             outputs = None
 
             if iter % interval == 0 or iter == max_iter-1:
-                lr_scheduler(optimizer=optimizer, iter_num=iter, max_iter=max_iter, step=iter//interval)
-
-                modelF.eval()
-                modelB.eval()
-                modelC.eval()
-                ttl_corr = 0
-                ttl_size = 0
-                for features, labels in val_loader:
-                    features, labels = features.to(args.device), labels.to(args.device)
-                    with torch.no_grad():
-                        outputs = modelC(modelB(modelF(features)))
-                        _, preds = torch.max(outputs, dim=1)
-                    ttl_corr += (preds == labels).sum().cpu().item()
-                    ttl_size += labels.shape[0]
-                curr_accu = ttl_corr / ttl_size * 100.
-                wandb_run.log({'Train/Accuracy': ttl_train_corr/ttl_train_num*100.}, step=iter//interval)
-                wandb_run.log({'Val/Accuracy': curr_accu}, step=iter//interval)
-                wandb_run.log({'Train/classifier_loss': ttl_train_loss/ttl_train_num}, step=iter//interval)
-                if curr_accu > best_accuracy:
-                    best_accuracy = curr_accu
-                    best_modelF = modelF.state_dict()
-                    best_modelB = modelB.state_dict()
-                    best_modelC = modelC.state_dict()
-
-                    torch.save(best_modelF, os.path.join(args.full_output_path, f'{args.output_weight_prefix}_best_modelF.pt'))
-                    torch.save(best_modelB, os.path.join(args.full_output_path, f'{args.output_weight_prefix}_best_modelB.pt'))
-                    torch.save(best_modelC, os.path.join(args.full_output_path, f'{args.output_weight_prefix}_best_modelC.pt'))
-                modelF.train()
-                modelB.train()
-                modelC.train()
-                features = None
-                labels = None
-                outputs = None
+                lr_scheduler(optimizer=optimizer, iter_num=iter, max_iter=max_iter, step=epoch)
             iter += 1
+
+        modelF.eval()
+        modelB.eval()
+        modelC.eval()
+        ttl_corr = 0
+        ttl_size = 0
+        for features, labels in val_loader:
+            features, labels = features.to(args.device), labels.to(args.device)
+            with torch.no_grad():
+                outputs = modelC(modelB(modelF(features)))
+                _, preds = torch.max(outputs, dim=1)
+            ttl_corr += (preds == labels).sum().cpu().item()
+            ttl_size += labels.shape[0]
+        curr_accu = ttl_corr / ttl_size * 100.
+        wandb_run.log({'Train/Accuracy': ttl_train_corr/ttl_train_num*100.}, step=epoch)
+        wandb_run.log({'Val/Accuracy': curr_accu}, step=epoch)
+        wandb_run.log({'Train/classifier_loss': ttl_train_loss/ttl_train_num}, step=epoch)
+        if curr_accu > best_accuracy:
+            best_accuracy = curr_accu
+            best_modelF = modelF.state_dict()
+            best_modelB = modelB.state_dict()
+            best_modelC = modelC.state_dict()
+
+            torch.save(best_modelF, os.path.join(args.full_output_path, f'{args.output_weight_prefix}_best_modelF.pt'))
+            torch.save(best_modelB, os.path.join(args.full_output_path, f'{args.output_weight_prefix}_best_modelB.pt'))
+            torch.save(best_modelC, os.path.join(args.full_output_path, f'{args.output_weight_prefix}_best_modelC.pt'))
+        modelF.train()
+        modelB.train()
+        modelC.train()
+        features = None
+        labels = None
+        outputs = None

@@ -245,15 +245,17 @@ if __name__ == "__main__":
         ttl_fbnm_loss = 0.
         ttl_im_loss = 0.
         ttl_num = 0
+        epoch_flag = True
         for weak_features, _, idxes in tqdm(weak_test_loader):
             batch_size = weak_features.shape[0]
-            if iter % interval_iter == 0 and args.cls_par >= 0:
+            if epoch_flag and args.cls_par >= 0:
+                epoch_flag = False
                 modelF.eval()
                 modelB.eval()
                 modelC.eval()
                 # print('Starting to find Pseudo Labels! May take a while :)')
                 # test loader same as target but has 3*batch_size compared to target and train
-                mem_label, soft_output, dd, mean_all_output, actual_label = obtain_label(loader=test_loader, modelF=modelF, modelB=modelB, modelC=modelC, args=args, step=iter // interval_iter)
+                mem_label, soft_output, dd, mean_all_output, actual_label = obtain_label(loader=test_loader, modelF=modelF, modelB=modelB, modelC=modelC, args=args, step=epoch)
 
                 if args.plr:
                     if iter == 0:
@@ -344,24 +346,24 @@ if __name__ == "__main__":
             ttl_im_loss += im_loss.item()
             ttl_num += weak_features.shape[0]
 
-            if iter % interval_iter == 0 or iter == max_iter:
+            if iter % interval_iter == 0:
                 if args.sdlr:
                     lr_scheduler(optimizer, iter_num=iter, max_iter=max_iter, gamma=30)
 
-                accuracy = inference(modelF=modelF, modelB=modelB, modelC=modelC, data_loader=test_loader, device=args.device)
-                if accuracy > max_accu:
-                    max_accu = accuracy
-                    torch.save(modelF.state_dict(), os.path.join(args.full_output_path, args.STDA_modelF_weight_file_name))
-                    torch.save(modelB.state_dict(), os.path.join(args.full_output_path, args.STDA_modelB_weight_file_name))
-                    torch.save(modelC.state_dict(), os.path.join(args.full_output_path, args.STDA_modelC_weight_file_name))
-                wandb.log({'Accuracy/classifier accuracy': accuracy, 'Accuracy/max classifier accuracy': max_accu}, step=iter // interval_iter)
-                wandb.log({
-                    "LOSS/total loss":ttl_loss / ttl_num * 100., 
-                    "LOSS/Pseudo-label cross-entorpy loss":ttl_cls_loss / ttl_num * 100., 
-                    "LOSS/consistency loss":ttl_const_loss / ttl_num * 100., 
-                    "LOSS/Nuclear-norm Maximization loss":ttl_fbnm_loss / ttl_num * 100.,
-                    "LOSS/IM loss":ttl_im_loss / ttl_num * 100.,
-                }, step=iter // interval_iter)
-                modelF.train()
-                modelB.train()
-                modelC.train()
+        accuracy = inference(modelF=modelF, modelB=modelB, modelC=modelC, data_loader=test_loader, device=args.device)
+        if accuracy > max_accu:
+            max_accu = accuracy
+            torch.save(modelF.state_dict(), os.path.join(args.full_output_path, args.STDA_modelF_weight_file_name))
+            torch.save(modelB.state_dict(), os.path.join(args.full_output_path, args.STDA_modelB_weight_file_name))
+            torch.save(modelC.state_dict(), os.path.join(args.full_output_path, args.STDA_modelC_weight_file_name))
+        wandb.log({'Accuracy/classifier accuracy': accuracy, 'Accuracy/max classifier accuracy': max_accu}, step=epoch)
+        wandb.log({
+            "LOSS/total loss":ttl_loss / ttl_num * 100., 
+            "LOSS/Pseudo-label cross-entorpy loss":ttl_cls_loss / ttl_num * 100., 
+            "LOSS/consistency loss":ttl_const_loss / ttl_num * 100., 
+            "LOSS/Nuclear-norm Maximization loss":ttl_fbnm_loss / ttl_num * 100.,
+            "LOSS/IM loss":ttl_im_loss / ttl_num * 100.,
+        }, step=epoch)
+        modelF.train()
+        modelB.train()
+        modelC.train()
