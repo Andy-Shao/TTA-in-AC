@@ -89,6 +89,11 @@ After that open and run the `analysis_exhibition.ipynb` to demonstrate the analy
 ### Speech Commands Dataset
 The dataset (1.4 GB) has 65,000 one-second long utterances of 30 short words by thousands of different people, contributed by public members through the AIY website. This is a set of one-second .wav audio files, each containing a single spoken English word.
 
+In both versions, ten of them are used as commands by convention: "Yes", "No", "Up", "Down", "Left",
+"Right", "On", "Off", "Stop", "Go". Other words are considered to be auxiliary (in the current implementation
+it is marked by the `True` value of `the "is_unknown"` feature). Their function is to teach a model to distinguish core words
+from unrecognized ones.
+
 + Sample size: 64721 (train: 51088, test: 6835, validation: 6798)
 + sample rate: 16000
 + sampel data shape: [1, 5945 - 16000]
