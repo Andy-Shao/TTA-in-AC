@@ -15,11 +15,12 @@ class SpeechCommandsDataset(Dataset):
         'stop': 22., 'tree': 23., 'cat': 24., 'go': 25., 'left': 26., 'no': 27., 'sheila': 28., 
         'wow': 29.
     }
-    commands = ['yes', 'no', 'up', 'down', 'left', 'right', 'on', 'off', 'stop', 'go']
-    no_commands = [
-        'zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'bed', 'dog', 'happy',
-        'marvin', 'bird', 'house', 'tree', 'cat', 'sheila', 'wow'
-    ]
+    commands = {'yes':0., 'no':1., 'up':2., 'down':3., 'left':4., 'right':5., 'on':6., 'off':7., 'stop':8., 'go':9.}
+    no_commands = {
+        'zero':0., 'one':1., 'two':2., 'three':3., 'four':4., 'five':5., 'six':6., 'seven':7., 'eight':8., 'nine':9., 
+        'bed':10., 'dog':11., 'happy':12., 'marvin':13., 'bird':14., 'house':15., 'tree':16., 'cat':17., 'sheila':18., 
+        'wow':19.
+    }
 
     def __init__(self, root_path: str, mode: str, include_rate=True, data_tfs=None, data_type='all') -> None:
         super().__init__()
@@ -37,9 +38,9 @@ class SpeechCommandsDataset(Dataset):
         if self.data_type == 'all':
             return data_list
         elif self.data_type == 'commands':
-            filter_list = self.commands
+            filter_list = self.commands.keys()
         elif self.data_type == 'no_commands':
-            filter_list = self.no_commands
+            filter_list = self.no_commands.keys()
         else:
             raise Exception('No support')
         new_data_list = []
@@ -100,7 +101,14 @@ class SpeechCommandsDataset(Dataset):
 
     def __cal_audio_path_label__(self, meta_data: str) -> tuple[str, float]:
         label = meta_data.strip().split('/')[0]
-        label = self.label_dic[label]
+        if self.data_type == 'all':
+            label = self.label_dic[label]
+        elif self.data_type == 'commands':
+            label = self.commands[label]
+        elif self.data_type == 'no_commands':
+            label = self.no_commands[label]
+        else:
+            raise Exception('No support')
         audio_path = os.path.join(self.root_path, meta_data)
         return audio_path, label
     

@@ -31,7 +31,7 @@ def lr_scheduler(optimizer: torch.optim.Optimizer, iter_num: int, max_iter: int,
 
 if __name__ == '__main__':
     ap = argparse.ArgumentParser()
-    ap.add_argument('--dataset', type=str, default='speech-commands', choices=['speech-commands'])
+    ap.add_argument('--dataset', type=str, default='speech-commands', choices=['speech-commands', 'speech-commands-purity'])
     ap.add_argument('--dataset_root_path', type=str)
     ap.add_argument('--output_path', type=str, default='./result')
     ap.add_argument('--output_csv_name', type=str, default='training_records.csv')
@@ -55,7 +55,12 @@ if __name__ == '__main__':
     ap.add_argument('--trte', type=str, default='val', choices=['full', 'val'])
 
     args = ap.parse_args()
-    args.class_num = 30
+    if args.dataset == 'speech-commands':
+        args.class_num = 30
+        args.dataset_type = 'full'
+    elif args.dataset == 'speech-commands-purity':
+        args.class_num = 10
+        args.dataset_type = 'commands'
     args.device = 'cuda' if torch.cuda.is_available() else 'cpu'
     args.full_output_path = os.path.join(args.output_path, args.dataset, 'CoNMix', 'pre_train')
     try:
@@ -95,12 +100,12 @@ if __name__ == '__main__':
     if args.normalized:
         print('calculate the train dataset mean and standard deviation')
         train_tf = Components(transforms=tf_array)
-        train_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='train', include_rate=False, data_tfs=train_tf)
+        train_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='train', include_rate=False, data_tfs=train_tf, data_type=args.dataset_type)
         train_loader = DataLoader(dataset=train_dataset, batch_size=256, shuffle=False, drop_last=False)
         train_mean, train_std = cal_norm(loader=train_loader)
         tf_array.append(v_transforms.Normalize(mean=train_mean, std=train_std))
     train_tf = Components(transforms=tf_array)
-    train_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='train', include_rate=False, data_tfs=train_tf)
+    train_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='train', include_rate=False, data_tfs=train_tf, data_type=args.dataset_type)
     train_loader = DataLoader(dataset=train_dataset, batch_size=args.batch_size, shuffle=True, drop_last=False)
 
     tf_array = [
@@ -113,12 +118,12 @@ if __name__ == '__main__':
     if args.normalized:
         print('calculate the validation dataset mean and standard deviation')
         val_tf = Components(transforms=tf_array)
-        val_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='validation', include_rate=False, data_tfs=val_tf)
+        val_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='validation', include_rate=False, data_tfs=val_tf, data_type=args.dataset_type)
         val_loader = DataLoader(dataset=val_dataset, batch_size=256, shuffle=False, drop_last=False)
         val_mean, val_std = cal_norm(loader=val_loader)
         tf_array.append(v_transforms.Normalize(mean=val_mean, std=val_std))
     val_tf = Components(transforms=tf_array)
-    val_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='validation', include_rate=False, data_tfs=val_tf)
+    val_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='validation', include_rate=False, data_tfs=val_tf, data_type=args.dataset_type)
     val_loader = DataLoader(dataset=val_dataset, batch_size=args.batch_size, shuffle=False, drop_last=False)
 
     modelF, modelB, modelC = load_models(args)
