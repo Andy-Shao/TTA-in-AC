@@ -195,6 +195,7 @@ if __name__ == "__main__":
 
     ap.add_argument('--lr_decay1', type=float, default=0.1)
     ap.add_argument('--lr_decay2', type=float, default=1.0)
+    ap.add_argument('--lr_gamma', type=int, default=30)
 
     ap.add_argument('--bottleneck', type=int, default=256)
     ap.add_argument('--epsilon', type=float, default=1e-5)
@@ -370,7 +371,7 @@ if __name__ == "__main__":
 
             if iter % interval_iter == 0:
                 if args.sdlr:
-                    lr_scheduler(optimizer, iter_num=iter, max_iter=max_iter, gamma=30)
+                    lr_scheduler(optimizer, iter_num=iter, max_iter=max_iter, gamma=args.lr_gamma)
 
         print('Inferecing...')
         accuracy = inference(modelF=modelF, modelB=modelB, modelC=modelC, data_loader=test_loader, device=args.device)
@@ -386,7 +387,7 @@ if __name__ == "__main__":
             "LOSS/consistency loss":ttl_const_loss / ttl_num * 100., 
             "LOSS/Nuclear-norm Maximization loss":ttl_fbnm_loss / ttl_num * 100.,
             "LOSS/IM loss":ttl_im_loss / ttl_num * 100.,
-        }, step=epoch)
+        }, step=epoch, commit=True)
         modelF.train()
         modelB.train()
         modelC.train()
