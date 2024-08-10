@@ -33,6 +33,7 @@ if __name__ == '__main__':
     ap = argparse.ArgumentParser()
     ap.add_argument('--dataset', type=str, default='speech-commands', choices=['speech-commands', 'speech-commands-purity'])
     ap.add_argument('--dataset_root_path', type=str)
+    ap.add_argument('--num_workers', type=int, default=16)
     ap.add_argument('--output_path', type=str, default='./result')
     ap.add_argument('--output_csv_name', type=str, default='training_records.csv')
     ap.add_argument('--output_weight_prefix', type=str, default='speech-commands')
@@ -57,7 +58,7 @@ if __name__ == '__main__':
     args = ap.parse_args()
     if args.dataset == 'speech-commands':
         args.class_num = 30
-        args.dataset_type = 'full'
+        args.dataset_type = 'all'
     elif args.dataset == 'speech-commands-purity':
         args.class_num = 10
         args.dataset_type = 'commands'
@@ -101,12 +102,12 @@ if __name__ == '__main__':
         print('calculate the train dataset mean and standard deviation')
         train_tf = Components(transforms=tf_array)
         train_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='train', include_rate=False, data_tfs=train_tf, data_type=args.dataset_type)
-        train_loader = DataLoader(dataset=train_dataset, batch_size=256, shuffle=False, drop_last=False)
+        train_loader = DataLoader(dataset=train_dataset, batch_size=256, shuffle=False, drop_last=False, num_workers=args.num_workers)
         train_mean, train_std = cal_norm(loader=train_loader)
         tf_array.append(v_transforms.Normalize(mean=train_mean, std=train_std))
     train_tf = Components(transforms=tf_array)
     train_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='train', include_rate=False, data_tfs=train_tf, data_type=args.dataset_type)
-    train_loader = DataLoader(dataset=train_dataset, batch_size=args.batch_size, shuffle=True, drop_last=False)
+    train_loader = DataLoader(dataset=train_dataset, batch_size=args.batch_size, shuffle=True, drop_last=False, num_workers=args.num_workers)
 
     tf_array = [
         pad_trunc(max_ms=max_ms, sample_rate=sample_rate),
@@ -119,12 +120,15 @@ if __name__ == '__main__':
         print('calculate the validation dataset mean and standard deviation')
         val_tf = Components(transforms=tf_array)
         val_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='validation', include_rate=False, data_tfs=val_tf, data_type=args.dataset_type)
-        val_loader = DataLoader(dataset=val_dataset, batch_size=256, shuffle=False, drop_last=False)
+        val_loader = DataLoader(dataset=val_dataset, batch_size=256, shuffle=False, drop_last=False, num_workers=args.num_workers)
         val_mean, val_std = cal_norm(loader=val_loader)
         tf_array.append(v_transforms.Normalize(mean=val_mean, std=val_std))
     val_tf = Components(transforms=tf_array)
     val_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='validation', include_rate=False, data_tfs=val_tf, data_type=args.dataset_type)
-    val_loader = DataLoader(dataset=val_dataset, batch_size=args.batch_size, shuffle=False, drop_last=False)
+    val_loader = DataLoader(dataset=val_dataset, batch_size=args.batch_size, shuffle=False, drop_last=False, num_workers=args.num_workers)
+
+    print(f'Total train dataset size: {len(train_dataset)}, batch size: {len(train_loader)}')
+    print(f'Total validation dataset size: {len(val_dataset)}, batch size: {len(val_loader)}')
 
     modelF, modelB, modelC = load_models(args)
     store_model_structure_to_txt(model=modelF, output_path=os.path.join(args.full_output_path, 'modelF_structure.txt'))

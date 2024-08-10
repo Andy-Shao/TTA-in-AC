@@ -17,10 +17,10 @@ export BASE_PATH='/root'
 #     --output_path $BASE_PATH'/tmp/speech_commands/running_tap-bg/10.0' --severity_level 10.0 --corruption 'running_tap' \
 #     --data_type 'final' --cal_strong
 
-# python -m CoNMix.speech-commands.prepare_corrupted_dataset --dataset_root_path $BASE_PATH'/data/speech_commands' \
-#     --output_path $BASE_PATH'/tmp/speech_commands/running_tap-bg/1.0' --severity_level 1.0 --corruption 'running_tap' \
-#     --data_type 'final' --cal_strong
-
 python -m CoNMix.speech-commands.prepare_corrupted_dataset --dataset_root_path $BASE_PATH'/data/speech_commands' \
-    --output_path $BASE_PATH'/tmp/speech_commands_purity/running_tap-bg/1.0' --severity_level 1.0 --corruption 'running_tap' \
-    --data_type 'final' --cal_strong --dataset 'speech-commands-purity'
+    --output_path $BASE_PATH'/tmp/speech_commands/running_tap-bg/1.0' --severity_level 1.0 --corruption 'running_tap' \
+    --data_type 'final' --cal_strong --dataset 'speech-commands'
+
+# python -m CoNMix.speech-commands.prepare_corrupted_dataset --dataset_root_path $BASE_PATH'/data/speech_commands' \
+#     --output_path $BASE_PATH'/tmp/speech_commands_purity/running_tap-bg/1.0' --severity_level 1.0 --corruption 'running_tap' \
+#     --data_type 'final' --cal_strong --dataset 'speech-commands-purity'
