@@ -1,6 +1,6 @@
 feat_classifier(
   (fc): ParametrizedLinear(
-    in_features=256, out_features=30, bias=True
+    in_features=256, out_features=11, bias=True
     (parametrizations): ModuleDict(
       (weight): ParametrizationList(
         (0): _WeightNorm()

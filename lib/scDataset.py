@@ -8,18 +8,17 @@ import torchaudio
 class SpeechCommandsDataset(Dataset):
     test_meta_file = 'testing_list.txt'
     val_meta_file = 'validation_list.txt'
-    label_dic = {
-        'zero': 0., 'one': 1., 'two': 2., 'three': 3., 'four': 4., 'five': 5., 'six': 6., 'seven': 7., 
-        'eight': 8., 'nine': 9., 'bed': 10., 'dog': 11., 'happy': 12., 'marvin': 13., 'off': 14., 
-        'right': 15., 'up': 16., 'yes': 17., 'bird': 18., 'down': 19., 'house': 20., 'on': 21., 
-        'stop': 22., 'tree': 23., 'cat': 24., 'go': 25., 'left': 26., 'no': 27., 'sheila': 28., 
-        'wow': 29.
-    }
     commands = {'yes':0., 'no':1., 'up':2., 'down':3., 'left':4., 'right':5., 'on':6., 'off':7., 'stop':8., 'go':9.}
     no_commands = {
         'zero':0., 'one':1., 'two':2., 'three':3., 'four':4., 'five':5., 'six':6., 'seven':7., 'eight':8., 'nine':9., 
         'bed':10., 'dog':11., 'happy':12., 'marvin':13., 'bird':14., 'house':15., 'tree':16., 'cat':17., 'sheila':18., 
         'wow':19.
+    }
+    label_dic = {
+        'yes':0., 'no':1., 'up':2., 'down':3., 'left':4., 'right':5., 'on':6., 'off':7., 'stop':8., 'go':9.,
+        'zero':10., 'one':10., 'two':10., 'three':10., 'four':10., 'five':10., 'six':10., 'seven':10., 'eight':10., 'nine':10., 
+        'bed':10., 'dog':10., 'happy':10., 'marvin':10., 'bird':10., 'house':10., 'tree':10., 'cat':10., 'sheila':10., 
+        'wow':10.
     }
 
     def __init__(self, root_path: str, mode: str, include_rate=True, data_tfs=None, data_type='all') -> None:

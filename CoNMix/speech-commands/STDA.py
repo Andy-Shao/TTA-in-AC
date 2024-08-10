@@ -209,7 +209,7 @@ if __name__ == "__main__":
 
     args = ap.parse_args()
     if args.dataset == 'speech-commands':
-        args.class_num = 30
+        args.class_num = 11
         args.dataset_type = 'all'
     elif args.dataset == 'speech-commands-purity':
         args.class_num = 10

@@ -57,7 +57,7 @@ if __name__ == '__main__':
 
     args = ap.parse_args()
     if args.dataset == 'speech-commands':
-        args.class_num = 30
+        args.class_num = 11
         args.dataset_type = 'all'
     elif args.dataset == 'speech-commands-purity':
         args.class_num = 10
@@ -150,6 +150,7 @@ if __name__ == '__main__':
         ttl_train_loss = 0.
         ttl_train_num = 0
         ttl_train_corr = 0
+        print('Training....')
         for features, labels in tqdm(train_loader):
             features, labels = features.to(args.device), labels.to(args.device)
             outputs = modelC(modelB(modelF(features)))
@@ -175,7 +176,8 @@ if __name__ == '__main__':
         modelC.eval()
         ttl_corr = 0
         ttl_size = 0
-        for features, labels in val_loader:
+        print('Validating...')
+        for features, labels in tqdm(val_loader):
             features, labels = features.to(args.device), labels.to(args.device)
             with torch.no_grad():
                 outputs = modelC(modelB(modelF(features)))

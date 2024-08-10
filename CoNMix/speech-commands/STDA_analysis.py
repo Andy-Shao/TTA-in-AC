@@ -65,7 +65,7 @@ if __name__ == '__main__':
     # random.seed(args.seed)
 
     if args.dataset == 'speech-commands':
-        args.class_num = 30
+        args.class_num = 11
         args.dataset_type = 'all'
     elif args.dataset == 'speech-commands-purity':
         args.class_num = 10
