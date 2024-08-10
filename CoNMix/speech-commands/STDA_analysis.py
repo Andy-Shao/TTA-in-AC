@@ -20,6 +20,7 @@ if __name__ == '__main__':
     ap = argparse.ArgumentParser()
     ap.add_argument('--dataset', type=str, default='speech-commands', choices=['speech-commands', 'speech-commands-purity'])
     ap.add_argument('--dataset_root_path', type=str)
+    ap.add_argument('--num-workers', type=int, default=16)
     ap.add_argument('--temporary_path', type=str)
     ap.add_argument('--output_path', type=str, default='./result')
     ap.add_argument('--modelF_weight_path', type=str)
@@ -36,6 +37,7 @@ if __name__ == '__main__':
 
     ap.add_argument('--seed', type=int, default=2024, help='random seed')
     ap.add_argument('--normalized', action='store_true')
+    ap.add_argument('--analyze_STDA', action='store_true')
 
     ap.add_argument('--max_epoch', type=int, default=200, help='max epoch')
     ap.add_argument('--interval', type=int, default=50, help='interval')
@@ -89,10 +91,10 @@ if __name__ == '__main__':
     if args.normalized:
         print('calculate the test dataset mean and standard deviation')
         test_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='test', include_rate=False, data_tfs=Components(transforms=tf_array), data_type=args.dataset_type)
-        test_mean, test_std = cal_norm(loader=DataLoader(dataset=test_dataset, batch_size=256, shuffle=False, drop_last=False))
+        test_mean, test_std = cal_norm(loader=DataLoader(dataset=test_dataset, batch_size=256, shuffle=False, drop_last=False, num_workers=args.num_workers))
         tf_array.append(v_transforms.Normalize(mean=test_mean, std=test_std))
     test_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='test', include_rate=False, data_tfs=Components(transforms=tf_array), data_type=args.dataset_type)
-    test_loader = DataLoader(dataset=test_dataset, batch_size=args.batch_size, shuffle=False, drop_last=False)
+    test_loader = DataLoader(dataset=test_dataset, batch_size=args.batch_size, shuffle=False, drop_last=False, num_workers=args.num_workers)
 
     if args.data_type == 'final':
         tf_array = [DoNothing()]
@@ -106,10 +108,10 @@ if __name__ == '__main__':
     if args.normalized:
         print('calculate the corrupted test dataset mean and standard deviation')
         corrupted_dataset = load_from(root_path=args.temporary_path, index_file_name=meta_file_name, data_tf=Components(transforms=tf_array))
-        corr_mean, corr_std = cal_norm(loader=DataLoader(dataset=corrupted_dataset, batch_size=256, shuffle=False, drop_last=False))
+        corr_mean, corr_std = cal_norm(loader=DataLoader(dataset=corrupted_dataset, batch_size=256, shuffle=False, drop_last=False, num_workers=args.num_workers))
         tf_array.append(v_transforms.Normalize(mean=corr_mean, std=corr_std))
     corrupted_dataset = load_from(root_path=args.temporary_path, index_file_name=meta_file_name, data_tf=Components(transforms=tf_array))
-    corrupted_loader = DataLoader(dataset=corrupted_dataset, batch_size=args.batch_size, shuffle=False, drop_last=False)
+    corrupted_loader = DataLoader(dataset=corrupted_dataset, batch_size=args.batch_size, shuffle=False, drop_last=False, num_workers=args.num_workers)
 
     print('Original test')
     modelF, modelB, modelC = load_model(args)

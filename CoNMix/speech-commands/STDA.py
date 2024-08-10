@@ -158,6 +158,7 @@ if __name__ == "__main__":
     ap.add_argument('--dataset', type=str, default='speech-commands', choices=['speech-commands', 'speech-commands-purity'])
     ap.add_argument('--weak_aug_dataset_root_path', type=str)
     ap.add_argument('--strong_aug_dataset_root_path', type=str)
+    ap.add_argument('--num_workers', type=int, default=16)
     ap.add_argument('--output_path', type=str, default='./result')
     ap.add_argument('--modelF_weight_path', type=str)
     ap.add_argument('--modelB_weight_path', type=str)
@@ -213,7 +214,6 @@ if __name__ == "__main__":
     elif args.dataset == 'speech-commands-purity':
         args.class_num = 10
         args.dataset_type = 'commands'
-    # args.test_batch_size = args.batch_size * 3
     args.device = 'cuda' if torch.cuda.is_available() else 'cpu'
     args.full_output_path = os.path.join(args.output_path, args.dataset, 'CoNMix', 'STDA')
     try:
@@ -235,9 +235,9 @@ if __name__ == "__main__":
         config=args, tags=['Audio Classification', args.dataset, 'ViT'])
     
     test_dataset, weak_test_dataset, strong_test_dataset = build_dataset(args)
-    test_loader = DataLoader(dataset=test_dataset, batch_size=args.test_batch_size, shuffle=False, drop_last=False)
+    test_loader = DataLoader(dataset=test_dataset, batch_size=args.test_batch_size, shuffle=False, drop_last=False, num_workers=args.num_workers)
     weak_test_dataset = Dataset_Idx(dataset=weak_test_dataset)
-    weak_test_loader = DataLoader(dataset=weak_test_dataset, batch_size=args.batch_size, shuffle=True, drop_last=True)
+    weak_test_loader = DataLoader(dataset=weak_test_dataset, batch_size=args.batch_size, shuffle=True, drop_last=True, num_workers=args.num_workers)
 
     # build mode & load pre-train weight
     modelF, modelB, modelC = load_model(args)
