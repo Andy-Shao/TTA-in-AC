@@ -23,4 +23,4 @@ python -m CoNMix.speech-commands.prepare_corrupted_dataset --dataset_root_path $
 
 # python -m CoNMix.speech-commands.prepare_corrupted_dataset --dataset_root_path $BASE_PATH'/data/speech_commands' \
 #     --output_path $BASE_PATH'/tmp/speech_commands_purity/running_tap-bg/1.0' --severity_level 1.0 --corruption 'running_tap' \
-#     --data_type 'final' --cal_strong --dataset 'speech-commands-purity's
+#     --data_type 'final' --cal_strong --dataset 'speech-commands-purity'
