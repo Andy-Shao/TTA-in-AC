@@ -14,7 +14,7 @@ from lib.wavUtils import Components, pad_trunc, DoNothing
 from CoNMix.lib.prepare_dataset import ExpandChannel
 from lib.scDataset import SpeechCommandsDataset
 from lib.datasets import load_from
-from CoNMix.analysis import load_model, load_origin_stat, inference
+from CoNMix.analysis import load_model, load_origin_stat, inference, load_adapted_stat
 
 if __name__ == '__main__':
     ap = argparse.ArgumentParser()
@@ -81,6 +81,7 @@ if __name__ == '__main__':
     n_mels=81
     hop_length=200
     meta_file_name = 'speech_commands_meta.csv'
+    algorithm = 'R50+ViT-B_16'
     tf_array = [
         pad_trunc(max_ms=max_ms, sample_rate=sample_rate),
         a_transforms.MelSpectrogram(sample_rate=sample_rate, n_fft=1024, n_mels=n_mels, hop_length=hop_length),
@@ -119,6 +120,7 @@ if __name__ == '__main__':
     load_origin_stat(args, modelF=modelF, modelB=modelB, modelC=modelC)
     accuracy = inference(modelF=modelF, modelB=modelB, modelC=modelC, data_loader=test_loader, device=args.device)
     print(f'Oritinal Test -- data size is:{len(test_dataset)}, accuracy: {accuracy:.2f}%')
+    accu_record.loc[len(accu_record)] = [args.dataset, algorithm, 'N/A', 'N/A', accuracy, 100. - accuracy, 0., ttl_weight_num]
 
     print('Corrupted Test')
     modelF, modelB, modelC = load_model(args)
@@ -126,3 +128,15 @@ if __name__ == '__main__':
     load_origin_stat(args, modelF=modelF, modelB=modelB, modelC=modelC)
     accuracy = inference(modelF=modelF, modelB=modelB, modelC=modelC, data_loader=corrupted_loader, device=args.device)
     print(f'Corrupted Test -- data size is:{len(corrupted_loader)}, accuracy: {accuracy:.2f}%')
+    accu_record.loc[len(accu_record)] = [args.dataset, algorithm, 'N/A', args.corruption, accuracy, 100. - accuracy, 0., ttl_weight_num]
+
+    if args.analyze_STDA:
+        print('STDA analysis')
+        modelF, modelB, modelC = load_model(args)
+        ttl_weight_num = count_ttl_params(model=modelF) + count_ttl_params(model=modelB) + count_ttl_params(model=modelC)
+        load_adapted_stat(args, modelF=modelF, modelB=modelB, modelC=modelC)
+        accuracy = inference(modelF=modelF, modelB=modelB, modelC=modelC, data_loader=corrupted_loader, device=args.device)
+        print(f'STDA analysis -- data size is: {len(corrupted_loader)}, accuracy: {accuracy:.2f}%')
+        accu_record.loc[len(accu_record)] = [args.dataset, algorithm, 'CoNMix-STDA', args.corruption, accuracy, 100. - accuracy, 0., ttl_weight_num]
+    
+    accu_record.to_csv(os.path.join(args.full_output_path, args.output_csv_name))
