@@ -108,7 +108,7 @@ from unrecognized ones.
 |white_noise|[1, 960000]|16000|
 
 [Speech Commands Dataset Link](https://research.google/blog/launching-the-speech-commands-dataset/)<br/>
-[Download path](http://download.tensorflow.org/data/speech_commands_v0.01.tar.gz)<br/>
+[Download Link](http://download.tensorflow.org/data/speech_commands_v0.01.tar.gz)<br/>
 [TensorFlow Document](https://www.tensorflow.org/datasets/community_catalog/huggingface/speech_commands)
 
 ## Code Reference
