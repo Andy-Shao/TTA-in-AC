@@ -4,8 +4,9 @@ from tqdm import tqdm
 import pandas as pd
 import numpy as np
 from typing import Any
+import shutil
 
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset, DataLoader
 import torchaudio
 import torch
 
@@ -42,14 +43,34 @@ def load_datapath(root_path: str, filter_fn) -> list[str]:
                     dataset_list.append(f'{data_path}/{it}')
     return dataset_list
 
+def multi_process_store_to(loader: DataLoader, root_path: str, index_file_name: str, data_transf=None, label_transf=None) -> None:
+    print(f'Store dataset into {root_path}, meta file is: {index_file_name}')
+    data_index = pd.DataFrame(columns=['data_path', 'label'])
+    try: 
+        if os.path.exists(root_path): shutil.rmtree(root_path)
+        os.makedirs(root_path)
+    except:
+        print('remove directory has an error.')
+    for i, (features, labels) in tqdm(enumerate(loader), total=len(loader)):
+        for k in range(features.shape[0]):
+            feature, label = features[k].clone(), labels[k].clone()
+            if data_transf is not None:
+                feature = data_transf(feature)
+            if label_transf is not None:
+                label = label_transf(label)
+            data_path = f'{i}_{k}_{label}.dt'
+            data_index.loc[len(data_index)] = [data_path, label.item()]
+            torch.save(feature, os.path.join(root_path, data_path))
+    data_index.to_csv(os.path.join(root_path, index_file_name))
+
 def store_to(dataset: Dataset, root_path: str, index_file_name: str, data_transf=None, label_transf=None) -> None:
     print(f'Store dataset into {root_path}, meta file is: {index_file_name}')
     data_index = pd.DataFrame(columns=['data_path', 'label'])
     try: 
-        if os.path.exists(root_path): os.removedirs(root_path)
+        if os.path.exists(root_path): shutil.rmtree(root_path)
         os.makedirs(root_path)
     except:
-        pass
+        print('remove directory has an error.')
     for index, (feature, label) in tqdm(enumerate(dataset), total=len(dataset)):
         if data_transf is not None:
             feature = data_transf(feature)

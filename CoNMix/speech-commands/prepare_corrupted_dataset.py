@@ -1,4 +1,6 @@
 import argparse
+import torch.utils
+import torch.utils.data
 from tqdm import tqdm
 
 import torch
@@ -8,8 +10,16 @@ from torchaudio import transforms as a_transforms
 from lib.toolkit import print_argparse
 from lib.wavUtils import pad_trunc, Components, BackgroundNoise, DoNothing, time_shift, GuassianNoise
 from lib.scDataset import SpeechCommandsDataset, BackgroundNoiseDataset
-from lib.datasets import store_to, load_from
+from lib.datasets import load_from
 from CoNMix.lib.prepare_dataset import ExpandChannel
+
+def store_to(dataset: torch.utils.data.Dataset, root_path:str, index_file_name:str, args:argparse.Namespace, data_transf=None, label_transf=None) -> None:
+    from lib.datasets import store_to as single_store_to, multi_process_store_to
+    if args.parallel:
+        data_loader = torch.utils.data.DataLoader(dataset=dataset, batch_size=256, shuffle=False, drop_last=False, num_workers=args.num_workers)
+        multi_process_store_to(loader=data_loader, root_path=root_path, index_file_name=index_file_name, data_transf=data_transf, label_transf=label_transf)
+    else:
+        single_store_to(dataset=dataset, root_path=root_path, index_file_name=index_file_name, data_transf=data_transf, label_transf=label_transf)
 
 def find_background_noise(args: argparse.Namespace) -> tuple[str, torch.Tensor]:
     background_noise_dataset = BackgroundNoiseDataset(root_path=args.dataset_root_path)
@@ -31,6 +41,8 @@ if __name__ == '__main__':
     ap.add_argument('--cal_strong', action='store_true')
 
     # ap.add_argument('--seed', type=int, default=2024, help='random seed')
+    ap.add_argument('--parallel', action='store_true')
+    ap.add_argument('--num_workers', type=int, default=16)
 
     args = ap.parse_args()
     args.device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -70,7 +82,7 @@ if __name__ == '__main__':
     output_path = f'{args.output_path}-{noise_type}'
     
     corrupted_test_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='test', include_rate=False, data_tfs=corrupted_test_tf, data_type=dataset_type)
-    store_to(dataset=corrupted_test_dataset, root_path=output_path, index_file_name=meta_file_name)
+    store_to(dataset=corrupted_test_dataset, root_path=output_path, index_file_name=meta_file_name, args=args)
     corrupted_test_dataset = load_from(root_path=output_path, index_file_name=meta_file_name)
 
     print('low augmentation')
@@ -84,7 +96,7 @@ if __name__ == '__main__':
             ExpandChannel(out_channel=3),
             v_transforms.Resize((224, 224), antialias=False),
         ])
-    store_to(dataset=corrupted_test_dataset, root_path=weak_path, index_file_name=meta_file_name, data_transf=weak_tf)
+    store_to(dataset=corrupted_test_dataset, root_path=weak_path, index_file_name=meta_file_name, data_transf=weak_tf, args=args)
     weak_aug_dataset = load_from(root_path=weak_path, index_file_name=meta_file_name)
     print(f'Foreach checking, datasize: {len(weak_aug_dataset)}')
     for feature, label in tqdm(weak_aug_dataset):
@@ -110,7 +122,7 @@ if __name__ == '__main__':
                 v_transforms.Resize((256, 256), antialias=False),
                 v_transforms.RandomCrop(224),
             ])
-        store_to(dataset=corrupted_test_dataset, root_path=strong_path, index_file_name=meta_file_name, data_transf=strong_tf)
+        store_to(dataset=corrupted_test_dataset, root_path=strong_path, index_file_name=meta_file_name, data_transf=strong_tf, args=args)
         strong_aug_dataset = load_from(root_path=strong_path, index_file_name=meta_file_name)
         print(f'Foreach checking, datasize: {len(strong_aug_dataset)}')
         for feature, label in tqdm(strong_aug_dataset):
