@@ -1,4 +1,4 @@
-export BASE_PATH='/home/andyshao'
+export BASE_PATH='/root'
 
 python -m CoNMix.speech-commands.STDA \
     --weak_aug_dataset_root_path $BASE_PATH'/tmp/speech_commands/exercise_bike-bg/1.0-exercise_bike-weak' \
@@ -11,7 +11,7 @@ python -m CoNMix.speech-commands.STDA \
     --STDA_modelB_weight_file_name 'speech-commands_modelB-bg-1.0-exercise_bike.pt' \
     --STDA_modelC_weight_file_name 'speech-commands_modelC-bg-1.0-exercise_bike.pt' --normalized \
     --data_type 'final' --const_par 0.2 --fbnm_par 6.0 --cls_par 0.2 --corruption 'exercise_bike' \
-    --alpha 0.9 --initc_num 1 --dataset 'speech-commands' --cls_mode 'logsoft_nll' --lr_gamma 30
+    --alpha 0.9 --initc_num 1 --dataset 'speech-commands' --cls_mode 'logsoft_nll' --lr_gamma 30 --wandb
 
 # python -m CoNMix.speech-commands.STDA \
 #     --weak_aug_dataset_root_path $BASE_PATH'/tmp/speech_commands/running_tap-bg/1.0-running_tap-weak' \
