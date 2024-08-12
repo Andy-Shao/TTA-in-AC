@@ -35,7 +35,7 @@ if __name__ == '__main__':
     ap.add_argument('--output_path', type=str, default='./result')
     ap.add_argument('--data_type', type=str, choices=['raw', 'final'], default='final')
 
-    ap.add_argument('--corruption', type=str, choices=['doing_the_dishes', 'dude_miaowing', 'exercise_bike', 'pink_noise', 'running_tap', 'white_noise', 'gaussian_noise'])
+    ap.add_argument('--corruption', type=str, choices=['doing_the_dishes', 'dude_miaowing', 'exercise_bike', 'pink_noise', 'running_tap', 'white_noise', 'guassian_noise'])
     ap.add_argument('--severity_level', type=float, default=20)
     # ap.add_argument('--cal_norm', action='store_true')
     ap.add_argument('--cal_strong', action='store_true')
@@ -63,7 +63,7 @@ if __name__ == '__main__':
     else:
         raise Exception('No support')
 
-    if args.corruption == 'gaussian_noise':
+    if args.corruption == 'guassian_noise':
         is_background_noise = False
         noise_type = args.corruption
         corrupted_test_tf = Components(transforms=[

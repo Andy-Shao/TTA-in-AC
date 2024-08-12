@@ -1,0 +1,3 @@
+,dataset,algorithm,tta-operation,corruption,accuracy,error,severity level,number of weight
+0,speech-commands,R50+ViT-B_16,N/A,N/A,95.15727871250914,4.8427212874908605,0.0,103692988
+1,speech-commands,R50+ViT-B_16,N/A,doing_the_dishes,69.58302852962692,30.416971470373085,0.0,103692988
