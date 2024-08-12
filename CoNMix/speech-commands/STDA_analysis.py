@@ -128,7 +128,7 @@ if __name__ == '__main__':
     load_origin_stat(args, modelF=modelF, modelB=modelB, modelC=modelC)
     accuracy = inference(modelF=modelF, modelB=modelB, modelC=modelC, data_loader=corrupted_loader, device=args.device)
     print(f'Corrupted Test -- data size is:{len(corrupted_loader)}, accuracy: {accuracy:.2f}%')
-    accu_record.loc[len(accu_record)] = [args.dataset, algorithm, 'N/A', args.corruption, accuracy, 100. - accuracy, 0., ttl_weight_num]
+    accu_record.loc[len(accu_record)] = [args.dataset, algorithm, 'N/A', args.corruption, accuracy, 100. - accuracy, args.severity_level, ttl_weight_num]
 
     if args.analyze_STDA:
         print('STDA analysis')
@@ -137,6 +137,6 @@ if __name__ == '__main__':
         load_adapted_stat(args, modelF=modelF, modelB=modelB, modelC=modelC)
         accuracy = inference(modelF=modelF, modelB=modelB, modelC=modelC, data_loader=corrupted_loader, device=args.device)
         print(f'STDA analysis -- data size is: {len(corrupted_loader)}, accuracy: {accuracy:.2f}%')
-        accu_record.loc[len(accu_record)] = [args.dataset, algorithm, 'CoNMix-STDA', args.corruption, accuracy, 100. - accuracy, 0., ttl_weight_num]
+        accu_record.loc[len(accu_record)] = [args.dataset, algorithm, 'CoNMix-STDA', args.corruption, accuracy, 100. - accuracy, args.severity_level, ttl_weight_num]
     
     accu_record.to_csv(os.path.join(args.full_output_path, args.output_csv_name))
