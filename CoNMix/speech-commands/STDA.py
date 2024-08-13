@@ -37,6 +37,7 @@ def inference(modelF: nn.Module, modelB: nn.Module, modelC: nn.Module, data_load
     return ttl_corr / ttl_size * 100.
 
 def obtain_label(loader: DataLoader, modelF: nn.Module, modelB: nn.Module, modelC: nn.Module, args: argparse.Namespace, step:int) -> tuple:
+    from scipy.spatial.distance import cdist
     # Accumulate feat, logint and gt labels
     with torch.no_grad():
         for idx, (inputs, labels) in enumerate(loader):
@@ -83,6 +84,7 @@ def obtain_label(loader: DataLoader, modelF: nn.Module, modelB: nn.Module, model
     # labelset == [0, 1, 2, ..., 29]
     
     # dd is the data distance between data and central point.
+    # dd = dict(all_feature, initc[labelset], args.distance)
     dd = all_feature @ initc[labelset].T # <g_t, initc>
     dd = np.exp(dd) # amplify difference
     pred_label = dd.argmax(axis=1) # predicted class based on the minimum distance
@@ -92,6 +94,7 @@ def obtain_label(loader: DataLoader, modelF: nn.Module, modelB: nn.Module, model
         aff = np.eye(K)[pred_label]
         initc = aff.transpose().dot(all_feature)
         initc = initc / (1e-8 + aff.sum(axis=0)[:, None])
+        # dd = dict(all_feature, initc[labelset], args.distance)
         dd = all_feature @ initc[labelset].T
         dd = np.exp(dd)
         pred_label = dd.argmax(axis=1)
