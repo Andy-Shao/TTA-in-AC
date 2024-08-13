@@ -19,6 +19,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='SHOT')
     parser.add_argument('--dataset', type=str, default='speech-commands', choices=['speech-commands'])
     parser.add_argument('--batch_size', type=int, default=96)
+    parser.add_argument('--num_workers', type=int, default=16)
     parser.add_argument('--max_epoch', type=int, default=75)
     parser.add_argument('--lr', type=float, default=.1)
     parser.add_argument('--wandb', action='store_true')

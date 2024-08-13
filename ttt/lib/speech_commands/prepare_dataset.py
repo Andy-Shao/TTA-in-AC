@@ -12,7 +12,7 @@ def prepare_data(args: argparse.Namespace, data_transforms=None, mode='train') -
     if data_transforms is None:
         data_transforms = pad_trunc(max_ms=1000, sample_rate=args.sample_rate)
     dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode=mode, include_rate=False, data_tfs=data_transforms)
-    data_loader = DataLoader(dataset=dataset, batch_size=args.batch_size, shuffle=True, drop_last=False)
+    data_loader = DataLoader(dataset=dataset, batch_size=args.batch_size, shuffle=True, drop_last=False, num_workers=args.num_workers)
     return dataset, data_loader
 
 def train_transforms(args: argparse.Namespace) -> dict[str, BatchTransform]:
