@@ -159,25 +159,4 @@ if __name__ == '__main__':
     print(f'Online TTT adaptation data size: {len(test_dataset)}, accuracy: {ttt_accu:.2f}%')
     accu_record.loc[len(accu_record)] = [args.dataset, 'RestNet_base', args.ttt_operation + ', online', args.corruption, ttt_accu, 100. - ttt_accu, args.severity_level, ttl_weight_num]
 
-    # print('Slow ttt adaption')
-    # if args.dataset == 'audio-mnist':
-    #     net, ext, head, ssh = load_model(args)
-    # else:
-    #     raise Exception('No support')
-    # criterion_ssh = nn.CrossEntropyLoss().to(device=args.device)
-    # optimizer_ssh = optim.SGD(params=ssh.parameters(), lr=args.lr)
-    # ttt_corr = 0
-    # for feature, label in tqdm(corrupted_test_dataset):
-    #     input = corrupted_test_transf[TimeShiftOps.ORIGIN].tran_one(feature)
-    #     input = input.to(args.device)
-    #     _, confidence = measure_one(model=ssh, audio=input, label=0)
-    #     if confidence < args.threshold:
-    #         adapt_one(feature=feature, ssh=ssh, ext=ext, args=args, criterion=criterion_ssh, data_transf=train_transfs, 
-    #                   optimizer=optimizer_ssh, net=net, head=head, mode='slow')
-    #     correctness, confidence = measure_one(model=net, audio=input, label=label)
-    #     ttt_corr += correctness
-    # ttt_accu = ttt_corr / len(test_dataset) * 100.
-    # print(f'Slow TTT adaptation data size: {len(test_dataset)}, accuracy: {ttt_accu:.2f}%')
-    # accu_record.loc[len(accu_record)] = [args.dataset, 'RestNet', args.ttt_operation + ', slow', args.corruption, ttt_accu, 100. - ttt_accu, args.severity_level]
-
     accu_record.to_csv(os.path.join(args.output_full_path, args.output_csv_name))

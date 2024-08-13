@@ -34,6 +34,7 @@ def load_model(args: argparse.Namespace) -> tuple[nn.Module, nn.Module, nn.Modul
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='SHOT')
     parser.add_argument('--dataset', type=str, default='speech-commands', choices=['speech-commands'])
+    parser.add_argument('--num_workers', type=int, default=16)
     parser.add_argument('--origin_model_weight_file_path', type=str)
     parser.add_argument('--output_path', type=str, default='./result')
     parser.add_argument('--output_csv_name', type=str, default='accuracy_record.csv')
