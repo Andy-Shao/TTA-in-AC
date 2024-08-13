@@ -52,9 +52,10 @@ if __name__ == '__main__':
     parser.add_argument('--threshold', default=1., type=float)
     parser.add_argument('--shift_limit', default=.25, type=float)
     parser.add_argument('--corruptions')
+    parser.add_argument('--TTT_analysis', action='store_true')
 
     args = parser.parse_args()
-    args.corruptions = args.corruptions.strip().split(sep=',')
+    args.corruptions = [it.strip() for it in args.corruptions.strip().split(sep=',')]
     args.corruption_types = ['doing_the_dishes', 'dude_miaowing', 'exercise_bike', 'pink_noise', 'running_tap', 'white_noise', 'gaussian_noise']
     args.output_full_path = os.path.join(args.output_path, args.dataset, 'ttt', 'time_shift_analysis')
     try:
@@ -65,8 +66,8 @@ if __name__ == '__main__':
     accu_record = pd.DataFrame(columns=['dataset', 'algorithm', 'tta-operation', 'corruption', 'accuracy', 'error', 'severity level', 'number of weight'])
     args.device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
-    if args.dataset == 'audio-mnist':
-        args.class_num = 10
+    if args.dataset == 'speech-commands':
+        args.class_num = 30
         args.sample_rate = 16000
         args.n_mels = 64
         args.final_full_line_in = 256
@@ -76,8 +77,7 @@ if __name__ == '__main__':
     else:
         raise Exception('No support')
     
-    import torch.backends.cudnn as cudnn
-    cudnn.benchmark = True
+    torch.backends.cudnn.benchmark = True
 
     if args.group_norm == 0:
         args.ttt_operation = f'TTT, ts, bn'
@@ -117,25 +117,27 @@ if __name__ == '__main__':
         accu_record.loc[len(accu_record)] = [args.dataset, f'RestNet{args.depth}_base', 'N/A', corruption, test_accu, 100. - test_accu, args.severity_level, ttl_weight_num]
         print(f'corrupted data size: {len(test_dataset)}, corrupted accuracy: {test_accu:.2f}%')
 
-        print(f'{corruption} TTT test')
-        net, ext, head, ssh = load_model(args)
-        ttl_weight_num = count_ttl_params(model=net) + count_ttl_params(model=ext) + count_ttl_params(model=head)
-        args.batch_size = args.batch_size // 3
-        train_transfs = train_transforms(args)
-        criterion_ssh = nn.CrossEntropyLoss().to(device=args.device)
-        optimizer_ssh = optim.SGD(params=ssh.parameters(), lr=args.lr)
-        ttt_corr = 0
-        for feature, label in tqdm(corrupted_dataset):
-            input = test_transf[TimeShiftOps.ORIGIN].tran_one(feature)
-            input = input.to(args.device)
-            _, confidence = measure_one(model=ssh, audio=input, label=0)
-            if confidence < args.threshold:
-                adapt_one(feature=feature, ssh=ssh, ext=ext, args=args, criterion=criterion_ssh, data_transf=train_transfs, 
-                      optimizer=optimizer_ssh, net=net, head=head, mode='online')
-            correctness, confidence = measure_one(model=net, audio=input, label=label)
-            ttt_corr += correctness
-        ttt_accu = ttt_corr / len(test_dataset) * 100.
-        print(f'Online TTT adaptation data size: {len(test_dataset)}, accuracy: {ttt_accu:.2f}%')
-        accu_record.loc[len(accu_record)] = [args.dataset, f'RestNet{args.depth}_base', args.ttt_operation + ', online', args.corruption, ttt_accu, 100. - ttt_accu, args.severity_level, ttl_weight_num]
+        if args.TTT_analysis:
+
+            print(f'{corruption} TTT test')
+            net, ext, head, ssh = load_model(args)
+            ttl_weight_num = count_ttl_params(model=net) + count_ttl_params(model=ext) + count_ttl_params(model=head)
+            args.batch_size = args.batch_size // 3
+            train_transfs = train_transforms(args)
+            criterion_ssh = nn.CrossEntropyLoss().to(device=args.device)
+            optimizer_ssh = optim.SGD(params=ssh.parameters(), lr=args.lr)
+            ttt_corr = 0
+            for feature, label in tqdm(corrupted_dataset):
+                input = test_transf[TimeShiftOps.ORIGIN].tran_one(feature)
+                input = input.to(args.device)
+                _, confidence = measure_one(model=ssh, audio=input, label=0)
+                if confidence < args.threshold:
+                    adapt_one(feature=feature, ssh=ssh, ext=ext, args=args, criterion=criterion_ssh, data_transf=train_transfs, 
+                        optimizer=optimizer_ssh, net=net, head=head, mode='online')
+                correctness, confidence = measure_one(model=net, audio=input, label=label)
+                ttt_corr += correctness
+            ttt_accu = ttt_corr / len(test_dataset) * 100.
+            print(f'Online TTT adaptation data size: {len(test_dataset)}, accuracy: {ttt_accu:.2f}%')
+            accu_record.loc[len(accu_record)] = [args.dataset, f'RestNet{args.depth}_base', args.ttt_operation + ', online', corruption, ttt_accu, 100. - ttt_accu, args.severity_level, ttl_weight_num]
 
     accu_record.to_csv(os.path.join(args.output_full_path, args.output_csv_name))
