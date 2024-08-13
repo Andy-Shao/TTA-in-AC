@@ -122,7 +122,7 @@ if __name__ == '__main__':
     model.eval()
     test_accuracy = inference(model=model, data_loader=test_loader, args=args)
     print(f'Original test accuracy: {test_accuracy:.2f}%')
-    records.loc[len(records)] = [args.dataset, args.model, 'N/A', 'N/A', test_accuracy, 100. - test_accuracy, args.severity_level, number_of_weight]
+    records.loc[len(records)] = [args.dataset, args.model, 'N/A', 'N/A', test_accuracy, 100. - test_accuracy, 0., number_of_weight]
 
     for noise_type in args.corruptions:
         assert noise_type in args.corruption_types, 'No support'

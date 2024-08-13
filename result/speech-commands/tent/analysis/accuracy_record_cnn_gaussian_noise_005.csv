@@ -1,5 +1,5 @@
 ,dataset,algorithm,tta-operation,corruption,accuracy,error,severity level,number of weight
-0,speech-commands,cnn,N/A,N/A,63.145574250182875,36.854425749817125,0.005,26704
+0,speech-commands,cnn,N/A,N/A,63.145574250182875,36.854425749817125,0.0,26704
 1,speech-commands,cnn,N/A,gaussian_noise,60.93635698610095,39.06364301389905,0.005,26704
 2,speech-commands,cnn,Tent Adaptation,gaussian_noise,19.10753474762253,80.89246525237746,0.005,26704
 3,speech-commands,cnn,Norm Adaptation,gaussian_noise,19.34162399414777,80.65837600585223,0.005,26704
