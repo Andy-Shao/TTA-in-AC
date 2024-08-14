@@ -1,0 +1,8 @@
+,dataset,algorithm,tta-operation,corruption,accuracy,error,severity level,number of weight
+0,audio-mnist,RestNet_base,N/A,N/A,93.67999999999999,6.320000000000007,0.0,737005
+1,audio-mnist,RestNet_base,N/A,doing_the_dishes-fixed,11.67,88.33,1.0,737005
+2,audio-mnist,RestNet_base,"TTT, ts, bn, online",doing_the_dishes-fixed,11.09,88.91,1.0,737005
+3,audio-mnist,RestNet_base,N/A,exercise_bike-fixed,12.75,87.25,1.0,737005
+4,audio-mnist,RestNet_base,"TTT, ts, bn, online",exercise_bike-fixed,10.440000000000001,89.56,1.0,737005
+5,audio-mnist,RestNet_base,N/A,running_tap-fixed,18.990000000000002,81.00999999999999,1.0,737005
+6,audio-mnist,RestNet_base,"TTT, ts, bn, online",running_tap-fixed,23.54,76.46000000000001,1.0,737005

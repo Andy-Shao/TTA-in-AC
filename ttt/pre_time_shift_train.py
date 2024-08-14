@@ -17,6 +17,7 @@ from ttt.lib.time_shift_rotation import rotate_batch
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='SHOT')
     parser.add_argument('--dataset', type=str, default='audio-mnist', choices=['audio-mnist'])
+    parser.add_argument('--num_workers', type=int, default=16)
     parser.add_argument('--batch_size', type=int, default=96)
     parser.add_argument('--max_epoch', type=int, default=75)
     parser.add_argument('--lr', type=float, default=.1)
@@ -67,7 +68,7 @@ if __name__ == '__main__':
     net, ext, head, ssh = build_mnist_model(args=args)
     print(f'net weight number is: {count_ttl_params(net)}, ssh weight number is: {count_ttl_params(ssh)}, ext weight number is: {count_ttl_params(ext)}')
     print((f'total weight number is: {count_ttl_params(net) + count_ttl_params(head)}'))
-    train_dataset, train_loader = prepare_train_data(args=args)
+    train_dataset, train_loader = prepare_train_data(args=args, num_workers=args.num_workers)
     tran_transfs = train_transforms(args=args)
 
     parameters = list(net.parameters()) + list(head.parameters())

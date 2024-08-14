@@ -25,12 +25,12 @@ export BASE_PATH='/root'
 #     --dataset_root_path $BASE_PATH'/data/AudioMNIST/data' --severity_level 0.005 --model 'restnet50' \
 #     --output_csv_name 'RestNet50_batch_accuracy_record_005.csv'
 
-# python -m tent.bg-analysis --model_weight_file_path './result/audio-mnist/tent/pre_train/RestNet50_batch_weight.pt' \
+# python -m tent.bg_analysis --model_weight_file_path './result/audio-mnist/tent/pre_train/RestNet50_batch_weight.pt' \
 #     --dataset_root_path $BASE_PATH'/data/AudioMNIST/data' --severity_level 1.0 --model 'restnet50' \
 #     --output_csv_name 'RestNet50_batch_accuracy_record_bg-fixed-1.0.csv' --corruptions 'doing_the_dishes,exercise_bike,running_tap' \
 #     --background_root_path $BASE_PATH'/data/speech_commands'
 
-python -m tent.bg-analysis --model_weight_file_path './result/audio-mnist/tent/pre_train/RestNet50_batch_weight.pt' \
+python -m tent.bg_analysis --model_weight_file_path './result/audio-mnist/tent/pre_train/RestNet50_batch_weight.pt' \
     --dataset_root_path $BASE_PATH'/data/AudioMNIST/data' --severity_level 1.0 --model 'restnet50' \
     --output_csv_name 'RestNet50_batch_accuracy_record_bg-rand-1.0.csv' --corruptions 'doing_the_dishes,exercise_bike,running_tap' \
     --background_root_path $BASE_PATH'/data/speech_commands' --rand_bg
