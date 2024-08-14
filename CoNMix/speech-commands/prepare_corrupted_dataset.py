@@ -34,6 +34,7 @@ if __name__ == '__main__':
     ap.add_argument('--dataset_root_path', type=str)
     ap.add_argument('--output_path', type=str, default='./result')
     ap.add_argument('--data_type', type=str, choices=['raw', 'final'], default='final')
+    ap.add_argument('--rand_bg', action='store_true')
 
     ap.add_argument('--corruption', type=str, choices=['doing_the_dishes', 'dude_miaowing', 'exercise_bike', 'pink_noise', 'running_tap', 'white_noise', 'guassian_noise'])
     ap.add_argument('--severity_level', type=float, default=20)
@@ -75,7 +76,7 @@ if __name__ == '__main__':
         noise_type, noise = find_background_noise(args)
         corrupted_test_tf = Components(transforms=[
             pad_trunc(max_ms=max_ms, sample_rate=sample_rate),
-            BackgroundNoise(noise_level=args.severity_level, noise=noise, is_random=True),
+            BackgroundNoise(noise_level=args.severity_level, noise=noise, is_random=args.rand_bg),
         ])
 
     print(f'Generate the corrupted dataset by {noise_type}')

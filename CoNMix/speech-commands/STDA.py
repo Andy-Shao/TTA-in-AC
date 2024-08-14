@@ -17,9 +17,18 @@ from lib.wavUtils import DoNothing, Components
 from CoNMix.lib.prepare_dataset import ExpandChannel, Dataset_Idx
 from lib.datasets import load_from
 from CoNMix.analysis import load_model, load_origin_stat
-from CoNMix.STDA import build_optim, lr_scheduler
+from CoNMix.STDA import build_optim
 from CoNMix.lib.loss import SoftCrossEntropyLoss, soft_CE, Entropy
 from CoNMix.lib.plr import plr
+
+def lr_scheduler(optimizer:optim.Optimizer, iter_num:int, max_iter:int, gamma=10, power=0.75) -> optim.Optimizer:
+    decay = (1 + gamma * iter_num / max_iter) ** (-power)
+    for param_group in optimizer.param_groups:
+        param_group['lr'] = param_group['lr0'] * decay
+        param_group['weight_decay'] = 1e-3
+        param_group['momentum'] = .9
+        param_group['nesterov'] = True
+    return optimizer
 
 def inference(modelF: nn.Module, modelB: nn.Module, modelC: nn.Module, data_loader: DataLoader, device='cpu') -> float:
     modelF.eval()
@@ -385,6 +394,7 @@ if __name__ == "__main__":
             torch.save(modelB.state_dict(), os.path.join(args.full_output_path, args.STDA_modelB_weight_file_name))
             torch.save(modelC.state_dict(), os.path.join(args.full_output_path, args.STDA_modelC_weight_file_name))
         wandb.log({'Accuracy/classifier accuracy': accuracy, 'Accuracy/max classifier accuracy': max_accu}, step=epoch)
+        print(f'Accuracy/classifier accuracy: {accuracy:.2f}%, Accuracy/max classifier accuracy: {max_accu:.2f}%')
         wandb.log({
             "LOSS/total loss":ttl_loss / ttl_num * 100., 
             "LOSS/Pseudo-label cross-entorpy loss":ttl_cls_loss / ttl_num * 100., 
