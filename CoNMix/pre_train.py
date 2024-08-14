@@ -26,7 +26,6 @@ def lr_scheduler(optimizer: torch.optim.Optimizer, iter_num: int, max_iter: int,
         param_group['weight_decay'] = 1e-3
         param_group['momentum'] = .9
         param_group['nestenv'] = True
-    wandb.log({'Train/learning_rate': param_group['lr']}, step=iter_num)
     return optimizer
 
 def build_optimizer(args: argparse.Namespace, modelF: nn.Module, modelB: nn.Module, modelC: nn.Module) -> optim.Optimizer:
@@ -58,6 +57,7 @@ if __name__ == '__main__':
     ap = argparse.ArgumentParser()
     ap.add_argument('--dataset', type=str, default='audio-mnist', choices=['audio-mnist'])
     ap.add_argument('--dataset_root_path', type=str)
+    ap.add_argument('--num_workers', type=int, default=16)
     ap.add_argument('--output_path', type=str, default='./result')
     ap.add_argument('--output_csv_name', type=str, default='training_records.csv')
     ap.add_argument('--output_weight_prefix', type=str, default='audio-mnist')
@@ -141,8 +141,8 @@ if __name__ == '__main__':
     else:
         raise Exception('No support')
 
-    train_loader = DataLoader(dataset=train_dataset, batch_size=args.batch_size, shuffle=True, drop_last=False)
-    test_loader = DataLoader(dataset=test_dataset, batch_size=args.batch_size, shuffle=False, drop_last=False)
+    train_loader = DataLoader(dataset=train_dataset, batch_size=args.batch_size, shuffle=True, drop_last=False, num_workers=args.num_workers)
+    test_loader = DataLoader(dataset=test_dataset, batch_size=args.batch_size, shuffle=False, drop_last=False, num_workers=args.num_workers)
     modelF, modelB, modelC = load_models(args)
     store_model_structure_to_txt(model=modelF, output_path=os.path.join(args.full_output_path, 'modelF_structure.txt'))
     store_model_structure_to_txt(model=modelB, output_path=os.path.join(args.full_output_path, 'modelB_structure.txt'))
@@ -158,8 +158,12 @@ if __name__ == '__main__':
     max_iter = args.max_epoch * len(train_loader)
     iter = 0
     interval = max_iter // args.interval
+    ttl_train_loss = 0.
+    ttl_train_num = 0
+    ttl_train_corr = 0
     for epoch in range(1, args.max_epoch+1):
         print(f'Epoch [{epoch}/{args.max_epoch}]')
+        print('Training...')
         for features, labels in tqdm(train_loader):
             features, labels = features.to(args.device), labels.to(args.device)
             outputs = modelC(modelB(modelF(features)))
@@ -167,7 +171,10 @@ if __name__ == '__main__':
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-            wandb_run.log({'Train/classifier_loss': loss.cpu().item()}, step=iter)
+            _, preds = torch.max(outputs.detach(), dim=1)   
+            ttl_train_corr += (preds == labels).sum().cpu().item()
+            ttl_train_loss += loss.cpu().item()
+            ttl_train_num += labels.shape[0]
             features = None
             labels = None
             loss = None
@@ -175,34 +182,38 @@ if __name__ == '__main__':
 
             if iter % interval == 0 or iter == max_iter-1:
                 lr_scheduler(optimizer=optimizer, iter_num=iter, max_iter=max_iter)
-
-                modelF.eval()
-                modelB.eval()
-                modelC.eval()
-                ttl_corr = 0
-                ttl_size = 0
-                for features, labels in test_loader:
-                    features, labels = features.to(args.device), labels.to(args.device)
-                    with torch.no_grad():
-                        outputs = modelC(modelB(modelF(features)))
-                        _, preds = torch.max(outputs, dim=1)
-                    ttl_corr += (preds == labels).sum().cpu().item()
-                    ttl_size += labels.shape[0]
-                curr_accu = ttl_corr / ttl_size * 100.
-                wandb_run.log({'Train/Accuracy': curr_accu}, step=iter)
-                if curr_accu > best_accuracy:
-                    best_accuracy = curr_accu
-                    best_modelF = modelF.state_dict()
-                    best_modelB = modelB.state_dict()
-                    best_modelC = modelC.state_dict()
-
-                    torch.save(best_modelF, os.path.join(args.full_output_path, f'{args.output_weight_prefix}_best_modelF.pt'))
-                    torch.save(best_modelB, os.path.join(args.full_output_path, f'{args.output_weight_prefix}_best_modelB.pt'))
-                    torch.save(best_modelC, os.path.join(args.full_output_path, f'{args.output_weight_prefix}_best_modelC.pt'))
-                modelF.train()
-                modelB.train()
-                modelC.train()
-                features = None
-                labels = None
-                outputs = None
             iter += 1
+
+        modelF.eval()
+        modelB.eval()
+        modelC.eval()
+        ttl_corr = 0
+        ttl_size = 0
+        print('Validating...')
+        for features, labels in tqdm(test_loader):
+            features, labels = features.to(args.device), labels.to(args.device)
+            with torch.no_grad():
+                outputs = modelC(modelB(modelF(features)))
+                _, preds = torch.max(outputs.detach(), dim=1)
+            ttl_corr += (preds == labels).sum().cpu().item()
+            ttl_size += labels.shape[0]
+        curr_accu = ttl_corr / ttl_size * 100.
+        wandb_run.log({'Train/Accuracy': ttl_train_corr/ttl_train_num*100.}, step=epoch)
+        wandb_run.log({'Val/Accuracy': curr_accu}, step=epoch)
+        wandb_run.log({'Train/classifier_loss': ttl_train_loss/ttl_train_num}, step=epoch)
+        wandb_run.log({'Train/learning_rate': optimizer.param_groups[0]['lr']}, step=epoch, commit=True)
+        if curr_accu > best_accuracy:
+            best_accuracy = curr_accu
+            best_modelF = modelF.state_dict()
+            best_modelB = modelB.state_dict()
+            best_modelC = modelC.state_dict()
+
+            torch.save(best_modelF, os.path.join(args.full_output_path, f'{args.output_weight_prefix}_best_modelF.pt'))
+            torch.save(best_modelB, os.path.join(args.full_output_path, f'{args.output_weight_prefix}_best_modelB.pt'))
+            torch.save(best_modelC, os.path.join(args.full_output_path, f'{args.output_weight_prefix}_best_modelC.pt'))
+        modelF.train()
+        modelB.train()
+        modelC.train()
+        features = None
+        labels = None
+        outputs = None

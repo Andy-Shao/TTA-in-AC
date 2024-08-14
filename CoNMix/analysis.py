@@ -54,6 +54,7 @@ if __name__ == '__main__':
     ap.add_argument('--dataset', type=str, default='audio-mnist', choices=['audio-mnist'])
     ap.add_argument('--dataset_root_path', type=str)
     ap.add_argument('--temporary_path', type=str)
+    ap.add_argument('--num_workers', type=int, default=16)
     ap.add_argument('--output_path', type=str, default='./result')
     ap.add_argument('--modelF_weight_path', type=str)
     ap.add_argument('--modelB_weight_path', type=str)
@@ -65,13 +66,9 @@ if __name__ == '__main__':
 
     ap.add_argument('--corruption', type=str, default='gaussian_noise')
     ap.add_argument('--severity_level', type=float, default=.0025)
-    ap.add_argument('--corrupted_mean', type=str, default='0.,0.,0.')
-    ap.add_argument('--corrupted_std', type=str, default='1.,1.,1.')
-    ap.add_argument('--test_mean', type=str, default='0.,0.,0.')
-    ap.add_argument('--test_std', type=str, default='1.,1.,1.')
 
     ap.add_argument('--seed', type=int, default=2024, help='random seed')
-    ap.add_argument('--cal_norm', action='store_true')
+    ap.add_argument('--normalized', action='store_true')
 
     ap.add_argument('--max_epoch', type=int, default=200, help='max epoch')
     ap.add_argument('--interval', type=int, default=50, help='interval')
@@ -114,34 +111,35 @@ if __name__ == '__main__':
         n_mels=128
         hop_length=377
         args.class_num = 10
-        test_tf = Components(transforms=[
+        test_tf = [
             pad_trunc(max_ms=max_ms, sample_rate=sample_rate),
             a_transforms.MelSpectrogram(sample_rate=sample_rate, n_fft=1024, n_mels=n_mels, hop_length=hop_length),
             a_transforms.AmplitudeToDB(top_db=80),
             ExpandChannel(out_channel=3),
             v_transforms.Resize((256, 256), antialias=False),
             v_transforms.RandomCrop(224),
-            v_transforms.Normalize(mean=parse_mean_std(args.test_mean), std=parse_mean_std(args.test_std))
-        ])
+        ]   
         audio_minst_load_pathes = load_datapath(root_path=args.dataset_root_path, filter_fn=lambda x: x['accent'] != 'German')
-        test_dataset = AudioMINST(data_trainsforms=test_tf, include_rate=False, data_paths=audio_minst_load_pathes)
+        if args.normalized:
+            print('calculate the test dataset mean and standard deviation')
+            test_dataset = AudioMINST(data_trainsforms=Components(transforms=test_tf), include_rate=False, data_paths=audio_minst_load_pathes)
+            test_loader = DataLoader(dataset=test_dataset, batch_size=256, shuffle=False, drop_last=False, num_workers=args.num_workers)
+            test_mean, test_std = cal_norm(loader=test_loader)
+            test_tf.append(v_transforms.Normalize(mean=test_mean, std=test_std))
+        test_dataset = AudioMINST(data_trainsforms=Components(transforms=test_tf), include_rate=False, data_paths=audio_minst_load_pathes)
         
-        corrupted_test_tf = Components(transforms=[
-            v_transforms.Normalize(mean=parse_mean_std(args.corrupted_mean), std=parse_mean_std(args.corrupted_std))
-        ])
-        corrupted_test_dataset = load_from(root_path=args.temporary_path, index_file_name='audio_minst_meta.csv', data_tf=corrupted_test_tf)
+        corrupted_test_tf = []
+        if args.normalized:
+            corrupted_test_dataset = load_from(root_path=args.temporary_path, index_file_name='audio_minst_meta.csv')
+            corrupted_test_loader = DataLoader(dataset=corrupted_test_dataset, batch_size=256, shuffle=False, drop_last=False, num_workers=args.num_workers)
+            corrupted_mean, corrupted_std = cal_norm(loader=corrupted_test_loader)
+            corrupted_test_tf.append(v_transforms.Normalize(mean=corrupted_mean, std=corrupted_std))
+        corrupted_test_dataset = load_from(root_path=args.temporary_path, index_file_name='audio_minst_meta.csv', data_tf=Components(transforms=corrupted_test_tf))
     else:
         raise Exception('No support')
     
-    test_loader = DataLoader(dataset=test_dataset, batch_size=args.batch_size, shuffle=False, drop_last=False)
-    corrupted_test_loader = DataLoader(dataset=corrupted_test_dataset, batch_size=args.batch_size, shuffle=False, drop_last=False)
-
-    if args.cal_norm:
-        mean, std = cal_norm(test_loader)
-        print(f'test mean: {mean}, std: {std}')
-        mean, std = cal_norm(corrupted_test_loader)
-        print(f'corrupted mean is: {mean}, std is: {std}')
-        exit()
+    test_loader = DataLoader(dataset=test_dataset, batch_size=args.batch_size, shuffle=False, drop_last=False, num_workers=args.num_workers)
+    corrupted_test_loader = DataLoader(dataset=corrupted_test_dataset, batch_size=args.batch_size, shuffle=False, drop_last=False, num_workers=args.num_workers)
     
     print('Original Test')
     modelF, modelB, modelC = load_model(args)
