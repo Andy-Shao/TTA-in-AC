@@ -21,6 +21,7 @@ from CoNMix.lib.prepare_dataset import ExpandChannel
 if __name__ == '__main__':
     ap = argparse.ArgumentParser(description='SHOT')
     ap.add_argument('--dataset', type=str, default='audio-mnist', choices=['audio-mnist'])
+    ap.add_argument('--num_workers', type=int, default=16)
     ap.add_argument('--batch_size', type=int, default=64)
     ap.add_argument('--max_epoch', type=int, default=50)
     ap.add_argument('--lr', type=float, default=1e-3)
@@ -108,8 +109,8 @@ if __name__ == '__main__':
         raise Exception('configure cannot be satisfied')
     
     print(f'train dataset size: {len(train_dataset)}, validation dataset size: {len(val_dataset)}')
-    train_loader = DataLoader(dataset=train_dataset, batch_size=args.batch_size, shuffle=True, drop_last=False)
-    val_loader = DataLoader(dataset=val_dataset, batch_size=args.batch_size, shuffle=False, drop_last=False)
+    train_loader = DataLoader(dataset=train_dataset, batch_size=args.batch_size, shuffle=True, drop_last=False, num_workers=args.num_workers)
+    val_loader = DataLoader(dataset=val_dataset, batch_size=args.batch_size, shuffle=False, drop_last=False, num_workers=args.num_workers)
 
     if args.cal_norm:
         print('calculate the mean and standard deviation')

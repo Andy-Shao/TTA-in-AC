@@ -50,6 +50,7 @@ def load_model(args: argparse.Namespace, device='cuda') -> nn.Module:
 if __name__ == '__main__':
     ap = argparse.ArgumentParser(description='SHOT')
     ap.add_argument('--dataset', type=str, default='audio-mnist', choices=['audio-mnist'])
+    ap.add_argument('--num_workers', type=int, default=16)
     ap.add_argument('--model', type=str, default='cnn', choices=['cnn', 'restnet50'])
     ap.add_argument('--model_weight_file_path', type=str)
     ap.add_argument('--output_path', type=str, default='./result')
@@ -111,7 +112,7 @@ if __name__ == '__main__':
             v_transforms.Normalize(mean=parse_mean_std(args.test_mean), std=parse_mean_std(args.test_std)) if args.normalized else DoNothing()
         ])
         test_dataset = AudioMINST(data_paths=test_datapathes, data_trainsforms=test_tf, include_rate=False)
-        test_loader = DataLoader(dataset=test_dataset, batch_size=args.batch_size, shuffle=False, drop_last=False)
+        test_loader = DataLoader(dataset=test_dataset, batch_size=args.batch_size, shuffle=False, drop_last=False, num_workers=args.num_workers)
 
         corrupted_test_tf = Components(transforms=[
             pad_trunc(max_ms=1000, sample_rate=sample_rate),
@@ -124,7 +125,7 @@ if __name__ == '__main__':
             v_transforms.Normalize(mean=parse_mean_std(args.corrupted_test_mean), std=parse_mean_std(args.corrupted_test_std)) if args.normalized else DoNothing()
         ])
         corrupted_test_dataset = AudioMINST(data_paths=test_datapathes, include_rate=False, data_trainsforms=corrupted_test_tf)
-        corrupted_test_loader = DataLoader(dataset=corrupted_test_dataset, batch_size=args.batch_size, shuffle=False, drop_last=False)
+        corrupted_test_loader = DataLoader(dataset=corrupted_test_dataset, batch_size=args.batch_size, shuffle=False, drop_last=False, num_workers=args.num_workers)
     else:
         raise Exception('No support')
     
@@ -154,7 +155,7 @@ if __name__ == '__main__':
 
     print('Tent Adaptation')
     if args.dataset == 'audio-mnist':
-        tent_test_loader = DataLoader(dataset=corrupted_test_dataset, batch_size=args.tent_batch_size, shuffle=False, drop_last=False)
+        tent_test_loader = DataLoader(dataset=corrupted_test_dataset, batch_size=args.tent_batch_size, shuffle=False, drop_last=False, num_workers=args.num_workers)
     else:
         raise Exception('No support')
     model = load_model(args, running_device)
@@ -173,7 +174,7 @@ if __name__ == '__main__':
 
     print('Norm Adaptation')
     if args.dataset == 'audio-mnist' and args.model == 'restnet50':
-        tent_test_loader = DataLoader(dataset=corrupted_test_dataset, batch_size=100, shuffle=False, drop_last=False)
+        tent_test_loader = DataLoader(dataset=corrupted_test_dataset, batch_size=100, shuffle=False, drop_last=False, num_workers=args.num_workers)
     model = load_model(args, running_device)
     weight_num = count_ttl_params(model=model)
     norm_model = NormAdapt(model=model).to(device=running_device)

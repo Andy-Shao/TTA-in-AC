@@ -115,10 +115,12 @@ class SpeechCommandsDataset(Dataset):
 class BackgroundNoiseDataset(Dataset):
     base_path = '_background_noise_'
 
-    def __init__(self, root_path: str) -> None:
+    def __init__(self, root_path: str, data_tf=None, label_tf=None) -> None:
         super().__init__()
         self.root_path = root_path 
         self.data_list = self.__cal_data_list__()
+        self.data_tf = data_tf
+        self.label_tf = label_tf
 
     def __cal_data_list__(self) -> list[str]:
         data_list = []
@@ -134,4 +136,8 @@ class BackgroundNoiseDataset(Dataset):
         noise_path = os.path.join(self.root_path, self.base_path, self.data_list[index])
         noise, sample_rate = torchaudio.load(noise_path)
         noise_type = self.data_list[index][:-(len('.wav'))]
+        if self.data_tf is not None:
+            noise = self.data_tf(noise)
+        if self.label_tf is not None:
+            sample_rate = self.label_tf(sample_rate)
         return noise_type, noise, sample_rate
