@@ -9,7 +9,7 @@ import torch
 from torch import optim
 from torch import nn
 
-from lib.toolkit import print_argparse, count_ttl_params
+from lib.toolkit import print_argparse, count_ttl_params, store_model_structure_to_txt
 from ttt.lib.test_helpers import build_sc_model
 from ttt.lib.speech_commands.prepare_dataset import prepare_data, train_transforms, val_transforms
 from ttt.lib.prepare_dataset import TimeShiftOps
@@ -25,7 +25,7 @@ if __name__ == '__main__':
     parser.add_argument('--wandb', action='store_true')
     parser.add_argument('--dataset_root_path', type=str)
     parser.add_argument('--output_path', type=str, default='./result')
-    parser.add_argument('--shared', type=str, default='layer2')
+    parser.add_argument('--shared', type=str, default='layer2', choices=['layer2', 'layer3'])
     parser.add_argument('--milestone_1', default=50, type=int)
     parser.add_argument('--milestone_2', default=65, type=int)
     parser.add_argument('--rotation_type', default='rand')
@@ -67,6 +67,8 @@ if __name__ == '__main__':
     #############################################################
 
     net, ext, head, ssh = build_sc_model(args=args)
+    store_model_structure_to_txt(model=net, output_path=os.path.join(args.output_full_path, f'{args.output_weight_name[:-4]}-net.txt'))
+    store_model_structure_to_txt(model=ssh, output_path=os.path.join(args.output_full_path, f'{args.output_weight_name[:-4]}-ssh.txt'))
     print(f'net weight number is: {count_ttl_params(net)}, ssh weight number is: {count_ttl_params(ssh)}, ext weight number is: {count_ttl_params(ext)}')
     print((f'total weight number is: {count_ttl_params(net) + count_ttl_params(head)}'))
     train_dataset, train_loader = prepare_data(args=args, mode='train')
@@ -123,7 +125,7 @@ if __name__ == '__main__':
             loss.backward()
             optimizer.step()
         scheduler.step()
-        wandb.log({'Train/Accuracy':ttl_corr/ttl_size*100., 'Train/classifier_loss':ttl_loss/ttl_size}, step=epoch)
+        wandb.log({'Train/Accuracy':ttl_corr/ttl_size*100., 'Train/classifier_loss':ttl_loss/ttl_size, 'Train/Shift Accuracy': ttl_ssh_corr/ttl_ssh_size*100.}, step=epoch)
         net.eval()
         ssh.eval()
         ttl_corr = 0
