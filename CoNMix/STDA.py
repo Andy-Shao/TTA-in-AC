@@ -18,7 +18,7 @@ from lib.datasets import load_from
 from CoNMix.analysis import load_model, load_origin_stat, inference
 from CoNMix.pre_train import op_copy
 from CoNMix.lib.prepare_dataset import Dataset_Idx, ExpandChannel
-from lib.wavUtils import Components
+from lib.wavUtils import Components, DoNothing
 from CoNMix.lib.loss import SoftCrossEntropyLoss, soft_CE
 from CoNMix.lib.plr import plr
 
@@ -55,56 +55,67 @@ def build_dataset(args: argparse.Namespace) -> tuple[Dataset, Dataset, Dataset]:
         args.class_num = 10
         meta_file_name = 'audio_minst_meta.csv'
         if args.data_type == 'final':
-            test_tf = Components(transforms=[
-                v_transforms.Normalize(mean=parse_mean_std(args.weak_corrupted_mean), std=parse_mean_std(args.weak_corrupted_std))
-            ])
+            test_tf = [
+                DoNothing(),
+            ]
         elif args.data_type == 'raw':
-            test_tf = Components(transforms=[
+            test_tf = [
                 a_transforms.MelSpectrogram(sample_rate=sample_rate, n_fft=1024, n_mels=n_mels, hop_length=hop_length),
                 a_transforms.AmplitudeToDB(top_db=80),
                 ExpandChannel(out_channel=3),
                 v_transforms.Resize((256, 256), antialias=False),
                 v_transforms.RandomCrop(224),
-                v_transforms.Normalize(mean=parse_mean_std(args.weak_corrupted_mean), std=parse_mean_std(args.weak_corrupted_std))
-            ])
+            ]
         else:
             raise Exception('No support')
-        test_dataset = load_from(root_path=args.weak_aug_dataset_root_path, index_file_name=meta_file_name, data_tf=test_tf)
+        if args.normalized:
+            print('calculate the test dataset mean and standard deviation')
+            test_dataset = load_from(root_path=args.weak_aug_dataset_root_path, index_file_name=meta_file_name, data_tf=Components(transforms=test_tf))
+            test_mean, test_std = cal_norm(loader=DataLoader(dataset=test_dataset, batch_size=256, shuffle=False, drop_last=False))
+            test_tf.append(v_transforms.Normalize(mean=test_mean, std=test_std))
+        test_dataset = load_from(root_path=args.weak_aug_dataset_root_path, index_file_name=meta_file_name, data_tf=Components(transforms=test_tf))
         if args.data_type == 'final':
-            weak_test_tf = Components(transforms=[
+            weak_test_tf = [
                 v_transforms.RandomHorizontalFlip(),
-                v_transforms.Normalize(mean=parse_mean_std(args.weak_corrupted_mean), std=parse_mean_std(args.weak_corrupted_std))
-            ])
+            ]
         elif args.data_type == 'raw':
-            weak_test_tf = Components(transforms=[
+            weak_test_tf = [
                 a_transforms.MelSpectrogram(sample_rate=sample_rate, n_fft=1024, n_mels=n_mels, hop_length=hop_length),
                 a_transforms.AmplitudeToDB(top_db=80),
                 ExpandChannel(out_channel=3),
                 v_transforms.Resize((256, 256), antialias=False),
                 v_transforms.RandomCrop(224),
                 v_transforms.RandomHorizontalFlip(),
-                v_transforms.Normalize(mean=parse_mean_std(args.weak_corrupted_mean), std=parse_mean_std(args.weak_corrupted_std))
-            ])
+            ]
         else:
             raise Exception('No support')
-        weak_test_dataset = load_from(root_path=args.weak_aug_dataset_root_path, index_file_name=meta_file_name, data_tf=weak_test_tf)
+        if args.normalized:
+            print('calculate the weak dataset mean and standard deviation')
+            weak_test_dataset = load_from(root_path=args.weak_aug_dataset_root_path, index_file_name=meta_file_name, data_tf=Components(transforms=weak_test_tf))
+            weak_mean, weak_std = cal_norm(loader=DataLoader(dataset=weak_test_dataset, batch_size=256, shuffle=False, drop_last=False))
+            weak_test_tf.append(v_transforms.Normalize(mean=weak_mean, std=weak_std))
+        weak_test_dataset = load_from(root_path=args.weak_aug_dataset_root_path, index_file_name=meta_file_name, data_tf=Components(transforms=weak_test_tf))
         
         if args.data_type == 'final':
-            strong_test_tf = Components(transforms=[
-                v_transforms.Normalize(mean=parse_mean_std(args.strong_corrupted_mean), std=parse_mean_std(args.strong_corrupted_std))
-            ])
+            strong_test_tf = [
+                DoNothing(),
+            ]
         elif args.data_type == 'raw':
-            strong_test_tf = Components(transforms=[
+            strong_test_tf = [
                 a_transforms.MelSpectrogram(sample_rate=sample_rate, n_fft=1024, n_mels=n_mels, hop_length=hop_length),
                 a_transforms.AmplitudeToDB(top_db=80),
                 ExpandChannel(out_channel=3),
                 v_transforms.Resize((256, 256), antialias=False),
                 v_transforms.RandomCrop(224),
-                v_transforms.Normalize(mean=parse_mean_std(args.strong_corrupted_mean), std=parse_mean_std(args.strong_corrupted_std))
-            ])
+            ]
         else:
             raise Exception('No support')
-        strong_test_dataset = load_from(root_path=args.strong_aug_dataset_root_path, index_file_name=meta_file_name, data_tf=strong_test_tf)
+        if args.normalized:
+            print('calculate the strong dataset mean and standard deviation')
+            strong_test_dataset = load_from(root_path=args.strong_aug_dataset_root_path, index_file_name=meta_file_name, data_tf=Components(transforms=strong_test_tf))
+            strong_mean, strong_std = cal_norm(loader=DataLoader(dataset=strong_test_dataset, batch_size=256, shuffle=False, drop_last=False))
+            strong_test_tf.append(v_transforms.Normalize(mean=strong_mean, std=strong_std))
+        strong_test_dataset = load_from(root_path=args.strong_aug_dataset_root_path, index_file_name=meta_file_name, data_tf=Components(transforms=strong_test_tf))
     else:
         raise Exception('No support')
     return test_dataset, weak_test_dataset, strong_test_dataset
@@ -199,6 +210,7 @@ def build_optim(args: argparse.Namespace, modelF: nn.Module, modelB: nn.Module, 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser(description='Rand-Augment')
     ap.add_argument('--dataset', type=str, default='audio-mnist', choices=['audio-mnist'])
+    ap.add_argument('--num_workers', type=int, default=16)
     ap.add_argument('--weak_aug_dataset_root_path', type=str)
     ap.add_argument('--strong_aug_dataset_root_path', type=str)
     ap.add_argument('--output_path', type=str, default='./result')
@@ -219,7 +231,7 @@ if __name__ == "__main__":
     ap.add_argument('--strong_corrupted_std', type=str)
 
     ap.add_argument('--seed', type=int, default=2024, help='random seed')
-    ap.add_argument('--cal_norm', action='store_true')
+    ap.add_argument('--normalized', action='store_true')
 
     ap.add_argument('--max_epoch', type=int, default=100, help="max iterations")
     ap.add_argument('--interval', type=int, default=100)
@@ -281,15 +293,9 @@ if __name__ == "__main__":
         config=args, tags=['Audio Classification', args.dataset, 'ViT'])
 
     test_dataset, weak_test_dataset, strong_test_dataset = build_dataset(args)
-    if args.cal_norm:
-        mean, std = cal_norm(loader=DataLoader(dataset=weak_test_dataset, batch_size=args.batch_size, shuffle=False, drop_last=False))
-        print(f'weak dataset -- mean: {mean}, std: {std}')
-        mean, std = cal_norm(loader=DataLoader(dataset=strong_test_dataset, batch_size=args.batch_size, shuffle=False, drop_last=False))
-        print(f'strong dataset -- mean: {mean}, std: {std}')
-        exit()
-    test_loader = DataLoader(dataset=test_dataset, batch_size=args.test_batch_size, shuffle=False, drop_last=False)
+    test_loader = DataLoader(dataset=test_dataset, batch_size=args.test_batch_size, shuffle=False, drop_last=False, num_workers=args.num_workers)
     weak_test_dataset = Dataset_Idx(dataset=weak_test_dataset)
-    weak_test_loader = DataLoader(dataset=weak_test_dataset, batch_size=args.batch_size, shuffle=True, drop_last=False)
+    weak_test_loader = DataLoader(dataset=weak_test_dataset, batch_size=args.batch_size, shuffle=True, drop_last=False, num_workers=args.num_workers)
     # build mode & load pre-train weight
     modelF, modelB, modelC = load_model(args)
     load_origin_stat(args, modelF=modelF, modelB=modelB, modelC=modelC)
