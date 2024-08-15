@@ -238,6 +238,8 @@ if __name__ == "__main__":
     ap.add_argument('--batch_size', type=int, default=48, help="batch_size")
     # ap.add_argument('--test_batch_size', type=int, default=128, help="batch_size")
     ap.add_argument('--lr', type=float, default=1e-3, help="learning rate")
+    ap.add_argument('--lr_gamma', type=int, default=10)
+    ap.add_argument('--cls_mode', type=str, default='logsoft_ce', choices=['logsoft_ce', 'logsoft_nll'])
 
     # ap.add_argument('--gent', type=bool, default=False)
     # ap.add_argument('--kd', type=bool, default=False)
@@ -247,7 +249,7 @@ if __name__ == "__main__":
     ap.add_argument('--fbnm', type=bool, default=True, help='fbnm -> Nuclear-norm Maximization loss')
 
     ap.add_argument('--threshold', type=int, default=0)
-    ap.add_argument('--cls_par', type=float, default=0.2, help='lambda 2 | Pseudo-label loss capable')
+    ap.add_argument('--cls_par', type=float, default=1.0, help='lambda 2 | Pseudo-label loss capable')
     ap.add_argument('--alpha', type=float, default=0.9)
 
     ap.add_argument('--const_par', type=float, default=0.2, help='lambda 3')
@@ -356,8 +358,15 @@ if __name__ == "__main__":
             if args.cls_par > 0:
                 with torch.no_grad():
                     pred = mem_label[idxes]
-                classifier_loss = SoftCrossEntropyLoss(outputs[0:batch_size], pred)
-                classifier_loss = torch.mean(classifier_loss)
+                if args.cls_mode == 'logsoft_ce':
+                    classifier_loss = SoftCrossEntropyLoss(outputs[0:batch_size], pred)
+                    classifier_loss = torch.mean(classifier_loss)
+                elif args.cls_mode == 'logsoft_nll':
+                    softmax_output = nn.LogSoftmax(dim=1)(outputs[0:batch_size])
+                    with torch.no_grad():
+                        _, pred = torch.max(pred, dim=1)
+                    classifier_loss = nn.NLLLoss(reduction='mean')(softmax_output, pred)
+                classifier_loss = args.cls_par*classifier_loss
             else:
                 classifier_loss = torch.tensor(.0).cuda()
 
@@ -395,7 +404,7 @@ if __name__ == "__main__":
 
             if iter % interval_iter == 0 or iter == max_iter:
                 if args.sdlr:
-                    lr_scheduler(optimizer, iter_num=iter, max_iter=max_iter)
+                    lr_scheduler(optimizer, iter_num=iter, max_iter=max_iter, gamma=args.lr_gamma)
 
         print('Inferencing...')
         accuracy = inference(modelF=modelF, modelB=modelB, modelC=modelC, data_loader=test_loader, device=args.device)
