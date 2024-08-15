@@ -8,9 +8,10 @@ from torchaudio import transforms as a_transforms
 from torchvision import transforms as v_transforms
 
 from lib.toolkit import print_argparse, cal_norm
-from lib.wavUtils import Components, pad_trunc, GuassianNoise, time_shift
+from lib.wavUtils import Components, pad_trunc, GuassianNoise, time_shift, BackgroundNoise
 from lib.datasets import AudioMINST, load_datapath, load_from
 from CoNMix.lib.prepare_dataset import ExpandChannel
+from tent.bg_analysis import find_noise
 
 def store_to(dataset: torch.utils.data.Dataset, root_path:str, index_file_name:str, args:argparse.Namespace, data_transf=None, label_transf=None) -> None:
     from lib.datasets import store_to as single_store_to, multi_process_store_to
@@ -24,15 +25,17 @@ if __name__ == '__main__':
     ap = argparse.ArgumentParser()
     ap.add_argument('--dataset', type=str, default='audio-mnist', choices=['audio-mnist'])
     ap.add_argument('--dataset_root_path', type=str)
+    ap.add_argument('--background_root_path', type=str)
     ap.add_argument('--num_workers', type=int, default=16)
     ap.add_argument('--output_path', type=str, default='./result')
     ap.add_argument('--data_type', type=str, choices=['raw', 'final'], default='final')
 
-    ap.add_argument('--corruption', type=str, default='gaussian_noise')
+    ap.add_argument('--corruption', type=str, default='gaussian_noise', choices=['doing_the_dishes', 'dude_miaowing', 'exercise_bike', 'pink_noise', 'running_tap', 'white_noise', 'guassian_noise'])
     ap.add_argument('--severity_level', type=float, default=.0025)
     ap.add_argument('--cal_norm', action='store_true')
     ap.add_argument('--cal_strong', action='store_true')
     ap.add_argument('--parallel', action='store_true')
+    ap.add_argument('--rand_bg', action='store_true')
 
     # ap.add_argument('--seed', type=int, default=2024, help='random seed')
 
@@ -49,10 +52,17 @@ if __name__ == '__main__':
         sample_rate=48000
         n_mels=128
         hop_length=377
-        corrupted_test_tf = Components(transforms=[
-            pad_trunc(max_ms=max_ms, sample_rate=sample_rate),
-            GuassianNoise(noise_level=args.severity_level),
-        ])
+        if args.corruption == 'guassian_noise':
+            corrupted_test_tf = Components(transforms=[
+                pad_trunc(max_ms=max_ms, sample_rate=sample_rate),
+                GuassianNoise(noise_level=args.severity_level),
+            ])
+        else:
+            noise = find_noise(args=args, new_sample_rate=sample_rate, corruption=args.corruption)
+            corrupted_test_tf = Components(transforms=[
+                pad_trunc(max_ms=max_ms, sample_rate=sample_rate),
+                BackgroundNoise(noise_level=args.severity_level, noise=noise, is_random=args.rand_bg),
+            ])
         audio_minst_load_pathes = load_datapath(root_path=args.dataset_root_path, filter_fn=lambda x: x['accent'] != 'German')
         corrupted_test_dataset = AudioMINST(data_trainsforms=corrupted_test_tf, include_rate=False, data_paths=audio_minst_load_pathes)
     else:
