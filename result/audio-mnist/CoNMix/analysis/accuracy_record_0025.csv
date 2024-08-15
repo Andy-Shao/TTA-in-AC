@@ -1,4 +1,4 @@
 ,dataset,algorithm,tta-operation,corruption,accuracy,error,severity level,number of weight
-0,audio-mnist,ViT,N/A,N/A,97.21,2.7900000000000063,0.0,103687828
-1,audio-mnist,ViT,N/A,gaussian_noise,67.71000000000001,32.28999999999999,0.0025,103687828
-2,audio-mnist,ViT,CoNMix,gaussian_noise,97.94,2.0600000000000023,0.0025,103687828
+0,audio-mnist,ViT,N/A,N/A,97.34,2.6599999999999966,0.0,103687828
+1,audio-mnist,ViT,N/A,gaussian_noise,82.77,17.230000000000004,0.0025,103687828
+2,audio-mnist,ViT,CoNMix,gaussian_noise,97.31,2.6899999999999977,0.0025,103687828
