@@ -1,0 +1,11 @@
+,dataset,algorithm,tta-operation,corruption,accuracy,error,severity level,number of weight
+0,audio-mnist,cnn,N/A,N/A,96.21,3.7900000000000063,0.0,25404
+1,audio-mnist,cnn,N/A,doing_the_dishes-rand,16.950000000000003,83.05,10.0,25404
+2,audio-mnist,cnn,Tent Adaptation,doing_the_dishes-rand,60.85,39.15,10.0,25404
+3,audio-mnist,cnn,Norm Adaptation,doing_the_dishes-rand,58.15,41.85,10.0,25404
+4,audio-mnist,cnn,N/A,exercise_bike-rand,16.64,83.36,10.0,25404
+5,audio-mnist,cnn,Tent Adaptation,exercise_bike-rand,61.160000000000004,38.839999999999996,10.0,25404
+6,audio-mnist,cnn,Norm Adaptation,exercise_bike-rand,59.29,40.71,10.0,25404
+7,audio-mnist,cnn,N/A,running_tap-rand,21.46,78.53999999999999,10.0,25404
+8,audio-mnist,cnn,Tent Adaptation,running_tap-rand,68.56,31.439999999999998,10.0,25404
+9,audio-mnist,cnn,Norm Adaptation,running_tap-rand,68.42,31.58,10.0,25404
