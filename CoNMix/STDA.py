@@ -37,11 +37,11 @@ def inference(modelF: nn.Module, modelB: nn.Module, modelC: nn.Module, data_load
         ttl_size += labels.shape[0]
     return ttl_corr / ttl_size * 100.
 
-def lr_scheduler(optimizer:optim.Optimizer, iter_num:int, max_iter:int, gamma=10, power=0.75) -> optim.Optimizer:
+def lr_scheduler(optimizer:optim.Optimizer, iter_num:int, max_iter:int, gamma=10, power=0.75, weight_decay=1e-3) -> optim.Optimizer:
     decay = (1 + gamma * iter_num / max_iter) ** (-power)
     for param_group in optimizer.param_groups:
         param_group['lr'] = param_group['lr0'] * decay
-        param_group['weight_decay'] = 1e-3
+        param_group['weight_decay'] = weight_decay
         param_group['momentum'] = .9
         param_group['nesterov'] = True
     return optimizer
@@ -239,6 +239,7 @@ if __name__ == "__main__":
     # ap.add_argument('--test_batch_size', type=int, default=128, help="batch_size")
     ap.add_argument('--lr', type=float, default=1e-3, help="learning rate")
     ap.add_argument('--lr_gamma', type=int, default=10)
+    ap.add_argument('--lr_weight_decay', type=float, default=1e-3)
     ap.add_argument('--cls_mode', type=str, default='logsoft_ce', choices=['logsoft_ce', 'logsoft_nll'])
 
     # ap.add_argument('--gent', type=bool, default=False)
@@ -338,6 +339,8 @@ if __name__ == "__main__":
                     else:
                         mem_label = plr(prev_mem_label, mem_label, dd, args.class_num, alpha = args.alpha)
                         prev_mem_label = mem_label.argmax(axis=1).astype(int)
+                else:
+                    mem_label = dd
     
                 # print('Completed finding Pseudo Labels\n')
                 mem_label = torch.from_numpy(mem_label).to(args.device)
@@ -404,7 +407,7 @@ if __name__ == "__main__":
 
             if iter % interval_iter == 0 or iter == max_iter:
                 if args.sdlr:
-                    lr_scheduler(optimizer, iter_num=iter, max_iter=max_iter, gamma=args.lr_gamma)
+                    lr_scheduler(optimizer, iter_num=iter, max_iter=max_iter, gamma=args.lr_gamma, weight_decay=args.lr_weight_decay)
 
         print('Inferencing...')
         accuracy = inference(modelF=modelF, modelB=modelB, modelC=modelC, data_loader=test_loader, device=args.device)

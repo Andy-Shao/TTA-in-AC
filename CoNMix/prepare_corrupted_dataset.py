@@ -9,7 +9,7 @@ from torchvision import transforms as v_transforms
 
 from lib.toolkit import print_argparse, cal_norm
 from lib.wavUtils import Components, pad_trunc, GuassianNoise, time_shift, BackgroundNoise
-from lib.datasets import AudioMINST, load_datapath, load_from
+from lib.datasets import AudioMINST, load_datapath, load_from, ClipDataset
 from CoNMix.lib.prepare_dataset import ExpandChannel
 from tent.bg_analysis import find_noise
 
@@ -38,6 +38,8 @@ if __name__ == '__main__':
     ap.add_argument('--rand_bg', action='store_true')
 
     # ap.add_argument('--seed', type=int, default=2024, help='random seed')
+    ap.add_argument('--clip', action='store_true')
+    ap.add_argument('--clip_rate', type=float, default=.3)
 
     args = ap.parse_args()
     args.device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -68,6 +70,9 @@ if __name__ == '__main__':
     else:
         raise Exception('No support')
     meta_file_name = 'audio_minst_meta.csv'
+
+    if args.clip:
+        corrupted_test_dataset = ClipDataset(dataset=corrupted_test_dataset, rate=args.clip_rate)
 
     if args.data_type == 'final':
         store_to(dataset=corrupted_test_dataset, root_path=args.output_path, index_file_name=meta_file_name, args=args)
