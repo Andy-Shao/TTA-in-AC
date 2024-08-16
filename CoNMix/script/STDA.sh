@@ -32,4 +32,4 @@ python -m CoNMix.STDA --dataset 'audio-mnist' \
     --STDA_modelB_weight_file_name 'audio-mnist_modelB-doing_the_dishes-1.0-bg-rand.pt' \
     --STDA_modelC_weight_file_name 'audio-mnist_modelC-doing_the_dishes-1.0-bg-rand.pt' --wandb --normalized \
     --corruption 'doing_the_dishes' --cls_par 0.0 --lr_gamma 30 --fbnm_par 4.0 --cls_mode 'logsoft_nll' \
-    --plr 0 --const_par 1.2
+    --plr 0 --const_par 0.6
