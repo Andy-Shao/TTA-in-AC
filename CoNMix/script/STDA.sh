@@ -32,7 +32,7 @@ python -m CoNMix.STDA --dataset 'audio-mnist' \
     --STDA_modelB_weight_file_name 'audio-mnist_modelB-doing_the_dishes-3.0-bg-rand.pt' \
     --STDA_modelC_weight_file_name 'audio-mnist_modelC-doing_the_dishes-3.0-bg-rand.pt' --wandb --normalized \
     --corruption 'doing_the_dishes' --cls_par 0.0 --lr_gamma 30 --fbnm_par 4.0 --cls_mode 'logsoft_nll' \
-    --plr 0 --const_par 0.6 
+    --plr 0 --const_par 0.6
 
 # python -m CoNMix.STDA --dataset 'audio-mnist' \
 #     --weak_aug_dataset_root_path $BASE_PATH'/tmp/AudioMNIST_analysis/doing_the_dishes/10.0-bg-rand_weak' \
