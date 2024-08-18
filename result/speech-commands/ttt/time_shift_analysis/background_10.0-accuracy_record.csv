@@ -1,0 +1,8 @@
+,dataset,algorithm,tta-operation,corruption,accuracy,error,severity level,number of weight
+0,speech-commands,RestNet50_base,N/A,N/A,96.06437454279444,3.9356254572055605,0.0,1518209
+1,speech-commands,RestNet50_base,N/A,doing_the_dishes,91.70446232626188,8.295537673738124,10.0,1518209
+2,speech-commands,RestNet50_base,"TTT, ts, bn, online",doing_the_dishes,91.42648134601316,8.573518653986838,10.0,1518209
+3,speech-commands,RestNet50_base,N/A,exercise_bike,91.4996342355523,8.500365764447693,10.0,1518209
+4,speech-commands,RestNet50_base,"TTT, ts, bn, online",exercise_bike,88.95391367959034,11.046086320409657,10.0,1518209
+5,speech-commands,RestNet50_base,N/A,running_tap,91.9824433065106,8.017556693489396,10.0,1518209
+6,speech-commands,RestNet50_base,"TTT, ts, bn, online",running_tap,91.16313094367227,8.836869056327728,10.0,1518209
