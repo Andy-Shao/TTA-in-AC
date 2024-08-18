@@ -88,7 +88,7 @@ if __name__ == '__main__':
         ])
         test_datapathes = load_datapath(root_path=args.dataset_root_path, filter_fn=lambda x: x['accent']!= 'German')
         test_dataset = AudioMINST(data_paths=test_datapathes, data_trainsforms=data_transforms, include_rate=False)
-        test_loader = DataLoader(dataset=test_dataset, batch_size=args.batch_size, shuffle=False, drop_last=False)
+        test_loader = DataLoader(dataset=test_dataset, batch_size=args.batch_size, shuffle=False, drop_last=False, num_workers=args.num_workers)
 
         corrupted_data_transforms = Components(transforms=[
             pad_trunc(max_ms=1000, sample_rate=sample_rate),
@@ -97,7 +97,7 @@ if __name__ == '__main__':
             a_transforms.AmplitudeToDB(top_db=80)
         ])
         corrupted_test_dataset = AudioMINST(data_paths=test_datapathes, include_rate=False, data_trainsforms=corrupted_data_transforms)
-        corrupted_test_loader = DataLoader(dataset=corrupted_test_dataset, batch_size=args.batch_size, shuffle=False, drop_last=False)
+        corrupted_test_loader = DataLoader(dataset=corrupted_test_dataset, batch_size=args.batch_size, shuffle=False, drop_last=False, num_workers=args.num_workers)
     elif args.dataset == 'audio-mnist' and args.model == 'restnet50':
         sample_rate = 48000
         n_mels=128
