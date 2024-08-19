@@ -294,6 +294,8 @@ if __name__ == "__main__":
                     else:
                         mem_label = plr(prev_mem_label, mem_label, dd, args.class_num, alpha = args.alpha)
                         prev_mem_label = mem_label.argmax(axis=1).astype(int)
+                else:
+                    mem_label = dd
     
                 # print('Completed finding Pseudo Labels\n')
                 mem_label = torch.from_numpy(mem_label).to(args.device)
