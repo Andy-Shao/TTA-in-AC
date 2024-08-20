@@ -29,6 +29,6 @@ python -m CoNMix.prepare_corrupted_dataset --dataset 'audio-mnist' --dataset_roo
 #     --output_path $BASE_PATH'/tmp/AudioMNIST_analysis/exercise_bike/10.0-bg-rand' --severity_level 10.0 --corruption 'exercise_bike' \
 #     --background_root_path $BASE_PATH'/data/speech_commands' --cal_strong --parallel --rand_bg
 
-python -m CoNMix.prepare_corrupted_dataset --dataset 'audio-mnist' --dataset_root_path $BASE_PATH'/data/AudioMNIST/data' \
-    --output_path $BASE_PATH'/tmp/AudioMNIST_analysis/running_tap/10.0-bg-rand' --severity_level 10.0 --corruption 'running_tap' \
-    --background_root_path $BASE_PATH'/data/speech_commands' --cal_strong --parallel --rand_bg
+# python -m CoNMix.prepare_corrupted_dataset --dataset 'audio-mnist' --dataset_root_path $BASE_PATH'/data/AudioMNIST/data' \
+#     --output_path $BASE_PATH'/tmp/AudioMNIST_analysis/running_tap/10.0-bg-rand' --severity_level 10.0 --corruption 'running_tap' \
+#     --background_root_path $BASE_PATH'/data/speech_commands' --cal_strong --parallel --rand_bg
