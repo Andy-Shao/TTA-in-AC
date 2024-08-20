@@ -1,0 +1,4 @@
+,dataset,algorithm,tta-operation,corruption,accuracy,error,severity level,number of weight
+0,audio-mnist,ViT,N/A,N/A,97.34,2.6599999999999966,0.0,103687828
+1,audio-mnist,ViT,N/A,exercise_bike,29.909999999999997,70.09,3.0,103687828
+2,audio-mnist,ViT,CoNMix,exercise_bike,84.99,15.010000000000005,3.0,103687828
