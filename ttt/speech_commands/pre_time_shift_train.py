@@ -17,7 +17,7 @@ from ttt.lib.time_shift_rotation import rotate_batch
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='SHOT')
-    parser.add_argument('--dataset', type=str, default='speech-commands', choices=['speech-commands'])
+    parser.add_argument('--dataset', type=str, default='speech-commands', choices=['speech-commands', 'speech-commands-numbers'])
     parser.add_argument('--batch_size', type=int, default=96)
     parser.add_argument('--num_workers', type=int, default=16)
     parser.add_argument('--max_epoch', type=int, default=75)
@@ -54,6 +54,15 @@ if __name__ == '__main__':
         args.final_full_line_in = 256
         args.hop_length = 253
         args.ssh_class_num = 3
+        args.data_type = 'all'
+    elif args.dataset == 'speech-commands-numbers':
+        args.class_num = 10
+        args.sample_rate = 16000
+        args.n_mels = 64
+        args.final_full_line_in = 256
+        args.hop_length = 253
+        args.ssh_class_num = 3
+        args.data_type = 'numbers'
     else:
         raise Exception('No support')
     args.device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -71,9 +80,9 @@ if __name__ == '__main__':
     store_model_structure_to_txt(model=ssh, output_path=os.path.join(args.output_full_path, f'{args.output_weight_name[:-4]}-ssh.txt'))
     print(f'net weight number is: {count_ttl_params(net)}, ssh weight number is: {count_ttl_params(ssh)}, ext weight number is: {count_ttl_params(ext)}')
     print((f'total weight number is: {count_ttl_params(net) + count_ttl_params(head)}'))
-    train_dataset, train_loader = prepare_data(args=args, mode='train')
+    train_dataset, train_loader = prepare_data(args=args, mode='train', data_type=args.data_type)
     tran_transfs = train_transforms(args=args)
-    val_dataset, val_loader = prepare_data(args=args, mode='validation')
+    val_dataset, val_loader = prepare_data(args=args, mode='validation', data_type=args.data_type)
     val_transfs = val_transforms(args=args)
 
     parameters = list(net.parameters()) + list(head.parameters())

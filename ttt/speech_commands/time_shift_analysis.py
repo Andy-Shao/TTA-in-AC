@@ -33,7 +33,7 @@ def load_model(args: argparse.Namespace) -> tuple[nn.Module, nn.Module, nn.Modul
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='SHOT')
-    parser.add_argument('--dataset', type=str, default='speech-commands', choices=['speech-commands'])
+    parser.add_argument('--dataset', type=str, default='speech-commands', choices=['speech-commands', 'speech-commands-numbers'])
     parser.add_argument('--num_workers', type=int, default=16)
     parser.add_argument('--origin_model_weight_file_path', type=str)
     parser.add_argument('--output_path', type=str, default='./result')
@@ -74,6 +74,16 @@ if __name__ == '__main__':
         args.hop_length = 253
         args.ssh_class_num = 3
         net, ext, head, ssh = load_model(args)
+        args.data_type = 'all'
+    if args.dataset == 'speech-commands-numbers':
+        args.class_num = 10
+        args.sample_rate = 16000
+        args.n_mels = 64
+        args.final_full_line_in = 256
+        args.hop_length = 253
+        args.ssh_class_num = 3
+        net, ext, head, ssh = load_model(args)
+        args.data_type = 'numbers'
     else:
         raise Exception('No support')
     
@@ -88,7 +98,7 @@ if __name__ == '__main__':
     ##########################################
 
     print('Origin test')
-    test_dataset, test_loader = prepare_data(args=args, mode='test')
+    test_dataset, test_loader = prepare_data(args=args, mode='test', data_type=args.data_type)
     test_transf = test_transforms(args)
     ttl_weight_num = count_ttl_params(model=net) + count_ttl_params(model=ext) + count_ttl_params(model=head)
     test_accu = inference(model=net, loader=test_loader, test_transf=test_transf, device=args.device)
@@ -108,7 +118,7 @@ if __name__ == '__main__':
                 pad_trunc(max_ms=1000, sample_rate=args.sample_rate),
                 BackgroundNoise(noise_level=args.severity_level, noise=noise, is_random=True),
             ]
-        corrupted_dataset, corrupted_loader = prepare_data(args=args, mode='test', data_transforms=Components(transforms=tf_array))
+        corrupted_dataset, corrupted_loader = prepare_data(args=args, mode='test', data_transforms=Components(transforms=tf_array), data_type=args.data_type)
 
         print(f'{corruption} corrupted test')
         net, ext, head, ssh = load_model(args)
