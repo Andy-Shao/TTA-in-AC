@@ -21,13 +21,17 @@ class SpeechCommandsDataset(Dataset):
         'bed':10., 'dog':11., 'happy':12., 'marvin':13., 'bird':14., 'house':15., 'tree':16., 'cat':17., 'sheila':18., 
         'wow':19.
     }
+    numbers = {
+        'zero': 0., 'one': 1., 'two': 2., 'three': 3., 'four': 4., 'five': 5., 'six': 6., 'seven': 7., 
+        'eight': 8., 'nine': 9.
+    }
 
     def __init__(self, root_path: str, mode: str, include_rate=True, data_tfs=None, data_type='all') -> None:
         super().__init__()
         self.root_path = root_path
         assert mode in ['train', 'validation', 'test', 'full', 'test+val'], 'mode type is incorrect'
         self.mode = mode
-        assert data_type in ['all', 'commands', 'no_commands']
+        assert data_type in ['all', 'commands', 'no_commands', 'numbers']
         self.data_type = data_type
         self.include_rate = include_rate
         data_list = self.__cal_data_list__(mode=mode)
@@ -41,6 +45,8 @@ class SpeechCommandsDataset(Dataset):
             filter_list = self.commands.keys()
         elif self.data_type == 'no_commands':
             filter_list = self.no_commands.keys()
+        elif self.data_type == 'numbers':
+            filter_list = self.numbers.keys()
         else:
             raise Exception('No support')
         new_data_list = []
@@ -107,6 +113,8 @@ class SpeechCommandsDataset(Dataset):
             label = self.commands[label]
         elif self.data_type == 'no_commands':
             label = self.no_commands[label]
+        elif self.data_type == 'numbers':
+            label = self.numbers[label]
         else:
             raise Exception('No support')
         audio_path = os.path.join(self.root_path, meta_data)

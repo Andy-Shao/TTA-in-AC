@@ -10,6 +10,18 @@ from torch.utils.data import Dataset, DataLoader
 import torchaudio
 import torch
 
+class FilterAudioMNIST(Dataset):
+    def __init__(self, root_path: str, filter_fn, data_tsf=None, include_rate=True):
+        super(FilterAudioMNIST, self).__init__()
+        data_pathes = load_datapath(root_path=root_path, filter_fn=filter_fn)
+        self.dataset = AudioMINST(data_paths=data_pathes, data_trainsforms=data_tsf, include_rate=include_rate)
+    
+    def __len__(self):
+        return len(self.dataset)
+
+    def __getitem__(self, index) -> Any:
+        return self.dataset[index]
+
 class AudioMINST(Dataset):
     def __init__(self, data_paths: list[str], data_trainsforms=None, include_rate=True):
         super(AudioMINST, self).__init__()
@@ -20,7 +32,7 @@ class AudioMINST(Dataset):
     def __len__(self):
         return len(self.data_paths)
     
-    def __getitem__(self, index) -> tuple[tuple, float]:
+    def __getitem__(self, index) -> tuple[object, float]:
         (wavform, sample_rate) = torchaudio.load(self.data_paths[index])
         label = self.data_paths[index].split('/')[-1].split('_')[0]
         if self.data_trainsforms is not None:
