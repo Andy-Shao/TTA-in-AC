@@ -18,12 +18,15 @@ class TentAdapt(nn.Module):
 
         self.model_states, self.optimizer_states = copy_state_in_model_optimizer(model=self.model, optimizer=self.optimizer)
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: torch.Tensor, adapted_fn=None) -> torch.Tensor:
         if self.resetable:
             self.reset()
         
         for _ in range(self.steps):
-            outputs = adapted_forward(x=x, model=self.model, optimizer=self.optimizer)
+            if adapted_fn is None:
+                outputs = adapted_forward(x=x, model=self.model, optimizer=self.optimizer)
+            else:
+                outputs = adapted_fn(x=x, model=self.model, optimizer=self.optimizer)
         
         return outputs
 

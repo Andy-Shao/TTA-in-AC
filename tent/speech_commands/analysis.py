@@ -28,7 +28,7 @@ def find_noise(noise_type: str) -> torch.Tensor:
 def cal_normalize(tf_array: list, args: argparse.Namespace) -> tuple:
     batch_size = 256
     data_tf = Components(transforms=tf_array)
-    target_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='test', include_rate=False, data_tfs=data_tf)
+    target_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='test', include_rate=False, data_tfs=data_tf, data_type=args.data_type)
     target_loader = DataLoader(dataset=target_dataset, batch_size=batch_size, shuffle=False, drop_last=False)
     test_mean, test_std = cal_norm(loader=target_loader)
     return test_mean, test_std
@@ -59,7 +59,7 @@ def load_model(args: argparse.Namespace) -> nn.Module:
 
 if __name__ == '__main__':
     ap = argparse.ArgumentParser(description='SHOT')
-    ap.add_argument('--dataset', type=str, default='speech-commands', choices=['speech-commands'])
+    ap.add_argument('--dataset', type=str, default='speech-commands', choices=['speech-commands', 'speech-commands-numbers'])
     ap.add_argument('--model', type=str, default='cnn', choices=['cnn', 'restnet50'])
     ap.add_argument('--model_weight_file_path', type=str)
     ap.add_argument('--output_path', type=str, default='./result')
@@ -75,7 +75,12 @@ if __name__ == '__main__':
     args.corruption_types = ['doing_the_dishes', 'dude_miaowing', 'exercise_bike', 'pink_noise', 'running_tap', 'white_noise', 'gaussian_noise']
     args.corruptions = args.corruptions.strip().split(sep=',')
     args.device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    args.class_num = 30
+    if args.dataset == 'speech-commands':
+        args.class_num = 30
+        args.data_type = 'all'
+    elif args.dataset == 'speech-commands-numbers':
+        args.class_num = 10
+        args.data_type = 'numbers'
     args.output_full_path = os.path.join(args.output_path, args.dataset, 'tent', 'analysis')
     try:
         os.makedirs(args.output_full_path)
@@ -92,7 +97,7 @@ if __name__ == '__main__':
             a_transforms.MelSpectrogram(sample_rate=sample_rate, n_fft=1024, n_mels=n_mels),
             a_transforms.AmplitudeToDB(top_db=80),
         ])
-        test_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='test', include_rate=False, data_tfs=data_transforms)
+        test_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='test', include_rate=False, data_tfs=data_transforms, data_type=args.data_type)
     elif args.model == 'restnet50':
         n_mels=129
         hop_length=125
@@ -108,7 +113,7 @@ if __name__ == '__main__':
             test_mean, test_std = cal_normalize(tf_array=tf_array, args=args)
             tf_array.append(v_transforms.Normalize(mean=test_mean, std=test_std))
         test_tf = Components(transforms=tf_array)
-        test_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='test', include_rate=False, data_tfs=test_tf)
+        test_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='test', include_rate=False, data_tfs=test_tf, data_type=args.data_type)
     else: 
         raise Exception('No support')
     
@@ -168,7 +173,7 @@ if __name__ == '__main__':
                 test_mean, test_std = cal_normalize(tf_array=tf_array, args=args)
                 tf_array.append(v_transforms.Normalize(mean=test_mean, std=test_std))
             corrupted_tf = Components(transforms=tf_array)
-        corrupted_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='test', include_rate=False, data_tfs=corrupted_tf)
+        corrupted_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='test', include_rate=False, data_tfs=corrupted_tf, data_type=args.data_type)
         
         print(f'{noise_type} corruption test')
         model = load_model(args)
@@ -185,6 +190,7 @@ if __name__ == '__main__':
         corrupted_loader = DataLoader(dataset=corrupted_dataset, batch_size=args.tent_batch_size, shuffle=False, drop_last=False)
         tent_params, tent_param_names = get_params(model=model)
         tent_optimizer = optim.Adam(params=tent_params, lr=1e-3, betas=(.9,.99), weight_decay=0.)
+        # tent_optimizer = optim.SGD(params=model.parameters(), lr=1e-3, weight_decay=5e-4, momentum=.9)
         tent_model = TentAdapt(model=model, optimizer=tent_optimizer, steps=1, resetable=False).to(device=args.device)
         test_accuracy = inference(model=tent_model, data_loader=corrupted_loader, args=args)
         print(f'{noise_type} tent adaptation test accuracy: {test_accuracy:.2f}%')
