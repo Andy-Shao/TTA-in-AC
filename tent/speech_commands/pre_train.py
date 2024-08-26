@@ -12,18 +12,19 @@ from torch.utils.data import DataLoader
 import torch.nn as nn
 import torch.optim as optim
 
-from lib.toolkit import print_argparse, store_model_structure_to_txt, cal_norm, count_ttl_params, parse_mean_std
+from lib.toolkit import print_argparse, store_model_structure_to_txt, cal_norm, count_ttl_params
 from lib.scDataset import SpeechCommandsDataset
-from lib.wavUtils import Components, pad_trunc, time_shift, DoNothing
-from lib.models import WavClassifier, ElasticRestNet50
+from lib.wavUtils import Components, pad_trunc, time_shift
+from lib.models import WavClassifier, ElasticRestNet
 from CoNMix.lib.prepare_dataset import ExpandChannel
 
 if __name__ == '__main__':
     ap = argparse.ArgumentParser(description='SHOT')
-    ap.add_argument('--dataset', type=str, default='speech-commands', choices=['speech-commands'])
+    ap.add_argument('--dataset', type=str, default='speech-commands', choices=['speech-commands', 'speech-commands-numbers'])
     ap.add_argument('--batch_size', type=int, default=64)
     ap.add_argument('--max_epoch', type=int, default=50)
     ap.add_argument('--lr', type=float, default=1e-3)
+    ap.add_argument('--weight_decay', type=float, default=0.)
     ap.add_argument('--wandb', action='store_true')
     ap.add_argument('--dataset_root_path', type=str)
     ap.add_argument('--model', type=str, default='cnn', choices=['cnn', 'restnet50'])
@@ -41,6 +42,7 @@ if __name__ == '__main__':
         pass
         
     args.device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    args.milestones = [it for it in range(3, 20, 3)]
     torch.backends.cudnn.benchmark = True
 
     torch.manual_seed(args.seed)
@@ -48,8 +50,14 @@ if __name__ == '__main__':
     np.random.seed(args.seed)
     random.seed(args.seed)
     print_argparse(args=args)
+    ###########################################
 
-    class_num = 30
+    if args.dataset == 'speech-commands':
+        class_num = 30
+        data_type = 'all'
+    elif args.dataset == 'speech-commands-numbers':
+        class_num = 10
+        data_type = 'numbers'
     sample_rate = 16000
     if args.model == 'cnn':
         n_mels = 64
@@ -66,9 +74,11 @@ if __name__ == '__main__':
             a_transforms.MelSpectrogram(sample_rate=sample_rate, n_fft=1024, n_mels=n_mels),
             a_transforms.AmplitudeToDB(top_db=80),
         ])
-        train_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='train', include_rate=False, data_tfs=train_transforms)
-        val_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='validation', include_rate=False, data_tfs=val_transforms)
+        train_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='train', include_rate=False, data_tfs=train_transforms, data_type=data_type)
+        val_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='validation', include_rate=False, data_tfs=val_transforms, data_type=data_type)
         model = WavClassifier(class_num=30, l1_in_features=64, c1_in_channels=1).to(device=args.device)
+        optimizer = optim.Adam(params=model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
+        scheduler = None
     elif args.model == 'restnet50':
         n_mels=129
         hop_length=125
@@ -86,11 +96,11 @@ if __name__ == '__main__':
         ]
         if args.normalized:
             print('calculate the train mean and standard deviation')
-            train_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='train', include_rate=False, data_tfs=Components(transforms=train_tf))
+            train_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='train', include_rate=False, data_tfs=Components(transforms=train_tf), data_type=data_type)
             train_loader = DataLoader(dataset=train_dataset, batch_size=256, shuffle=False, drop_last=True)
             train_mean, train_std = cal_norm(loader=train_loader)
             train_tf.append(v_transforms.Normalize(mean=train_mean, std=train_std))
-        train_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='train', include_rate=False, data_tfs=Components(transforms=train_tf))
+        train_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='train', include_rate=False, data_tfs=Components(transforms=train_tf), data_type=data_type)
         val_tf = [
             pad_trunc(max_ms=1000, sample_rate=sample_rate),
             a_transforms.MelSpectrogram(sample_rate=sample_rate, n_fft=1024, n_mels=n_mels, hop_length=hop_length),
@@ -100,12 +110,14 @@ if __name__ == '__main__':
         ]
         if args.normalized:
             print('calculate the validation mean and standard deviation')
-            val_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='validation', include_rate=False, data_tfs=Components(transforms=val_tf))
+            val_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='validation', include_rate=False, data_tfs=Components(transforms=val_tf), data_type=data_type)
             val_loader = DataLoader(dataset=val_dataset, batch_size=256, shuffle=False, drop_last=True)
             val_mean, val_std = cal_norm(loader=val_loader)
             val_tf.append(v_transforms.Normalize(mean=val_mean, std=val_std))
-        val_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='validation', include_rate=False, data_tfs=Components(transforms=val_tf))
-        model = ElasticRestNet50(class_num=class_num).to(device=args.device)
+        val_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='validation', include_rate=False, data_tfs=Components(transforms=val_tf), data_type=data_type)
+        model = ElasticRestNet(class_num=class_num, depth=50).to(device=args.device)
+        optimizer = optim.SGD(params=model.parameters(), lr=args.lr, weight_decay=args.weight_decay, momentum=.9)
+        scheduler = optim.lr_scheduler.MultiStepLR(optimizer=optimizer, milestones=args.milestones, gamma=.5, last_epoch=-1)
     else:
         raise Exception('No support')
     
@@ -121,7 +133,6 @@ if __name__ == '__main__':
 
     print(f'model weight number is: {count_ttl_params}')
     loss_fn = nn.CrossEntropyLoss().to(device=args.device)
-    optimizer = optim.Adam(params=model.parameters(), lr=args.lr)
 
     ttl_accu = 0.
     for epoch in range(args.max_epoch):
@@ -144,6 +155,8 @@ if __name__ == '__main__':
             ttl_corr += (preds == labels).sum().cpu().item()
             ttl_num += features.shape[0]
             ttl_loss += loss.detach().cpu().item()
+        if scheduler is not None:
+            scheduler.step()
         ttl_accu = ttl_corr/ttl_num * 100.
         avg_loss = ttl_loss/ttl_num
         print(f'Training accuracy: {ttl_accu:.2f}%, loss: {avg_loss:.4f}')
@@ -161,7 +174,7 @@ if __name__ == '__main__':
             ttl_corr += (preds == labels).sum().cpu().item()
             ttl_num += features.shape[0]
         curr_accu = ttl_corr/ttl_num * 100.
-        wandb_run.log({'Validation/accuracy': curr_accu}, step=epoch)
+        wandb_run.log({'Validation/accuracy': curr_accu}, step=epoch, commit=True)
         print(f'Validation accuracy: {curr_accu:.2f}%')
         if ttl_accu < curr_accu:
             ttl_accu = curr_accu

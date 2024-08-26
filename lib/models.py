@@ -66,3 +66,18 @@ class ElasticRestNet50(nn.Module):
     def forward(self, x):
         x = self.body(x)
         return self.fc(x)
+    
+class ElasticRestNet(nn.Module):
+    def __init__(self, class_num:int, depth:int) -> None:
+        super().__init__()
+        assert depth in [34, 50], 'No support'
+        from torchvision.models import resnet50, resnet34, ResNet50_Weights, ResNet34_Weights
+        if depth == 34:
+            self.body = resnet34(weights=ResNet34_Weights.DEFAULT)
+        elif depth == 50:
+            self.body = resnet50(weights=ResNet50_Weights.DEFAULT)
+        self.fc = nn.Linear(in_features=self.body.fc.out_features, out_features=class_num)
+    
+    def forward(self, x):
+        x = self.body(x)
+        return self.fc(x)

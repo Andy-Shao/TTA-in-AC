@@ -113,6 +113,7 @@ if __name__ == '__main__':
         raise Exception('No support')
     
     test_loader = DataLoader(dataset=test_dataset, batch_size=args.batch_size, shuffle=False, drop_last=False)
+    print(f'test data size: {len(test_dataset)}, batch size: {len(test_loader)}')
 
     records = pd.DataFrame(columns=['dataset', 'algorithm', 'tta-operation', 'corruption', 'accuracy', 'error', 'severity level', 'number of weight'])
 
