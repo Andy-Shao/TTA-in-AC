@@ -1,7 +1,7 @@
 ,dataset,type,mean,standard deviaiton
 0,audio-mnist,train,[-1.079023e-05],[0.00309949]
 1,audio-mnist,test,[-1.0177833e-05],[0.00445356]
-2,speech_commands,train,[-8.856062e-05],[0.08103871]
-3,speech_commands,test,[-0.00017467],[0.08301105]
-4,speech_commands_numbers,train,[-8.715392e-05],[0.08087005]
-5,speech_commands_numbers,test,[-0.00016285],[0.08646617]
+2,speech-commands,train,[-8.8560635e-05],[0.08103871]
+3,speech-commands,test,[-0.00017467],[0.08301105]
+4,speech-commands-numbers,train,[-8.715392e-05],[0.08087005]
+5,speech-commands-numbers,test,[-0.00016285],[0.08646617]

@@ -49,7 +49,7 @@ if __name__ == '__main__':
                 root_path=dataset_root_path, include_rate=False, data_tsf=Components(transforms=tsf),
                 filter_fn=lambda x: x['accent'] != 'German'
             )
-        elif dataset == 'speech_commands':
+        elif dataset == 'speech-commands':
             class_num = 30
             sample_rate = 16000
             tsf = [
@@ -61,7 +61,7 @@ if __name__ == '__main__':
             test_dataset = SpeechCommandsDataset(
                 root_path=dataset_root_path, include_rate=False, data_tfs=Components(transforms=tsf), mode='test'
             )
-        elif dataset == 'speech_commands_numbers':
+        elif dataset == 'speech-commands-numbers':
             class_num = 10
             sample_rate = 16000
             tsf = [
