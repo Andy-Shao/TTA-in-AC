@@ -9,7 +9,7 @@ class RandomSpeechCommandsDataset(Dataset):
     test_meta_file = 'rand_testing_list.txt'
     val_meta_file = 'rand_validation_list.txt'
 
-    def __init__(self, root_path: str, mode: str, include_rate=True, data_tfs=None, data_type='all', seed:int = 0) -> None:
+    def __init__(self, root_path: str, mode: str, include_rate=True, data_tfs=None, data_type='all', seed:int = 2024) -> None:
         super().__init__()
         self.dataset = SpeechCommandsDataset(root_path=root_path, mode='train', include_rate=include_rate, data_tfs=data_tfs, data_type=data_type)
         self.seed = seed
@@ -31,16 +31,15 @@ class RandomSpeechCommandsDataset(Dataset):
             self.data_list = self.test_indexes
 
     def __generate_random_meta_file__(self, seed:int) -> None:
-        import numpy as np
-        if seed != 0:
-            np.random.seed(seed=seed)
-        self.test_indexes = np.random.choice(len(self.dataset), size=int(.7*len(self.dataset)), replace=False)
+        from numpy.random import MT19937, RandomState, SeedSequence
+        rs = RandomState(MT19937(SeedSequence(seed)))
+        self.test_indexes = rs.choice(len(self.dataset), size=int(.3*len(self.dataset)), replace=False)
         residua = []
         for i in range(len(self.dataset)):
             if i in self.test_indexes:
                 continue
             residua.append(i)
-        self.train_indexes = np.random.choice(residua, size=int(.9*len(residua)), replace=False)
+        self.train_indexes = rs.choice(residua, size=int(.9*len(residua)), replace=False)
         self.val_indexes = []
         for i in residua:
             if i in self.train_indexes:
