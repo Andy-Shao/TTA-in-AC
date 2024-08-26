@@ -23,7 +23,7 @@ class RandomSpeechCommandsDataset(Dataset):
             self.data_list = self.val_indexes
         elif mode == 'full':
             self.data_list = [it for it in range(self.dataset)]
-        elif mode == 'test_val':
+        elif mode == 'test+val':
             self.data_list = []
             self.data_list.extend(self.test_indexes)
             self.data_list.extend(self.val_indexes)
