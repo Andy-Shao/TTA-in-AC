@@ -6,7 +6,7 @@ class DatasetType(Enum):
     Audio_MINIST= 'AudioMNIST',
     Speech_Commands='Speech Commands',
     Speech_Command_Numbers='Speech Command Numbers',
-    Audio_MINIST_Low_Rate='AudioMNIST Low Rate'
+    Speech_Command_Random='Speech Command Random'
 
 class TTA_Type(Enum):
     TENT='Tent Adaptation'
