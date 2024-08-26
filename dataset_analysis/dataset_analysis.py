@@ -8,7 +8,7 @@ from torch.utils.data import DataLoader
 from lib.toolkit import print_argparse, cal_norm
 from lib.datasets import FilterAudioMNIST
 from lib.wavUtils import Components, pad_trunc
-from lib.scDataset import SpeechCommandsDataset
+from lib.scDataset import SpeechCommandsDataset, RandomSpeechCommandsDataset
 
 if __name__ == '__main__':
     arg_parse = argparse.ArgumentParser()
@@ -74,6 +74,20 @@ if __name__ == '__main__':
             test_dataset = SpeechCommandsDataset(
                 root_path=dataset_root_path, include_rate=False, data_tfs=Components(transforms=tsf), mode='test',
                 data_type='numbers'
+            )
+        elif dataset == 'speech-commands-random':
+            class_num = 30
+            sample_rate = 16000
+            tsf = [
+                pad_trunc(max_ms=1000, sample_rate=sample_rate)
+            ]
+            train_dataset = RandomSpeechCommandsDataset(
+                root_path=dataset_root_path, include_rate=False, data_tfs=Components(transforms=tsf), mode='train', 
+                data_type='all', seed=2024
+            )
+            test_dataset = RandomSpeechCommandsDataset(
+                root_path=dataset_root_path, include_rate=False, data_tfs=Components(transforms=tsf), mode='test',
+                data_type='all', seed=2024
             )
         else:
             raise Exception('No support')

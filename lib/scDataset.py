@@ -5,6 +5,54 @@ from torch.utils.data import Dataset
 import torch
 import torchaudio
 
+class RandomSpeechCommandsDataset(Dataset):
+    test_meta_file = 'rand_testing_list.txt'
+    val_meta_file = 'rand_validation_list.txt'
+
+    def __init__(self, root_path: str, mode: str, include_rate=True, data_tfs=None, data_type='all', seed:int = 0) -> None:
+        super().__init__()
+        self.dataset = SpeechCommandsDataset(root_path=root_path, mode='train', include_rate=include_rate, data_tfs=data_tfs, data_type=data_type)
+        self.seed = seed
+        assert mode in ['train', 'validation', 'test', 'full', 'test+val'], 'mode type is incorrect'
+        self.mode = mode
+        self.__generate_random_meta_file__(seed=seed)
+
+        if mode == 'train':
+            self.data_list = self.train_indexes
+        elif mode == 'validation':
+            self.data_list = self.val_indexes
+        elif mode == 'full':
+            self.data_list = [it for it in range(self.dataset)]
+        elif mode == 'test_val':
+            self.data_list = []
+            self.data_list.extend(self.test_indexes)
+            self.data_list.extend(self.val_indexes)
+        elif mode == 'test':
+            self.data_list = self.test_indexes
+
+    def __generate_random_meta_file__(self, seed:int) -> None:
+        import numpy as np
+        if seed != 0:
+            np.random.seed(seed=seed)
+        self.test_indexes = np.random.choice(len(self.dataset), size=int(.7*len(self.dataset)), replace=False)
+        residua = []
+        for i in range(len(self.dataset)):
+            if i in self.test_indexes:
+                continue
+            residua.append(i)
+        self.train_indexes = np.random.choice(residua, size=int(.9*len(residua)), replace=False)
+        self.val_indexes = []
+        for i in residua:
+            if i in self.train_indexes:
+                continue
+            self.val_indexes.append(i)
+
+    def __len__(self) -> int:
+        return len(self.data_list)
+
+    def __getitem__(self, index) -> Any:
+        return self.dataset[self.data_list[index]]
+
 class SpeechCommandsDataset(Dataset):
     test_meta_file = 'testing_list.txt'
     val_meta_file = 'validation_list.txt'

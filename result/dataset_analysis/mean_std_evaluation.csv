@@ -3,5 +3,7 @@
 1,audio-mnist,test,[-1.0177833e-05],[0.00445356]
 2,speech-commands,train,[-8.8560635e-05],[0.08103871]
 3,speech-commands,test,[-0.00017467],[0.08301105]
-4,speech-commands-numbers,train,[-8.715392e-05],[0.08087005]
+4,speech-commands-numbers,train,[-8.7153916e-05],[0.08087005]
 5,speech-commands-numbers,test,[-0.00016285],[0.08646617]
+6,speech-commands-random,train,[-9.607859e-05],[0.08089308]
+7,speech-commands-random,test,[-8.486959e-05],[0.08135287]
