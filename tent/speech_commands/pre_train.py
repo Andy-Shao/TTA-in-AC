@@ -8,19 +8,25 @@ import wandb
 import torch
 from torchaudio import transforms as a_transforms
 from torchvision import transforms as v_transforms
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Dataset
 import torch.nn as nn
 import torch.optim as optim
 
 from lib.toolkit import print_argparse, store_model_structure_to_txt, cal_norm, count_ttl_params
-from lib.scDataset import SpeechCommandsDataset
+from lib.scDataset import SpeechCommandsDataset, RandomSpeechCommandsDataset
 from lib.wavUtils import Components, pad_trunc, time_shift
 from lib.models import WavClassifier, ElasticRestNet
 from CoNMix.lib.prepare_dataset import ExpandChannel
 
+def prep_dataset(args:argparse.Namespace, data_type:str, mode:str, data_tsf:nn.Module) -> Dataset:
+    if args.dataset == 'speech-commands-random':
+        return RandomSpeechCommandsDataset(root_path=args.dataset_root_path, mode=mode, data_type=data_type, data_tfs=data_tsf, include_rate=False)
+    else:
+        return SpeechCommandsDataset(root_path=args.dataset_root_path, mode=mode, data_type=data_type, data_tfs=data_tsf, include_rate=False)
+
 if __name__ == '__main__':
     ap = argparse.ArgumentParser(description='SHOT')
-    ap.add_argument('--dataset', type=str, default='speech-commands', choices=['speech-commands', 'speech-commands-numbers'])
+    ap.add_argument('--dataset', type=str, default='speech-commands', choices=['speech-commands', 'speech-commands-numbers', 'speech-commands-random'])
     ap.add_argument('--batch_size', type=int, default=64)
     ap.add_argument('--max_epoch', type=int, default=50)
     ap.add_argument('--lr', type=float, default=1e-3)
@@ -58,6 +64,9 @@ if __name__ == '__main__':
     elif args.dataset == 'speech-commands-numbers':
         class_num = 10
         data_type = 'numbers'
+    elif args.dataset == 'speech-commands-random':
+        class_num = 30
+        data_type = 'all'
     sample_rate = 16000
     if args.model == 'cnn':
         n_mels = 64
@@ -74,8 +83,8 @@ if __name__ == '__main__':
             a_transforms.MelSpectrogram(sample_rate=sample_rate, n_fft=1024, n_mels=n_mels),
             a_transforms.AmplitudeToDB(top_db=80),
         ])
-        train_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='train', include_rate=False, data_tfs=train_transforms, data_type=data_type)
-        val_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='validation', include_rate=False, data_tfs=val_transforms, data_type=data_type)
+        train_dataset = prep_dataset(args=args, mode='train', data_tsf=train_transforms, data_type=data_type)
+        val_dataset = prep_dataset(args=args, mode='validation', data_tsf=val_transforms, data_type=data_type)
         model = WavClassifier(class_num=30, l1_in_features=64, c1_in_channels=1).to(device=args.device)
         optimizer = optim.Adam(params=model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
         scheduler = None
@@ -96,11 +105,11 @@ if __name__ == '__main__':
         ]
         if args.normalized:
             print('calculate the train mean and standard deviation')
-            train_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='train', include_rate=False, data_tfs=Components(transforms=train_tf), data_type=data_type)
+            train_dataset = prep_dataset(args=args, data_type=data_type, mode='train', data_tsf=Components(transforms=train_tf))
             train_loader = DataLoader(dataset=train_dataset, batch_size=256, shuffle=False, drop_last=True)
             train_mean, train_std = cal_norm(loader=train_loader)
             train_tf.append(v_transforms.Normalize(mean=train_mean, std=train_std))
-        train_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='train', include_rate=False, data_tfs=Components(transforms=train_tf), data_type=data_type)
+        train_dataset = prep_dataset(args=args, data_type=data_type, mode='train', data_tsf=Components(transforms=train_tf))
         val_tf = [
             pad_trunc(max_ms=1000, sample_rate=sample_rate),
             a_transforms.MelSpectrogram(sample_rate=sample_rate, n_fft=1024, n_mels=n_mels, hop_length=hop_length),
@@ -110,11 +119,11 @@ if __name__ == '__main__':
         ]
         if args.normalized:
             print('calculate the validation mean and standard deviation')
-            val_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='validation', include_rate=False, data_tfs=Components(transforms=val_tf), data_type=data_type)
+            val_dataset = prep_dataset(args=args, mode='validation', data_tsf=Components(transforms=val_tf), data_type=data_type)
             val_loader = DataLoader(dataset=val_dataset, batch_size=256, shuffle=False, drop_last=True)
             val_mean, val_std = cal_norm(loader=val_loader)
             val_tf.append(v_transforms.Normalize(mean=val_mean, std=val_std))
-        val_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='validation', include_rate=False, data_tfs=Components(transforms=val_tf), data_type=data_type)
+        val_dataset = prep_dataset(args=args, mode='validation', data_tsf=Components(transforms=val_tf), data_type=data_type)
         model = ElasticRestNet(class_num=class_num, depth=50).to(device=args.device)
         optimizer = optim.SGD(params=model.parameters(), lr=args.lr, weight_decay=args.weight_decay, momentum=.9)
         scheduler = optim.lr_scheduler.MultiStepLR(optimizer=optimizer, milestones=args.milestones, gamma=.5, last_epoch=-1)
@@ -131,7 +140,7 @@ if __name__ == '__main__':
         project=f'Audio Classification Pre-Training ({args.dataset})', name=f'Tent/Norm {args.model}', mode='online' if args.wandb else 'disabled',
         config=args, tags=['Audio Classification', args.dataset, 'Test-time Adaptation'])
 
-    print(f'model weight number is: {count_ttl_params}')
+    print(f'model weight number is: {count_ttl_params(model=model)}')
     loss_fn = nn.CrossEntropyLoss().to(device=args.device)
 
     ttl_accu = 0.

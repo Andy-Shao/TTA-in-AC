@@ -134,7 +134,7 @@ if __name__ == '__main__':
             loss.backward()
             optimizer.step()
         scheduler.step()
-        wandb.log({'Train/Accuracy':ttl_corr/ttl_size*100., 'Train/classifier_loss':ttl_loss/ttl_size, 'Train/Shift Accuracy': ttl_ssh_corr/ttl_ssh_size*100.}, step=epoch)
+        wandb.log({'Train/accuracy':ttl_corr/ttl_size*100., 'Train/classifier_loss':ttl_loss/ttl_size, 'Train/shift_accuracy': ttl_ssh_corr/ttl_ssh_size*100.}, step=epoch)
         net.eval()
         ssh.eval()
         ttl_corr = 0
@@ -149,7 +149,7 @@ if __name__ == '__main__':
             ttl_corr += (preds_cls == labels_cls).sum().cpu().item()
             ttl_size += labels.shape[0]
         val_accu = ttl_corr/ttl_size*100.
-        wandb.log({'Val/Accuracy':val_accu}, step=epoch, commit=True)
+        wandb.log({'Val/accuracy':val_accu}, step=epoch, commit=True)
         if max_val_accu < val_accu:
             max_val_accu = val_accu
             state = {'net': net.state_dict(), 'head': head.state_dict(), 'optimizer': optimizer.state_dict()}

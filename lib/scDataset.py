@@ -9,9 +9,9 @@ class RandomSpeechCommandsDataset(Dataset):
     test_meta_file = 'rand_testing_list.txt'
     val_meta_file = 'rand_validation_list.txt'
 
-    def __init__(self, root_path: str, mode: str, include_rate=True, data_tfs=None, data_type='all', seed:int = 2024) -> None:
+    def __init__(self, root_path: str, mode: str, include_rate=True, data_tfs=None, data_type='all', seed:int = 2024, source_mode:str ='train') -> None:
         super().__init__()
-        self.dataset = SpeechCommandsDataset(root_path=root_path, mode='train', include_rate=include_rate, data_tfs=data_tfs, data_type=data_type)
+        self.dataset = SpeechCommandsDataset(root_path=root_path, mode=source_mode, include_rate=include_rate, data_tfs=data_tfs, data_type=data_type)
         self.seed = seed
         assert mode in ['train', 'validation', 'test', 'full', 'test+val'], 'mode type is incorrect'
         self.mode = mode
