@@ -11,13 +11,13 @@ from torch import nn
 
 from lib.toolkit import print_argparse, count_ttl_params, store_model_structure_to_txt
 from ttt.lib.test_helpers import build_sc_model
-from ttt.lib.speech_commands.prepare_dataset import prepare_data, train_transforms, val_transforms
+from ttt.lib.speech_commands.prepare_dataset import prepare_data, train_transforms, val_transforms, add_normalization
 from ttt.lib.prepare_dataset import TimeShiftOps
 from ttt.lib.time_shift_rotation import rotate_batch
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='SHOT')
-    parser.add_argument('--dataset', type=str, default='speech-commands', choices=['speech-commands', 'speech-commands-numbers'])
+    parser.add_argument('--dataset', type=str, default='speech-commands', choices=['speech-commands', 'speech-commands-numbers', 'speech-commands-random'])
     parser.add_argument('--batch_size', type=int, default=96)
     parser.add_argument('--num_workers', type=int, default=16)
     parser.add_argument('--max_epoch', type=int, default=75)
@@ -36,6 +36,7 @@ if __name__ == '__main__':
     parser.add_argument('--output_csv_name', type=str, default='accu_record.csv')
     parser.add_argument('--output_weight_name', type=str, default='ckpt.pth')
     parser.add_argument('--seed', default=2024, type=int)
+    parser.add_argument('--normalized', action='store_true')
 
     args = parser.parse_args()
     print('TTT pre-train')
@@ -47,7 +48,7 @@ if __name__ == '__main__':
     except:
         pass
 
-    if args.dataset == 'speech-commands':
+    if args.dataset == 'speech-commands' or args.dataset == 'speech-commands-random':
         args.class_num = 30
         args.sample_rate = 16000
         args.n_mels = 64
@@ -82,8 +83,12 @@ if __name__ == '__main__':
     print((f'total weight number is: {count_ttl_params(net) + count_ttl_params(head)}'))
     train_dataset, train_loader = prepare_data(args=args, mode='train', data_type=args.data_type)
     tran_transfs = train_transforms(args=args)
+    print('calculate train mean and standard deviation')
+    tran_transfs = add_normalization(args=args, tsf_dict=tran_transfs, dataset=train_dataset)
     val_dataset, val_loader = prepare_data(args=args, mode='validation', data_type=args.data_type)
     val_transfs = val_transforms(args=args)
+    print('calculate validation mean and standard deviation')
+    val_transfs = add_normalization(args=args, tsf_dict=val_transfs, dataset=val_dataset)
 
     parameters = list(net.parameters()) + list(head.parameters())
     optimizer = optim.SGD(params=parameters, lr=args.lr, momentum=.9, weight_decay=5e-4)
@@ -149,7 +154,7 @@ if __name__ == '__main__':
             ttl_corr += (preds_cls == labels_cls).sum().cpu().item()
             ttl_size += labels.shape[0]
         val_accu = ttl_corr/ttl_size*100.
-        wandb.log({'Val/accuracy':val_accu}, step=epoch, commit=True)
+        wandb.log({'Validation/accuracy':val_accu}, step=epoch, commit=True)
         if max_val_accu < val_accu:
             max_val_accu = val_accu
             state = {'net': net.state_dict(), 'head': head.state_dict(), 'optimizer': optimizer.state_dict()}
