@@ -17,6 +17,7 @@ from lib.models import WavClassifier, ElasticRestNet50
 from lib.tentAdapt import get_params, TentAdapt
 from lib.normAdapt import NormAdapt
 from CoNMix.lib.prepare_dataset import ExpandChannel
+from tent.speech_commands.pre_train import prep_dataset
 
 def find_noise(noise_type: str) -> torch.Tensor:
     background_noise_dataset = BackgroundNoiseDataset(root_path=args.dataset_root_path)
@@ -28,7 +29,8 @@ def find_noise(noise_type: str) -> torch.Tensor:
 def cal_normalize(tf_array: list, args: argparse.Namespace) -> tuple:
     batch_size = 256
     data_tf = Components(transforms=tf_array)
-    target_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='test', include_rate=False, data_tfs=data_tf, data_type=args.data_type)
+    # target_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='test', include_rate=False, data_tfs=data_tf, data_type=args.data_type)
+    target_dataset = prep_dataset(args=args, mode='test', data_tsf=data_tf, data_type=args.data_type)
     target_loader = DataLoader(dataset=target_dataset, batch_size=batch_size, shuffle=False, drop_last=False)
     test_mean, test_std = cal_norm(loader=target_loader)
     return test_mean, test_std
@@ -59,7 +61,7 @@ def load_model(args: argparse.Namespace) -> nn.Module:
 
 if __name__ == '__main__':
     ap = argparse.ArgumentParser(description='SHOT')
-    ap.add_argument('--dataset', type=str, default='speech-commands', choices=['speech-commands', 'speech-commands-numbers'])
+    ap.add_argument('--dataset', type=str, default='speech-commands', choices=['speech-commands', 'speech-commands-numbers', 'speech-commands-random'])
     ap.add_argument('--model', type=str, default='cnn', choices=['cnn', 'restnet50'])
     ap.add_argument('--model_weight_file_path', type=str)
     ap.add_argument('--output_path', type=str, default='./result')
@@ -81,6 +83,11 @@ if __name__ == '__main__':
     elif args.dataset == 'speech-commands-numbers':
         args.class_num = 10
         args.data_type = 'numbers'
+    elif args.dataset == 'speech-commands-random':
+        args.class_num = 30
+        args.data_type = 'all'
+    else:
+        raise Exception('No support')
     args.output_full_path = os.path.join(args.output_path, args.dataset, 'tent', 'analysis')
     try:
         os.makedirs(args.output_full_path)
@@ -97,7 +104,8 @@ if __name__ == '__main__':
             a_transforms.MelSpectrogram(sample_rate=sample_rate, n_fft=1024, n_mels=n_mels),
             a_transforms.AmplitudeToDB(top_db=80),
         ])
-        test_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='test', include_rate=False, data_tfs=data_transforms, data_type=args.data_type)
+        # test_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='test', include_rate=False, data_tfs=data_transforms, data_type=args.data_type)
+        test_dataset = prep_dataset(args=args, mode='test', data_type=args.data_type, data_tsf=data_transforms)
     elif args.model == 'restnet50':
         n_mels=129
         hop_length=125
@@ -113,7 +121,8 @@ if __name__ == '__main__':
             test_mean, test_std = cal_normalize(tf_array=tf_array, args=args)
             tf_array.append(v_transforms.Normalize(mean=test_mean, std=test_std))
         test_tf = Components(transforms=tf_array)
-        test_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='test', include_rate=False, data_tfs=test_tf, data_type=args.data_type)
+        # test_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='test', include_rate=False, data_tfs=test_tf, data_type=args.data_type)
+        test_dataset = prep_dataset(args=args, mode='test', data_tsf=test_tf, data_type=args.data_type)
     else: 
         raise Exception('No support')
     
@@ -173,7 +182,9 @@ if __name__ == '__main__':
                 test_mean, test_std = cal_normalize(tf_array=tf_array, args=args)
                 tf_array.append(v_transforms.Normalize(mean=test_mean, std=test_std))
             corrupted_tf = Components(transforms=tf_array)
-        corrupted_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='test', include_rate=False, data_tfs=corrupted_tf, data_type=args.data_type)
+        # corrupted_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='test', include_rate=False, data_tfs=corrupted_tf, data_type=args.data_type)
+        corrupted_dataset = prep_dataset(args=args, data_type=args.data_type, mode='test', data_tsf=corrupted_tf)
+        print(f'corrupted dataset size: {len(corrupted_dataset)}')
         
         print(f'{noise_type} corruption test')
         model = load_model(args)
@@ -199,10 +210,11 @@ if __name__ == '__main__':
         tent_model = None
         tent_params = None
         tent_param_names = None
+        torch.cuda.empty_cache()
 
         print(f'{noise_type} norm test')
         if args.model == 'restnet50':
-            corrupted_loader = DataLoader(dataset=corrupted_dataset, batch_size=100, shuffle=False, drop_last=False)
+            corrupted_loader = DataLoader(dataset=corrupted_dataset, batch_size=120, shuffle=False, drop_last=False)
         model = load_model(args)
         number_of_weight = count_ttl_params(model=model)
         norm_model = NormAdapt(model=model, momentum=.9).to(device=args.device)

@@ -3,10 +3,10 @@ import os
 from enum import Enum
 
 class DatasetType(Enum):
-    Audio_MINIST= 'AudioMNIST',
-    Speech_Commands='Speech Commands',
-    Speech_Command_Numbers='Speech Command Numbers',
-    Speech_Command_Random='Speech Command Random'
+    Audio_MINIST='audio-mnist',
+    Speech_Commands='speech-commands',
+    Speech_Command_Numbers='speech-commands-numbers',
+    Speech_Command_Random='speech-commands-random'
 
 class TTA_Type(Enum):
     TENT='Tent Adaptation'
