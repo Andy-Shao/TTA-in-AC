@@ -21,7 +21,7 @@ def add_normalization(args:argparse.Namespace, tsf_dict:dict[str, BatchTransform
             result[key] = BatchTransform(transforms=Components(transforms=[tsf, v_transforms.Normalize(mean=data_mean, std=data_std)]))
         return result
     else:
-        return tsf
+        return tsf_dict
 
 def build_dataset(args:argparse.Namespace, data_tsf:nn.Module=None, mode:str='train', data_type:str='all') -> Dataset:
     if args.dataset == 'speech-commands-random':
