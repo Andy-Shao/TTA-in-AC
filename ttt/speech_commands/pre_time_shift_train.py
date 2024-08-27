@@ -106,6 +106,9 @@ if __name__ == '__main__':
         project=f'Audio Classification Pre-Training ({args.dataset})', name=f'TTT', mode='online' if args.wandb else 'disabled',
         config=args, tags=['Audio Classification', args.dataset, 'Test-time Adaptation'])
     
+    print(f'train dataset size: {len(train_dataset)}, batch size: {len(train_loader)}')
+    print(f'validation dataset size: {len(val_dataset)}, batch size: {len(val_loader)}')
+    
     max_val_accu = 0.
     for epoch in range(args.max_epoch):
         net.train()

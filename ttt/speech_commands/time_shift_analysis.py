@@ -13,7 +13,27 @@ from ttt.lib.speech_commands.prepare_dataset import prepare_data, val_transforms
 from lib.scDataset import BackgroundNoiseDataset
 from lib.wavUtils import Components, pad_trunc, GuassianNoise, BackgroundNoise
 from ttt.lib.prepare_dataset import TimeShiftOps
-from ttt.time_shift_analysis import adapt_one, measure_one
+from ttt.time_shift_analysis import measure_one
+from ttt.lib.time_shift_rotation import rotate_batch
+
+def adapt_one(feature: torch.Tensor, ssh: nn.Module, ext: nn.Module, args: argparse.Namespace, 
+              criterion: nn.Module, data_transf: nn.Module, optimizer: optim.Optimizer, net: nn.Module, 
+              head: nn.Module, mode='online') -> None:
+    assert mode in ['online', 'slow'], 'mode is error'
+    # if mode == 'slow':
+    #     refresh_model(args=args, net=net, head=head)
+    ssh.eval()
+    ext.train()
+    features = torch.unsqueeze(feature, dim=0).repeat(args.batch_size, 1, 1)
+    audios, labels = rotate_batch(batch=features, label='rand', data_transforms=data_transf)
+    audios, labels = audios.to(args.device), labels.to(args.device)
+    for it in range(args.niter if mode == 'online' else args.niter * 10):
+        optimizer.zero_grad()
+        outputs = ssh(audios)
+        # outputs = nn.functional.softmax(outputs, dim=1)
+        loss = criterion(outputs, labels)
+        loss.backward()
+        optimizer.step()
 
 def find_noise(noise_type:str, args:argparse) -> torch.Tensor:
     backgrounds = BackgroundNoiseDataset(root_path=args.dataset_root_path)
@@ -151,10 +171,10 @@ if __name__ == '__main__':
                 if confidence < args.threshold:
                     adapt_one(feature=feature, ssh=ssh, ext=ext, args=args, criterion=criterion_ssh, data_transf=train_transfs, 
                         optimizer=optimizer_ssh, net=net, head=head, mode='online')
-                correctness, confidence = measure_one(model=net, audio=input, label=label)
+                correctness, _ = measure_one(model=net, audio=input, label=label)
                 ttt_corr += correctness
-            ttt_accu = ttt_corr / len(test_dataset) * 100.
-            print(f'Online TTT adaptation data size: {len(test_dataset)}, accuracy: {ttt_accu:.2f}%')
+            ttt_accu = ttt_corr / len(corrupted_dataset) * 100.
+            print(f'Online TTT adaptation data size: {len(corrupted_dataset)}, accuracy: {ttt_accu:.2f}%')
             accu_record.loc[len(accu_record)] = [args.dataset, f'RestNet{args.depth}_base', args.ttt_operation + ', online', corruption, ttt_accu, 100. - ttt_accu, args.severity_level, ttl_weight_num]
 
     accu_record.to_csv(os.path.join(args.output_full_path, args.output_csv_name))

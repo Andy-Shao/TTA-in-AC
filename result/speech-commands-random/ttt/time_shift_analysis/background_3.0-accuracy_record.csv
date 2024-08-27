@@ -1,0 +1,4 @@
+,dataset,algorithm,tta-operation,corruption,accuracy,error,severity level,number of weight
+0,speech-commands-random,RestNet50_base,N/A,N/A,96.25473052329376,3.745269476706241,0.0,1518209
+1,speech-commands-random,RestNet50_base,N/A,doing_the_dishes,79.85775805820174,20.14224194179826,3.0,1518209
+2,speech-commands-random,RestNet50_base,"TTT, ts, bn, online",doing_the_dishes,77.28043847057289,22.71956152942711,3.0,1518209
