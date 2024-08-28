@@ -9,9 +9,9 @@ from torchaudio import transforms as a_transforms
 
 from lib.toolkit import print_argparse
 from lib.wavUtils import pad_trunc, Components, BackgroundNoise, DoNothing, time_shift, GuassianNoise
-from lib.scDataset import SpeechCommandsDataset, BackgroundNoiseDataset
+from lib.scDataset import BackgroundNoiseDataset
 from lib.datasets import load_from, ClipDataset
-from CoNMix.lib.prepare_dataset import ExpandChannel
+from CoNMix.lib.prepare_dataset import ExpandChannel, build_dataset
 
 def store_to(dataset: torch.utils.data.Dataset, root_path:str, index_file_name:str, args:argparse.Namespace, data_transf=None, label_transf=None) -> None:
     from lib.datasets import store_to as single_store_to, multi_process_store_to
@@ -30,7 +30,7 @@ def find_background_noise(args: argparse.Namespace) -> tuple[str, torch.Tensor]:
 
 if __name__ == '__main__':
     ap = argparse.ArgumentParser()
-    ap.add_argument('--dataset', type=str, default='speech-commands', choices=['speech-commands', 'speech-commands-purity'])
+    ap.add_argument('--dataset', type=str, default='speech-commands', choices=['speech-commands', 'speech-commands-purity', 'speech-commands-random'])
     ap.add_argument('--dataset_root_path', type=str)
     ap.add_argument('--output_path', type=str, default='./result')
     ap.add_argument('--data_type', type=str, choices=['raw', 'final'], default='final')
@@ -59,10 +59,10 @@ if __name__ == '__main__':
     n_mels=81
     hop_length=200
     meta_file_name = 'speech_commands_meta.csv'
-    if args.dataset == 'speech-commands':
-        dataset_type = 'all'
+    if args.dataset == 'speech-commands' or args.dataset == 'speech-commands-random':
+        args.dataset_type = 'all'
     elif args.dataset == 'speech-commands-purity':
-        dataset_type = 'commands'
+        args.dataset_type = 'commands'
     else:
         raise Exception('No support')
 
@@ -84,7 +84,7 @@ if __name__ == '__main__':
     print(f'Generate the corrupted dataset by {noise_type}')
     output_path = f'{args.output_path}-{noise_type}'
     
-    corrupted_test_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='test', include_rate=False, data_tfs=corrupted_test_tf, data_type=dataset_type)
+    corrupted_test_dataset = build_dataset(args=args, mode='test', data_tfs=corrupted_test_tf)
     if args.clip:
         corrupted_test_dataset = ClipDataset(dataset=corrupted_test_dataset, rate=args.clip_rate)
     store_to(dataset=corrupted_test_dataset, root_path=output_path, index_file_name=meta_file_name, args=args)

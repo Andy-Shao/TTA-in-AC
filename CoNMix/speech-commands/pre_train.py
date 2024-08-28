@@ -99,13 +99,11 @@ if __name__ == '__main__':
     if args.normalized:
         print('calculate the train dataset mean and standard deviation')
         train_tf = Components(transforms=tf_array)
-        # train_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='train', include_rate=False, data_tfs=train_tf, data_type=args.dataset_type)
         train_dataset = build_dataset(args=args, mode='train', data_tfs=train_tf)
         train_loader = DataLoader(dataset=train_dataset, batch_size=256, shuffle=False, drop_last=False, num_workers=args.num_workers)
         train_mean, train_std = cal_norm(loader=train_loader)
         tf_array.append(v_transforms.Normalize(mean=train_mean, std=train_std))
     train_tf = Components(transforms=tf_array)
-    # train_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='train', include_rate=False, data_tfs=train_tf, data_type=args.dataset_type)
     train_dataset = build_dataset(args=args, mode='train', data_tfs=train_tf)
     train_loader = DataLoader(dataset=train_dataset, batch_size=args.batch_size, shuffle=True, drop_last=False, num_workers=args.num_workers)
 
@@ -119,13 +117,11 @@ if __name__ == '__main__':
     if args.normalized:
         print('calculate the validation dataset mean and standard deviation')
         val_tf = Components(transforms=tf_array)
-        # val_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='validation', include_rate=False, data_tfs=val_tf, data_type=args.dataset_type)
         val_dataset = build_dataset(args=args, mode='validation', data_tfs=val_tf)
         val_loader = DataLoader(dataset=val_dataset, batch_size=256, shuffle=False, drop_last=False, num_workers=args.num_workers)
         val_mean, val_std = cal_norm(loader=val_loader)
         tf_array.append(v_transforms.Normalize(mean=val_mean, std=val_std))
     val_tf = Components(transforms=tf_array)
-    # val_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='validation', include_rate=False, data_tfs=val_tf, data_type=args.dataset_type)
     val_dataset = build_dataset(args=args, mode='validation', data_tfs=val_tf)
     val_loader = DataLoader(dataset=val_dataset, batch_size=args.batch_size, shuffle=False, drop_last=False, num_workers=args.num_workers)
 
