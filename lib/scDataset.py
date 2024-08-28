@@ -73,7 +73,7 @@ class SpeechCommandsDataset(Dataset):
         'eight': 8., 'nine': 9.
     }
 
-    def __init__(self, root_path: str, mode: str, include_rate=True, data_tfs=None, data_type='all') -> None:
+    def __init__(self, root_path: str, mode: str, include_rate=True, data_tfs=None, data_type='all', normalized:bool=False) -> None:
         super().__init__()
         self.root_path = root_path
         assert mode in ['train', 'validation', 'test', 'full', 'test+val'], 'mode type is incorrect'
@@ -84,6 +84,7 @@ class SpeechCommandsDataset(Dataset):
         data_list = self.__cal_data_list__(mode=mode)
         self.data_list = self.__filter_data_list__(data_list=data_list)
         self.data_tfs = data_tfs
+        self.normalized = normalized
     
     def __filter_data_list__(self, data_list:list[str]) -> list[str]:
         if self.data_type == 'all':
@@ -145,7 +146,7 @@ class SpeechCommandsDataset(Dataset):
     
     def __getitem__(self, index) -> torch.Tensor:
         audio_path, label = self.__cal_audio_path_label__(self.data_list[index])
-        audio, sample_rate = torchaudio.load(audio_path)
+        audio, sample_rate = self.__load_wav__(audio_path=audio_path)
         if self.data_tfs is not None:
             audio = self.data_tfs(audio)
         if self.include_rate:
@@ -167,6 +168,32 @@ class SpeechCommandsDataset(Dataset):
         audio_path = os.path.join(self.root_path, meta_data)
         return audio_path, label
     
+    def __load_wav__(self, audio_path:str) -> tuple[torch.Tensor, int]:
+        if self.normalized:
+            # import numpy as np
+            # from pydub import AudioSegment
+            # from pydub.effects import normalize
+            # import copy
+
+            # audio = AudioSegment.from_wav(audio_path)
+            # # normalized_audio = normalize(audio, headroom=.01 if self.mode == 'test' else .1)
+            # normalized_audio = change_audio_mean_std(audio, target_mean=0., target_std=5000.)
+            # raw_data = normalized_audio.raw_data
+            # num_channels = normalized_audio.channels
+            # sample_width = normalized_audio.sample_width  # in bytes
+            # frame_rate = normalized_audio.frame_rate
+            # # num_samples = len(normalized_audio.get_array_of_samples()) // num_channels
+            # audio_array = np.frombuffer(raw_data, dtype=np.int16 if sample_width == 2 else np.int8)
+            # audio_array = audio_array.reshape(num_channels, -1)
+            # audio_tensor = torch.from_numpy(copy.deepcopy(audio_array)).to(dtype=torch.float32)
+            # return audio_tensor, frame_rate
+            wavform, sample_rate = torchaudio.load(audio_path)
+            if self.mode == 'train':
+                wavform = wavform - (-8.724928e-05) + (-0.00017467)
+            return wavform, sample_rate
+        else:
+            return torchaudio.load(audio_path)
+        
 class BackgroundNoiseDataset(Dataset):
     base_path = '_background_noise_'
 

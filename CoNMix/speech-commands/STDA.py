@@ -168,7 +168,7 @@ def build_dataset(args: argparse.Namespace) -> tuple[Dataset, Dataset, Dataset]:
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser(description='Rand-Augment')
-    ap.add_argument('--dataset', type=str, default='speech-commands', choices=['speech-commands', 'speech-commands-purity'])
+    ap.add_argument('--dataset', type=str, default='speech-commands', choices=['speech-commands', 'speech-commands-purity', 'speech-commands-random'])
     ap.add_argument('--weak_aug_dataset_root_path', type=str)
     ap.add_argument('--strong_aug_dataset_root_path', type=str)
     ap.add_argument('--num_workers', type=int, default=16)
@@ -221,7 +221,7 @@ if __name__ == "__main__":
     ap.add_argument('--initc_num', type=int, default=1)
 
     args = ap.parse_args()
-    if args.dataset == 'speech-commands':
+    if args.dataset == 'speech-commands' or args.dataset == 'speech-commands-random':
         args.class_num = 30
         args.dataset_type = 'all'
     elif args.dataset == 'speech-commands-purity':

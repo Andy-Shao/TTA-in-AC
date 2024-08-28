@@ -61,6 +61,20 @@ if __name__ == '__main__':
             test_dataset = SpeechCommandsDataset(
                 root_path=dataset_root_path, include_rate=False, data_tfs=Components(transforms=tsf), mode='test'
             )
+        elif dataset == 'speech-commands-norm':
+            class_num = 30
+            sample_rate = 16000
+            tsf = [
+                pad_trunc(max_ms=1000, sample_rate=sample_rate)
+            ]
+            train_dataset = SpeechCommandsDataset(
+                root_path=dataset_root_path, include_rate=False, data_tfs=Components(transforms=tsf), mode='train',
+                normalized=True
+            )
+            test_dataset = SpeechCommandsDataset(
+                root_path=dataset_root_path, include_rate=False, data_tfs=Components(transforms=tsf), mode='test',
+                normalized=True
+            )
         elif dataset == 'speech-commands-numbers':
             class_num = 10
             sample_rate = 16000

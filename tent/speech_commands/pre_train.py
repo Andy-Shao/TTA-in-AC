@@ -27,6 +27,7 @@ def prep_dataset(args:argparse.Namespace, data_type:str, mode:str, data_tsf:nn.M
 if __name__ == '__main__':
     ap = argparse.ArgumentParser(description='SHOT')
     ap.add_argument('--dataset', type=str, default='speech-commands', choices=['speech-commands', 'speech-commands-numbers', 'speech-commands-random'])
+    ap.add_argument('--num_workers', type=int, default=16)
     ap.add_argument('--batch_size', type=int, default=64)
     ap.add_argument('--max_epoch', type=int, default=50)
     ap.add_argument('--lr', type=float, default=1e-3)
@@ -130,8 +131,8 @@ if __name__ == '__main__':
     else:
         raise Exception('No support')
     
-    train_loader = DataLoader(dataset=train_dataset, batch_size=args.batch_size, shuffle=True, drop_last=False)
-    val_loader = DataLoader(dataset=val_dataset, batch_size=args.batch_size, shuffle=False, drop_last=False)
+    train_loader = DataLoader(dataset=train_dataset, batch_size=args.batch_size, shuffle=True, drop_last=False, num_workers=args.num_workers)
+    val_loader = DataLoader(dataset=val_dataset, batch_size=args.batch_size, shuffle=False, drop_last=False, num_workers=args.num_workers)
     print(f'train dataset size: {len(train_dataset)}, number of batches: {len(train_loader)}')
     print(f'val dataset size: {len(val_dataset)}, number of batches: {len(val_loader)}')
     store_model_structure_to_txt(model=model, output_path=os.path.join(args.output_full_path, f'{args.model}.txt'))
