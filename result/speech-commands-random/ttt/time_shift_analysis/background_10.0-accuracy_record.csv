@@ -1,4 +1,8 @@
 ,dataset,algorithm,tta-operation,corruption,accuracy,error,severity level,number of weight
-0,speech-commands-random,RestNet50_base,N/A,N/A,96.24820566357823,3.751794336421767,0.0,1518209
-1,speech-commands-random,RestNet50_base,N/A,doing_the_dishes,91.43285919352734,8.567140806472665,10.0,1518209
-2,speech-commands-random,RestNet50_base,"TTT, ts, bn, online",doing_the_dishes,90.24533472530341,9.754665274696592,10.0,1518209
+0,speech-commands-random,RestNet50_base,N/A,N/A,97.55970246639697,2.4402975336030295,0.0,1518209
+1,speech-commands-random,RestNet50_base,N/A,doing_the_dishes,92.27456609682892,7.72543390317108,10.0,1518209
+2,speech-commands-random,RestNet50_base,"TTT, ts, bn, online",doing_the_dishes,91.10009134803602,8.899908651963983,10.0,1518209
+3,speech-commands-random,RestNet50_base,N/A,exercise_bike,92.13101918308756,7.8689808169124404,10.0,1518209
+4,speech-commands-random,RestNet50_base,"TTT, ts, bn, online",exercise_bike,87.49836878507112,12.501631214928878,10.0,1518209
+5,speech-commands-random,RestNet50_base,N/A,running_tap,92.67910739919091,7.320892600809088,10.0,1518209
+6,speech-commands-random,RestNet50_base,"TTT, ts, bn, online",running_tap,89.66462221062247,10.335377789377532,10.0,1518209
