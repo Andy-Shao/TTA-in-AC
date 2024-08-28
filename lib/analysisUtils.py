@@ -201,16 +201,16 @@ def analyze_guassian_noise(all_records: dict[DatasetType, pd.DataFrame]) -> pd.D
             RecordColumn.TTA_OP: 'Norm Adaptation + normalized',
             RecordColumn.Model: 'RestNet50'
         },
-        10: {
-            RecordColumn.Dataset: DatasetType.Speech_Command_Random.value,
-            RecordColumn.Records: all_records[DatasetType.Speech_Command_Random][TTA_Type.TTT],
-            RecordColumn.TTA_Type: TTA_Type.TTT.value,
-            RecordColumn.Corruption: 'gaussian_noise',
-            RecordColumn.Severity_Level: [0.005],
-            RecordColumn.Algorithm: None,
-            RecordColumn.TTA_OP: 'TTT, ts, bn, online',
-            RecordColumn.Model: 'Transfer Learning'
-        }
+        # 10: {
+        #     RecordColumn.Dataset: DatasetType.Speech_Command_Random.value,
+        #     RecordColumn.Records: all_records[DatasetType.Speech_Command_Random][TTA_Type.TTT],
+        #     RecordColumn.TTA_Type: TTA_Type.TTT.value,
+        #     RecordColumn.Corruption: 'gaussian_noise',
+        #     RecordColumn.Severity_Level: [0.005],
+        #     RecordColumn.Algorithm: None,
+        #     RecordColumn.TTA_OP: 'TTT, ts, bn, online',
+        #     RecordColumn.Model: 'Transfer Learning'
+        # }
     })
 
 def analyze_background(all_records: dict[DatasetType, pd.DataFrame], noise_type:str) -> pd.DataFrame:
@@ -315,14 +315,14 @@ def analyze_background(all_records: dict[DatasetType, pd.DataFrame], noise_type:
             RecordColumn.TTA_OP: 'Norm Adaptation + normalized',
             RecordColumn.Model: 'RestNet50'
         },
-        10: {
-            RecordColumn.Dataset: DatasetType.Speech_Command_Random.value,
-            RecordColumn.Records: all_records[DatasetType.Speech_Command_Random][TTA_Type.TTT],
-            RecordColumn.TTA_Type: TTA_Type.TTT.value,
-            RecordColumn.Corruption: noise_type,
-            RecordColumn.Severity_Level: [10.0, 3.0],
-            RecordColumn.Algorithm: None,
-            RecordColumn.TTA_OP: 'TTT, ts, bn, online',
-            RecordColumn.Model: 'Transfer Learning'
-        }
+        # 10: {
+        #     RecordColumn.Dataset: DatasetType.Speech_Command_Random.value,
+        #     RecordColumn.Records: all_records[DatasetType.Speech_Command_Random][TTA_Type.TTT],
+        #     RecordColumn.TTA_Type: TTA_Type.TTT.value,
+        #     RecordColumn.Corruption: noise_type,
+        #     RecordColumn.Severity_Level: [10.0, 3.0],
+        #     RecordColumn.Algorithm: None,
+        #     RecordColumn.TTA_OP: 'TTT, ts, bn, online',
+        #     RecordColumn.Model: 'Transfer Learning'
+        # }
     })
