@@ -170,26 +170,26 @@ class SpeechCommandsDataset(Dataset):
     
     def __load_wav__(self, audio_path:str) -> tuple[torch.Tensor, int]:
         if self.normalized:
-            import numpy as np
-            from pydub import AudioSegment
-            from pydub.effects import normalize
-            import copy
+            # import numpy as np
+            # from pydub import AudioSegment
+            # from pydub.effects import normalize
+            # import copy
 
-            audio = AudioSegment.from_wav(audio_path)
-            normalized_audio = normalize(audio, headroom=.1)
-            raw_data = normalized_audio.raw_data
-            num_channels = normalized_audio.channels
-            sample_width = normalized_audio.sample_width  # in bytes
-            frame_rate = normalized_audio.frame_rate
-            # num_samples = len(normalized_audio.get_array_of_samples()) // num_channels
-            audio_array = np.frombuffer(raw_data, dtype=np.int16 if sample_width == 2 else np.int8)
-            audio_array = audio_array.reshape(num_channels, -1)
-            audio_tensor = torch.from_numpy(copy.deepcopy(audio_array)).to(dtype=torch.float32)
-            return audio_tensor, frame_rate
-            # wavform, sample_rate = torchaudio.load(audio_path)
-            # if self.mode == 'train':
-            #     wavform = wavform - (-8.724928e-05) + (-0.00017467)
-            # return wavform, sample_rate
+            # audio = AudioSegment.from_wav(audio_path)
+            # normalized_audio = normalize(audio, headroom=.1)
+            # raw_data = normalized_audio.raw_data
+            # num_channels = normalized_audio.channels
+            # sample_width = normalized_audio.sample_width  # in bytes
+            # frame_rate = normalized_audio.frame_rate
+            # # num_samples = len(normalized_audio.get_array_of_samples()) // num_channels
+            # audio_array = np.frombuffer(raw_data, dtype=np.int16 if sample_width == 2 else np.int8)
+            # audio_array = audio_array.reshape(num_channels, -1)
+            # audio_tensor = torch.from_numpy(copy.deepcopy(audio_array)).to(dtype=torch.float32)
+            # return audio_tensor, frame_rate
+            wavform, sample_rate = torchaudio.load(audio_path)
+            if self.mode == 'train':
+                wavform = wavform - (-8.724928e-05) + (-0.00017467)
+            return wavform, sample_rate
         else:
             return torchaudio.load(audio_path)
         

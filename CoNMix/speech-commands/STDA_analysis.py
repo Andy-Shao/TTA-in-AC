@@ -31,7 +31,7 @@ if __name__ == '__main__':
     ap.add_argument('--adapted_modelB_weight_path', type=str)
     ap.add_argument('--adapted_modelC_weight_path', type=str)
 
-    ap.add_argument('--corruption', type=str, choices=['doing_the_dishes', 'dude_miaowing', 'exercise_bike', 'pink_noise', 'running_tap', 'white_noise', 'guassian_noise'])
+    ap.add_argument('--corruption', type=str, choices=['doing_the_dishes', 'dude_miaowing', 'exercise_bike', 'pink_noise', 'running_tap', 'white_noise', 'gaussian_noise'])
     ap.add_argument('--severity_level', type=float, default=.0025)
     ap.add_argument('--data_type', type=str, choices=['raw', 'final'], default='final')
 
