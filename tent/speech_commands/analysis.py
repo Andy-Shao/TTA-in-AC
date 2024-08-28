@@ -61,7 +61,7 @@ def load_model(args: argparse.Namespace) -> nn.Module:
 
 if __name__ == '__main__':
     ap = argparse.ArgumentParser(description='SHOT')
-    ap.add_argument('--dataset', type=str, default='speech-commands', choices=['speech-commands', 'speech-commands-numbers', 'speech-commands-random'])
+    ap.add_argument('--dataset', type=str, default='speech-commands', choices=['speech-commands', 'speech-commands-numbers', 'speech-commands-random', 'speech-commands-norm'])
     ap.add_argument('--model', type=str, default='cnn', choices=['cnn', 'restnet50'])
     ap.add_argument('--model_weight_file_path', type=str)
     ap.add_argument('--output_path', type=str, default='./result')
@@ -77,7 +77,7 @@ if __name__ == '__main__':
     args.corruption_types = ['doing_the_dishes', 'dude_miaowing', 'exercise_bike', 'pink_noise', 'running_tap', 'white_noise', 'gaussian_noise']
     args.corruptions = args.corruptions.strip().split(sep=',')
     args.device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    if args.dataset == 'speech-commands':
+    if args.dataset == 'speech-commands' or args.dataset == 'speech-commands-norm':
         args.class_num = 30
         args.data_type = 'all'
     elif args.dataset == 'speech-commands-numbers':

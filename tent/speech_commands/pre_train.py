@@ -21,12 +21,14 @@ from CoNMix.lib.prepare_dataset import ExpandChannel
 def prep_dataset(args:argparse.Namespace, data_type:str, mode:str, data_tsf:nn.Module) -> Dataset:
     if args.dataset == 'speech-commands-random':
         return RandomSpeechCommandsDataset(root_path=args.dataset_root_path, mode=mode, data_type=data_type, data_tfs=data_tsf, include_rate=False)
+    elif args.dataset == 'speech-commands-norm':
+        return SpeechCommandsDataset(root_path=args.dataset_root_path, mode=mode, data_type=data_type, data_tfs=data_tsf, include_rate=False, normalized=True)
     else:
         return SpeechCommandsDataset(root_path=args.dataset_root_path, mode=mode, data_type=data_type, data_tfs=data_tsf, include_rate=False)
 
 if __name__ == '__main__':
     ap = argparse.ArgumentParser(description='SHOT')
-    ap.add_argument('--dataset', type=str, default='speech-commands', choices=['speech-commands', 'speech-commands-numbers', 'speech-commands-random'])
+    ap.add_argument('--dataset', type=str, default='speech-commands', choices=['speech-commands', 'speech-commands-numbers', 'speech-commands-random', 'speech-commands-norm'])
     ap.add_argument('--num_workers', type=int, default=16)
     ap.add_argument('--batch_size', type=int, default=64)
     ap.add_argument('--max_epoch', type=int, default=50)
@@ -59,7 +61,7 @@ if __name__ == '__main__':
     print_argparse(args=args)
     ###########################################
 
-    if args.dataset == 'speech-commands':
+    if args.dataset == 'speech-commands' or args.dataset == 'speech-commands-norm':
         class_num = 30
         data_type = 'all'
     elif args.dataset == 'speech-commands-numbers':
@@ -107,7 +109,7 @@ if __name__ == '__main__':
         if args.normalized:
             print('calculate the train mean and standard deviation')
             train_dataset = prep_dataset(args=args, data_type=data_type, mode='train', data_tsf=Components(transforms=train_tf))
-            train_loader = DataLoader(dataset=train_dataset, batch_size=256, shuffle=False, drop_last=True)
+            train_loader = DataLoader(dataset=train_dataset, batch_size=256, shuffle=False, drop_last=True, num_workers=args.num_workers)
             train_mean, train_std = cal_norm(loader=train_loader)
             train_tf.append(v_transforms.Normalize(mean=train_mean, std=train_std))
         train_dataset = prep_dataset(args=args, data_type=data_type, mode='train', data_tsf=Components(transforms=train_tf))
@@ -121,7 +123,7 @@ if __name__ == '__main__':
         if args.normalized:
             print('calculate the validation mean and standard deviation')
             val_dataset = prep_dataset(args=args, mode='validation', data_tsf=Components(transforms=val_tf), data_type=data_type)
-            val_loader = DataLoader(dataset=val_dataset, batch_size=256, shuffle=False, drop_last=True)
+            val_loader = DataLoader(dataset=val_dataset, batch_size=256, shuffle=False, drop_last=True, num_workers=args.num_workers)
             val_mean, val_std = cal_norm(loader=val_loader)
             val_tf.append(v_transforms.Normalize(mean=val_mean, std=val_std))
         val_dataset = prep_dataset(args=args, mode='validation', data_tsf=Components(transforms=val_tf), data_type=data_type)

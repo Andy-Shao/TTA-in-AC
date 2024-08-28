@@ -53,8 +53,14 @@ export BASE_PATH=${BASE_PATH:-'/home/andyshao'}
 #     --model_weight_file_path './result/speech-commands-random/tent/pre_train/restnet50_weight.pt' --normalized \
 #     --corruptions 'doing_the_dishes,exercise_bike,running_tap'
 
-python -m tent.speech_commands.analysis  --dataset 'speech-commands-random' \
+# python -m tent.speech_commands.analysis  --dataset 'speech-commands-random' \
+#     --dataset_root_path $BASE_PATH'/data/speech_commands' --model 'restnet50' \
+#     --severity_level 3.0 --output_csv_name 'accuracy_record_RestNet50_background_3.0.csv' \
+#     --model_weight_file_path './result/speech-commands-random/tent/pre_train/restnet50_weight.pt' --normalized \
+#     --corruptions 'doing_the_dishes,exercise_bike,running_tap'
+
+python -m tent.speech_commands.analysis --dataset 'speech-commands-norm' \
     --dataset_root_path $BASE_PATH'/data/speech_commands' --model 'restnet50' \
-    --severity_level 3.0 --output_csv_name 'accuracy_record_RestNet50_background_3.0.csv' \
-    --model_weight_file_path './result/speech-commands-random/tent/pre_train/restnet50_weight.pt' --normalized \
+    --severity_level 10.0 --output_csv_name 'accuracy_record_RestNet50_background_10.0.csv' \
+    --model_weight_file_path './result/speech-commands-norm/tent/pre_train/RestNet50_weight.pt' --normalized \
     --corruptions 'doing_the_dishes,exercise_bike,running_tap'
