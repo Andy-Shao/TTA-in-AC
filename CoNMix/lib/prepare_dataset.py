@@ -1,6 +1,15 @@
+import argparse
+
 import torch.nn as nn
 import torch
 from torch.utils.data import Dataset
+from lib.scDataset import SpeechCommandsDataset, RandomSpeechCommandsDataset
+
+def build_dataset(args: argparse.Namespace, mode:str, data_tfs:nn.Module) -> Dataset:
+    if args.dataset == 'speech-commands-random':
+        return RandomSpeechCommandsDataset(root_path=args.dataset_root_path, mode=mode, include_rate=False, data_tfs=data_tfs, data_type=args.dataset_type)
+    else:
+        return SpeechCommandsDataset(root_path=args.dataset_root_path, mode=mode, include_rate=False, data_tfs=data_tfs, data_type=args.dataset_type)
 
 class ExpandChannel(nn.Module):
     def __init__(self, out_channel: int) -> None:
