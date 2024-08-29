@@ -12,22 +12,29 @@ class RandomSpeechCommandsDataset(Dataset):
 
     def __init__(
             self, root_path: str, mode: str, include_rate=True, data_tfs=None, data_type='all', seed:int = 2024, source_mode:str ='train',
-            output_path: str = './result/speech-commands-random'
+            output_path: str = './result/speech-commands-random', refresh=False
         ) -> None:
         super().__init__()
+        if refresh:
+            try:
+                os.remove(os.path.join(output_path), self.test_meta_file)
+                os.remove(os.path.join(output_path), self.val_meta_file)
+                os.remove(os.path.join(output_path), self.train_meta_file)
+            except:
+                pass
         self.dataset = SpeechCommandsDataset(root_path=root_path, mode=source_mode, include_rate=include_rate, data_tfs=data_tfs, data_type=data_type)
         self.seed = seed
         assert mode in ['train', 'validation', 'test', 'full', 'test+val'], 'mode type is incorrect'
         self.mode = mode
-        self.__generate_random_meta_file__(seed=seed)
         self.output_path = output_path
+        self.__generate_random_meta_file__(seed=seed)
 
         if mode == 'train':
             data_list = self.train_indexes
         elif mode == 'validation':
             data_list = self.val_indexes
         elif mode == 'full':
-            data_list = [it for it in range(self.dataset)]
+            data_list = self.dataset.data_list
         elif mode == 'test+val':
             data_list = []
             data_list.extend(self.test_indexes)
@@ -64,11 +71,14 @@ class RandomSpeechCommandsDataset(Dataset):
                     continue
                 self.val_indexes.append(it)
             with open(os.path.join(self.output_path, self.test_meta_file), 'wt', newline='\n') as f:
-                f.writelines(self.test_indexes)
+                for it in self.test_indexes:
+                    f.write(it+'\n')
             with open(os.path.join(self.output_path, self.val_meta_file), 'wt', newline='\n') as f:
-                f.writelines(self.val_indexes)
+                for it in self.val_indexes:
+                    f.write(it+'\n')
             with open(os.path.join(self.output_path, self.train_meta_file), 'wt', newline='\n') as f:
-                f.writelines(self.train_indexes)
+                for it in self.train_indexes:
+                    f.write(it+'\n')
 
     def __len__(self) -> int:
         return len(self.dataset)
