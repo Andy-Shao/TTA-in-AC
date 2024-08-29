@@ -1,7 +1,9 @@
-,dataset,type,mean,standard deviaiton
-0,audio-mnist,train,[-1.079023e-05],[0.00309949]
-1,audio-mnist,test,[-1.0177833e-05],[0.00445356]
-2,speech-commands,train,[-8.856063e-05],[0.08103871]
-3,speech-commands,test,[-0.00017467],[0.08301105]
-4,speech-commands-random,train,[-6.4184766e-05],[0.08157629]
-5,speech-commands-random,test,[-0.00016766],[0.08044415]
+,dataset,type,mean,standard deviaiton,dataset size
+0,audio-mnist,train,[-1.079023e-05],[0.00309949],20000
+1,audio-mnist,test,[-1.0177833e-05],[0.00445356],10000
+2,speech-commands,train,[-8.8560606e-05],[0.08103871],51088
+3,speech-commands,test,[-0.00017467],[0.08301105],6835
+4,speech-commands,validation,[0.00024789],[0.07386722],6798
+5,speech-commands-random,train,[-6.4184766e-05],[0.08157629],32185
+6,speech-commands-random,test,[-0.00016766],[0.08044415],15326
+7,speech-commands-random,validation,[3.0986317e-05],[0.08328391],3577
