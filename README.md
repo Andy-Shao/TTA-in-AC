@@ -108,10 +108,6 @@ from unrecognized ones.
 |running_tap|[1, 978488]|16000|
 |white_noise|[1, 960000]|16000|
 
-#### Speech Commands Numbers
-Speech Commands Numbers only include the '0' to '9' speech records in Speech Commands Dataset.
-+ Sample size: 23666 (train: 18620, test: 2552 , validation: 2494)
-
 [Speech Commands Dataset Link](https://research.google/blog/launching-the-speech-commands-dataset/)<br/>
 [Download Link](http://download.tensorflow.org/data/speech_commands_v0.01.tar.gz)<br/>
 [TensorFlow Document](https://www.tensorflow.org/datasets/community_catalog/huggingface/speech_commands)
