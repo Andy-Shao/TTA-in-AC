@@ -1,11 +1,11 @@
 ,dataset,algorithm,tta-operation,corruption,accuracy,error,severity level,number of weight
-0,speech-commands-random,restnet50,N/A,N/A,92.08534516507895,7.914654834921052,0.0,25587062
-1,speech-commands-random,restnet50,N/A,doing_the_dishes,75.1468093435991,24.853190656400898,10.0,25587062
-2,speech-commands-random,restnet50,Tent Adaptation + normalized,doing_the_dishes,81.93918830745139,18.06081169254861,10.0,25587062
-3,speech-commands-random,restnet50,Norm Adaptation + normalized,doing_the_dishes,77.99164817956414,22.008351820435863,10.0,25587062
-4,speech-commands-random,restnet50,N/A,exercise_bike,71.88437948584105,28.115620514158948,10.0,25587062
-5,speech-commands-random,restnet50,Tent Adaptation + normalized,exercise_bike,80.88216103353778,19.117838966462216,10.0,25587062
-6,speech-commands-random,restnet50,Norm Adaptation + normalized,exercise_bike,75.18595850189222,24.814041498107784,10.0,25587062
-7,speech-commands-random,restnet50,N/A,running_tap,74.15503066684066,25.84496933315934,10.0,25587062
-8,speech-commands-random,restnet50,Tent Adaptation + normalized,running_tap,81.9065640088738,18.0934359911262,10.0,25587062
-9,speech-commands-random,restnet50,Norm Adaptation + normalized,running_tap,76.84979772934882,23.150202270651178,10.0,25587062
+0,speech-commands-random,restnet50,N/A,N/A,92.11796946365654,7.882030536343464,0.0,25587062
+1,speech-commands-random,restnet50,N/A,doing_the_dishes,74.9380138327026,25.061986167297405,10.0,25587062
+2,speech-commands-random,restnet50,Tent Adaptation + normalized,doing_the_dishes,81.9065640088738,18.0934359911262,10.0,25587062
+3,speech-commands-random,restnet50,Norm Adaptation + normalized,doing_the_dishes,77.41093566488321,22.589064335116788,10.0,25587062
+4,speech-commands-random,restnet50,N/A,exercise_bike,71.5842359389273,28.415764061072693,10.0,25587062
+5,speech-commands-random,restnet50,Tent Adaptation + normalized,exercise_bike,80.60159206577059,19.39840793422941,10.0,25587062
+6,speech-commands-random,restnet50,Norm Adaptation + normalized,exercise_bike,74.8531906564009,25.146809343599102,10.0,25587062
+7,speech-commands-random,restnet50,N/A,running_tap,74.37687589716822,25.62312410283178,10.0,25587062
+8,speech-commands-random,restnet50,Tent Adaptation + normalized,running_tap,82.2654312932272,17.734568706772805,10.0,25587062
+9,speech-commands-random,restnet50,Norm Adaptation + normalized,running_tap,77.22823959284875,22.77176040715125,10.0,25587062
