@@ -104,23 +104,23 @@ def display_wavform(waveform: torch.Tensor, title:str='Audio Waveform'):
     plt.xlabel('Time')
     plt.show()
 
-def display_spectro_gram(waveform: torch.Tensor):
+def display_spectro_gram(waveform: torch.Tensor, title='Mel Spectrogram in channel 0'):
     import matplotlib.pyplot as plt
 
     plt.figure(figsize=(10,4))
     plt.imshow(waveform[0].detach().numpy(), cmap='viridis', origin='lower', aspect='auto')
-    plt.title('Mel Spectrogram in channel 0')
+    plt.title(title)
     plt.xlabel('Time')
     plt.ylabel('Frequency')
     plt.colorbar(format='%+2.0f dB')
     plt.show()
 
-def disply_PIL_image(img: Image):
+def disply_PIL_image(img: Image, title='Mel Spectrogram in channel 0'):
     import matplotlib.pyplot as plt
 
     plt.figure(figsize=(10,4))
     plt.imshow(np.asarray(img), cmap='viridis', origin='lower', aspect='auto')
-    plt.title('Mel Spectrogram in channel 0')
+    plt.title(title)
     plt.xlabel('Time')
     plt.ylabel('Frequency')
     plt.colorbar(format='%+2.0f dB')
