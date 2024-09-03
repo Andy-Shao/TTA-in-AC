@@ -94,12 +94,12 @@ class time_shift(nn.Module):
             shift_arg = int(self.shift_limit * wavform.shape[1])
         return wavform.roll(shifts=shift_arg)
     
-def display_wavform(waveform: torch.Tensor):
+def display_wavform(waveform: torch.Tensor, title:str='Audio Waveform'):
     import matplotlib.pyplot as plt
 
     plt.figure(figsize=(12, 4))
     plt.plot(waveform.numpy().T)
-    plt.title('Audio Waveform')
+    plt.title(title)
     plt.ylabel('Amplitude')
     plt.xlabel('Time')
     plt.show()
