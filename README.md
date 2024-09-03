@@ -19,6 +19,7 @@ conda install pytorch==2.1.0 torchvision==0.16.0 torchaudio==2.1.0 pytorch-cuda=
 conda install -y -c anaconda scipy==1.11.3
 conda install conda-forge::ml-collections==0.1.1 -y
 conda install pandas==2.2.2 -y
+# conda install conda-forge::pydub==0.25.1 -y
 conda install tqdm==4.66.4 -y
 conda install jupyter -y
 conda install matplotlib==3.8.4 -y 
@@ -106,10 +107,6 @@ from unrecognized ones.
 |pink_noise|[1, 960000]|16000|
 |running_tap|[1, 978488]|16000|
 |white_noise|[1, 960000]|16000|
-
-#### Speech Commands Numbers
-Speech Commands Numbers only include the '0' to '9' speech records in Speech Commands Dataset.
-+ Sample size: 23666 (train: 18620, test: 2552 , validation: 2494)
 
 [Speech Commands Dataset Link](https://research.google/blog/launching-the-speech-commands-dataset/)<br/>
 [Download Link](http://download.tensorflow.org/data/speech_commands_v0.01.tar.gz)<br/>

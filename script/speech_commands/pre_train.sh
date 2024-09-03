@@ -8,8 +8,19 @@ export BASE_PATH=${BASE_PATH:-'/root'}
 #     --model 'restnet50' --output_csv_name 'RestNet50_training_records.csv' \
 #     --output_weight_name 'RestNet50_weight.pt' --normalized --wandb 
 
-python -m tent.speech_commands.pre_train --dataset 'speech-commands-numbers' \
+# python -m tent.speech_commands.pre_train --dataset 'speech-commands-numbers' \
+#     --dataset_root_path $BASE_PATH'/data/speech_commands' --max_epoch 20 \
+#     --model 'restnet50' --output_csv_name 'restnet50_training_records.csv' \
+#     --output_weight_name 'restnet50_weight.pt' --normalized --weight_decay '5e-4' \
+#     --wandb 
+
+python -m tent.speech_commands.pre_train --dataset 'speech-commands-random' \
     --dataset_root_path $BASE_PATH'/data/speech_commands' --max_epoch 20 \
     --model 'restnet50' --output_csv_name 'restnet50_training_records.csv' \
     --output_weight_name 'restnet50_weight.pt' --normalized --weight_decay '5e-4' \
     --wandb 
+
+# python -m tent.speech_commands.pre_train --dataset 'speech-commands-norm' \
+#     --dataset_root_path $BASE_PATH'/data/speech_commands' --max_epoch 20 \
+#     --model 'restnet50' --output_csv_name 'RestNet50_training_records.csv' \
+#     --output_weight_name 'RestNet50_weight.pt' --normalized --wandb 

@@ -8,7 +8,7 @@ export BASE_PATH=${BASE_PATH:-'/root'}
 #     --adapted_modelF_weight_path './result/speech-commands/CoNMix/STDA/speech-commands_modelF-bg-1.0-guassian_noise.pt' \
 #     --adapted_modelB_weight_path './result/speech-commands/CoNMix/STDA/speech-commands_modelB-bg-1.0-guassian_noise.pt' \
 #     --adapted_modelC_weight_path './result/speech-commands/CoNMix/STDA/speech-commands_modelC-bg-1.0-guassian_noise.pt' \
-#     --normalized --severity_level 0.005 --data_type 'final' --corruption 'guassian_noise' \
+#     --normalized --severity_level 0.005 --data_type 'final' --corruption 'gaussian_noise' \
 #     --dataset 'speech-commands' --output_csv_name '0.005-guassian_noise_accuracy_record.csv'
 
 # python -m CoNMix.speech-commands.STDA_analysis --dataset_root_path $BASE_PATH'/data/speech_commands' \

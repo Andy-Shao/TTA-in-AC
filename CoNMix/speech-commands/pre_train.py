@@ -13,11 +13,9 @@ from torch import optim
 
 from lib.toolkit import print_argparse, cal_norm, store_model_structure_to_txt
 from lib.wavUtils import pad_trunc, time_shift, Components
-from CoNMix.lib.prepare_dataset import ExpandChannel
-from lib.scDataset import SpeechCommandsDataset
+from CoNMix.lib.prepare_dataset import ExpandChannel, build_dataset
 from CoNMix.pre_train import load_models, build_optimizer
 from CoNMix.lib.loss import CrossEntropyLabelSmooth
-from lib.datasets import ClipDataset
 
 def lr_scheduler(optimizer: torch.optim.Optimizer, iter_num: int, max_iter: int, step:int, gamma=10, power=0.75) -> optim.Optimizer:
     decay = (1 + gamma * iter_num / max_iter) ** (-power)
@@ -31,7 +29,7 @@ def lr_scheduler(optimizer: torch.optim.Optimizer, iter_num: int, max_iter: int,
 
 if __name__ == '__main__':
     ap = argparse.ArgumentParser()
-    ap.add_argument('--dataset', type=str, default='speech-commands', choices=['speech-commands', 'speech-commands-purity'])
+    ap.add_argument('--dataset', type=str, default='speech-commands', choices=['speech-commands', 'speech-commands-purity', 'speech-commands-random'])
     ap.add_argument('--dataset_root_path', type=str)
     ap.add_argument('--num_workers', type=int, default=16)
     ap.add_argument('--output_path', type=str, default='./result')
@@ -56,7 +54,7 @@ if __name__ == '__main__':
     ap.add_argument('--trte', type=str, default='val', choices=['full', 'val'])
 
     args = ap.parse_args()
-    if args.dataset == 'speech-commands':
+    if args.dataset == 'speech-commands' or args.dataset == 'speech-commands-random':
         args.class_num = 30
         args.dataset_type = 'all'
     elif args.dataset == 'speech-commands-purity':
@@ -101,12 +99,12 @@ if __name__ == '__main__':
     if args.normalized:
         print('calculate the train dataset mean and standard deviation')
         train_tf = Components(transforms=tf_array)
-        train_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='train', include_rate=False, data_tfs=train_tf, data_type=args.dataset_type)
+        train_dataset = build_dataset(args=args, mode='train', data_tfs=train_tf)
         train_loader = DataLoader(dataset=train_dataset, batch_size=256, shuffle=False, drop_last=False, num_workers=args.num_workers)
         train_mean, train_std = cal_norm(loader=train_loader)
         tf_array.append(v_transforms.Normalize(mean=train_mean, std=train_std))
     train_tf = Components(transforms=tf_array)
-    train_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='train', include_rate=False, data_tfs=train_tf, data_type=args.dataset_type)
+    train_dataset = build_dataset(args=args, mode='train', data_tfs=train_tf)
     train_loader = DataLoader(dataset=train_dataset, batch_size=args.batch_size, shuffle=True, drop_last=False, num_workers=args.num_workers)
 
     tf_array = [
@@ -119,12 +117,12 @@ if __name__ == '__main__':
     if args.normalized:
         print('calculate the validation dataset mean and standard deviation')
         val_tf = Components(transforms=tf_array)
-        val_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='validation', include_rate=False, data_tfs=val_tf, data_type=args.dataset_type)
+        val_dataset = build_dataset(args=args, mode='validation', data_tfs=val_tf)
         val_loader = DataLoader(dataset=val_dataset, batch_size=256, shuffle=False, drop_last=False, num_workers=args.num_workers)
         val_mean, val_std = cal_norm(loader=val_loader)
         tf_array.append(v_transforms.Normalize(mean=val_mean, std=val_std))
     val_tf = Components(transforms=tf_array)
-    val_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='validation', include_rate=False, data_tfs=val_tf, data_type=args.dataset_type)
+    val_dataset = build_dataset(args=args, mode='validation', data_tfs=val_tf)
     val_loader = DataLoader(dataset=val_dataset, batch_size=args.batch_size, shuffle=False, drop_last=False, num_workers=args.num_workers)
 
     print(f'Total train dataset size: {len(train_dataset)}, batch size: {len(train_loader)}')

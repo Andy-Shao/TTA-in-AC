@@ -8,49 +8,83 @@ import torchaudio
 class RandomSpeechCommandsDataset(Dataset):
     test_meta_file = 'rand_testing_list.txt'
     val_meta_file = 'rand_validation_list.txt'
+    train_meta_file = 'rand_train_list.txt'
 
-    def __init__(self, root_path: str, mode: str, include_rate=True, data_tfs=None, data_type='all', seed:int = 2024) -> None:
+    def __init__(
+            self, root_path: str, mode: str, include_rate=True, data_tfs=None, data_type='all', seed:int = 2024, source_mode:str ='train',
+            output_path: str = './result/speech-commands-random', refresh=False
+        ) -> None:
         super().__init__()
-        self.dataset = SpeechCommandsDataset(root_path=root_path, mode='train', include_rate=include_rate, data_tfs=data_tfs, data_type=data_type)
+        if refresh:
+            try:
+                os.remove(os.path.join(output_path), self.test_meta_file)
+                os.remove(os.path.join(output_path), self.val_meta_file)
+                os.remove(os.path.join(output_path), self.train_meta_file)
+            except:
+                pass
+        self.dataset = SpeechCommandsDataset(root_path=root_path, mode=source_mode, include_rate=include_rate, data_tfs=data_tfs, data_type=data_type)
         self.seed = seed
         assert mode in ['train', 'validation', 'test', 'full', 'test+val'], 'mode type is incorrect'
         self.mode = mode
+        self.output_path = output_path
         self.__generate_random_meta_file__(seed=seed)
 
         if mode == 'train':
-            self.data_list = self.train_indexes
+            data_list = self.train_indexes
         elif mode == 'validation':
-            self.data_list = self.val_indexes
+            data_list = self.val_indexes
         elif mode == 'full':
-            self.data_list = [it for it in range(self.dataset)]
+            data_list = self.dataset.data_list
         elif mode == 'test+val':
-            self.data_list = []
-            self.data_list.extend(self.test_indexes)
-            self.data_list.extend(self.val_indexes)
+            data_list = []
+            data_list.extend(self.test_indexes)
+            data_list.extend(self.val_indexes)
         elif mode == 'test':
-            self.data_list = self.test_indexes
+            data_list = self.test_indexes
+        self.dataset.data_list = data_list
 
     def __generate_random_meta_file__(self, seed:int) -> None:
-        from numpy.random import MT19937, RandomState, SeedSequence
-        rs = RandomState(MT19937(SeedSequence(seed)))
-        self.test_indexes = rs.choice(len(self.dataset), size=int(.3*len(self.dataset)), replace=False)
-        residua = []
-        for i in range(len(self.dataset)):
-            if i in self.test_indexes:
-                continue
-            residua.append(i)
-        self.train_indexes = rs.choice(residua, size=int(.9*len(residua)), replace=False)
-        self.val_indexes = []
-        for i in residua:
-            if i in self.train_indexes:
-                continue
-            self.val_indexes.append(i)
+        if os.path.exists(os.path.join(self.output_path, self.test_meta_file)):
+            with open(os.path.join(self.output_path, self.test_meta_file), 'rt', newline='\n') as f:
+                all_data = f.readlines()
+            self.test_indexes = [line.rstrip('\n') for line in all_data]
+            with open(os.path.join(self.output_path, self.val_meta_file), 'rt', newline='\n') as f:
+                all_data = f.readlines()
+            self.val_indexes = [line.rstrip('\n') for line in all_data]
+            with open(os.path.join(self.output_path, self.train_meta_file), 'rt', newline='\n') as f:
+                all_data = f.readlines()
+            self.train_indexes = [line.rstrip('\n') for line in all_data]
+        else:
+            from numpy.random import MT19937, RandomState, SeedSequence
+            rs = RandomState(MT19937(SeedSequence(seed)))
+            data_list = self.dataset.data_list
+            self.test_indexes = rs.choice(data_list, size=int(.3*len(data_list)), replace=False)
+            residua = []
+            for it in data_list:
+                if it in self.test_indexes:
+                    continue
+                residua.append(it)
+            self.train_indexes = rs.choice(residua, size=int(.9*len(residua)), replace=False)
+            self.val_indexes = []
+            for it in residua:
+                if it in self.train_indexes:
+                    continue
+                self.val_indexes.append(it)
+            with open(os.path.join(self.output_path, self.test_meta_file), 'wt', newline='\n') as f:
+                for it in self.test_indexes:
+                    f.write(it+'\n')
+            with open(os.path.join(self.output_path, self.val_meta_file), 'wt', newline='\n') as f:
+                for it in self.val_indexes:
+                    f.write(it+'\n')
+            with open(os.path.join(self.output_path, self.train_meta_file), 'wt', newline='\n') as f:
+                for it in self.train_indexes:
+                    f.write(it+'\n')
 
     def __len__(self) -> int:
-        return len(self.data_list)
+        return len(self.dataset)
 
     def __getitem__(self, index) -> Any:
-        return self.dataset[self.data_list[index]]
+        return self.dataset[index]
 
 class SpeechCommandsDataset(Dataset):
     test_meta_file = 'testing_list.txt'
@@ -73,7 +107,7 @@ class SpeechCommandsDataset(Dataset):
         'eight': 8., 'nine': 9.
     }
 
-    def __init__(self, root_path: str, mode: str, include_rate=True, data_tfs=None, data_type='all') -> None:
+    def __init__(self, root_path: str, mode: str, include_rate=True, data_tfs=None, data_type='all', normalized:bool=False) -> None:
         super().__init__()
         self.root_path = root_path
         assert mode in ['train', 'validation', 'test', 'full', 'test+val'], 'mode type is incorrect'
@@ -84,6 +118,7 @@ class SpeechCommandsDataset(Dataset):
         data_list = self.__cal_data_list__(mode=mode)
         self.data_list = self.__filter_data_list__(data_list=data_list)
         self.data_tfs = data_tfs
+        self.normalized = normalized
     
     def __filter_data_list__(self, data_list:list[str]) -> list[str]:
         if self.data_type == 'all':
@@ -145,7 +180,7 @@ class SpeechCommandsDataset(Dataset):
     
     def __getitem__(self, index) -> torch.Tensor:
         audio_path, label = self.__cal_audio_path_label__(self.data_list[index])
-        audio, sample_rate = torchaudio.load(audio_path)
+        audio, sample_rate = self.__load_wav__(audio_path=audio_path)
         if self.data_tfs is not None:
             audio = self.data_tfs(audio)
         if self.include_rate:
@@ -167,6 +202,31 @@ class SpeechCommandsDataset(Dataset):
         audio_path = os.path.join(self.root_path, meta_data)
         return audio_path, label
     
+    def __load_wav__(self, audio_path:str) -> tuple[torch.Tensor, int]:
+        if self.normalized:
+            # import numpy as np
+            # from pydub import AudioSegment
+            # from pydub.effects import normalize
+            # import copy
+
+            # audio = AudioSegment.from_wav(audio_path)
+            # normalized_audio = normalize(audio, headroom=.1)
+            # raw_data = normalized_audio.raw_data
+            # num_channels = normalized_audio.channels
+            # sample_width = normalized_audio.sample_width  # in bytes
+            # frame_rate = normalized_audio.frame_rate
+            # # num_samples = len(normalized_audio.get_array_of_samples()) // num_channels
+            # audio_array = np.frombuffer(raw_data, dtype=np.int16 if sample_width == 2 else np.int8)
+            # audio_array = audio_array.reshape(num_channels, -1)
+            # audio_tensor = torch.from_numpy(copy.deepcopy(audio_array)).to(dtype=torch.float32)
+            # return audio_tensor, frame_rate
+            wavform, sample_rate = torchaudio.load(audio_path)
+            if self.mode == 'train':
+                wavform = wavform - (-8.724928e-05) + (-0.00017467)
+            return wavform, sample_rate
+        else:
+            return torchaudio.load(audio_path)
+        
 class BackgroundNoiseDataset(Dataset):
     base_path = '_background_noise_'
 

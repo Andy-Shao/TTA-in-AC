@@ -1,9 +1,9 @@
-,dataset,type,mean,standard deviaiton
-0,audio-mnist,train,[-1.079023e-05],[0.00309949]
-1,audio-mnist,test,[-1.0177833e-05],[0.00445356]
-2,speech-commands,train,[-8.8560635e-05],[0.08103871]
-3,speech-commands,test,[-0.00017467],[0.08301105]
-4,speech-commands-numbers,train,[-8.7153916e-05],[0.08087005]
-5,speech-commands-numbers,test,[-0.00016285],[0.08646617]
-6,speech-commands-random,train,[-9.607859e-05],[0.08089308]
-7,speech-commands-random,test,[-8.486959e-05],[0.08135287]
+,dataset,type,mean,standard deviaiton,dataset size
+0,audio-mnist,train,[-53.371475 -53.371475 -53.371475],[19.25299 19.25299 19.25299],20000
+1,audio-mnist,test,[-53.633068 -53.633068 -53.633068],[19.71607 19.71607 19.71607],10000
+2,speech-commands,train,[-24.65672 -24.65672 -24.65672],[19.083237 19.083237 19.083237],51088
+3,speech-commands,test,[-25.947584 -25.947584 -25.947584],[18.988497 18.988497 18.988497],6835
+4,speech-commands,validation,[-27.331282 -27.331282 -27.331282],[18.743814 18.743814 18.743814],6798
+5,speech-commands-random,train,[-24.644356 -24.644356 -24.644356],[19.172575 19.172575 19.172575],32185
+6,speech-commands-random,test,[-26.143267 -26.143267 -26.143267],[19.172894 19.172894 19.172894],15326
+7,speech-commands-random,validation,[-25.796955 -25.796955 -25.796955],[19.15897 19.15897 19.15897],3577

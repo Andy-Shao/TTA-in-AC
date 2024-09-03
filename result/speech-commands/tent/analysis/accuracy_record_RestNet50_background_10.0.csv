@@ -1,11 +1,11 @@
 ,dataset,algorithm,tta-operation,corruption,accuracy,error,severity level,number of weight
-0,speech-commands,restnet50,N/A,N/A,86.55449890270665,13.445501097293345,0.0,25587062
-1,speech-commands,restnet50,N/A,doing_the_dishes,64.1111923920995,35.8888076079005,10.0,25587062
-2,speech-commands,restnet50,Tent Adaptation + normalized,doing_the_dishes,34.65983906364302,65.34016093635698,10.0,25587062
-3,speech-commands,restnet50,Norm Adaptation + normalized,doing_the_dishes,28.354059985369425,71.64594001463058,10.0,25587062
-4,speech-commands,restnet50,N/A,exercise_bike,56.927578639356256,43.072421360643744,10.0,25587062
-5,speech-commands,restnet50,Tent Adaptation + normalized,exercise_bike,35.0256035113387,64.9743964886613,10.0,25587062
-6,speech-commands,restnet50,Norm Adaptation + normalized,exercise_bike,27.900512070226775,72.09948792977323,10.0,25587062
-7,speech-commands,restnet50,N/A,running_tap,61.81419166057059,38.18580833942941,10.0,25587062
-8,speech-commands,restnet50,Tent Adaptation + normalized,running_tap,35.42062911485004,64.57937088514996,10.0,25587062
-9,speech-commands,restnet50,Norm Adaptation + normalized,running_tap,28.368690563277248,71.63130943672274,10.0,25587062
+0,speech-commands,restnet50,N/A,N/A,87.66642282370154,12.333577176298462,0.0,25587062
+1,speech-commands,restnet50,N/A,doing_the_dishes,66.93489392831017,33.065106071689826,10.0,25587062
+2,speech-commands,restnet50,Tent Adaptation + normalized,doing_the_dishes,22.677395757132405,77.3226042428676,10.0,25587062
+3,speech-commands,restnet50,Norm Adaptation + normalized,doing_the_dishes,17.264081931236284,82.73591806876371,10.0,25587062
+4,speech-commands,restnet50,N/A,exercise_bike,62.472567666422826,37.527432333577174,10.0,25587062
+5,speech-commands,restnet50,Tent Adaptation + normalized,exercise_bike,20.804681784930505,79.19531821506949,10.0,25587062
+6,speech-commands,restnet50,Norm Adaptation + normalized,exercise_bike,16.12289685442575,83.87710314557425,10.0,25587062
+7,speech-commands,restnet50,N/A,running_tap,65.51572787125092,34.48427212874908,10.0,25587062
+8,speech-commands,restnet50,Tent Adaptation + normalized,running_tap,21.068032187271395,78.9319678127286,10.0,25587062
+9,speech-commands,restnet50,Norm Adaptation + normalized,running_tap,16.69348939283102,83.30651060716897,10.0,25587062
