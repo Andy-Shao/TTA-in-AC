@@ -219,6 +219,7 @@ if __name__ == "__main__":
     ap.add_argument('--plr', type=int, default=1, help='Pseudo-label refinement')
     ap.add_argument('--sdlr', type=int, default=1, help='lr_scheduler capable')
     ap.add_argument('--initc_num', type=int, default=1)
+    ap.add_argument('--early_stop', type=int, default=-1)
 
     args = ap.parse_args()
     if args.dataset == 'speech-commands' or args.dataset == 'speech-commands-random':
@@ -267,6 +268,8 @@ if __name__ == "__main__":
     modelC.train()
     max_accu = 0.
     for epoch in range(args.max_epoch):
+        if args.early_stop > 0 and epoch-1 == args.early_stop:
+            break
         print(f'Epoch {epoch+1}/{args.max_epoch}')
         ttl_loss = 0.
         ttl_cls_loss = 0.

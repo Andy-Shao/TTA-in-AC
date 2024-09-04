@@ -11,14 +11,13 @@ from torch.utils.data import DataLoader
 
 from lib.toolkit import print_argparse, cal_norm, count_ttl_params
 from lib.wavUtils import Components, pad_trunc, DoNothing
-from CoNMix.lib.prepare_dataset import ExpandChannel
-from lib.scDataset import SpeechCommandsDataset
+from CoNMix.lib.prepare_dataset import ExpandChannel, build_dataset
 from lib.datasets import load_from
 from CoNMix.analysis import load_model, load_origin_stat, inference, load_adapted_stat
 
 if __name__ == '__main__':
     ap = argparse.ArgumentParser()
-    ap.add_argument('--dataset', type=str, default='speech-commands', choices=['speech-commands', 'speech-commands-purity'])
+    ap.add_argument('--dataset', type=str, default='speech-commands', choices=['speech-commands', 'speech-commands-purity', 'speech-commands-random'])
     ap.add_argument('--dataset_root_path', type=str)
     ap.add_argument('--num-workers', type=int, default=16)
     ap.add_argument('--temporary_path', type=str)
@@ -64,7 +63,7 @@ if __name__ == '__main__':
     # np.random.seed(args.seed)
     # random.seed(args.seed)
 
-    if args.dataset == 'speech-commands':
+    if args.dataset == 'speech-commands' or args.dataset == 'speech-commands-random':
         args.class_num = 30
         args.dataset_type = 'all'
     elif args.dataset == 'speech-commands-purity':
@@ -91,10 +90,12 @@ if __name__ == '__main__':
     ]
     if args.normalized:
         print('calculate the test dataset mean and standard deviation')
-        test_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='test', include_rate=False, data_tfs=Components(transforms=tf_array), data_type=args.dataset_type)
+        # test_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='test', include_rate=False, data_tfs=Components(transforms=tf_array), data_type=args.dataset_type)
+        test_dataset = build_dataset(args=args, mode='test', data_tfs=Components(transforms=tf_array))
         test_mean, test_std = cal_norm(loader=DataLoader(dataset=test_dataset, batch_size=256, shuffle=False, drop_last=False, num_workers=args.num_workers))
         tf_array.append(v_transforms.Normalize(mean=test_mean, std=test_std))
-    test_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='test', include_rate=False, data_tfs=Components(transforms=tf_array), data_type=args.dataset_type)
+    # test_dataset = SpeechCommandsDataset(root_path=args.dataset_root_path, mode='test', include_rate=False, data_tfs=Components(transforms=tf_array), data_type=args.dataset_type)
+    test_dataset = build_dataset(args=args, mode='test', data_tfs=Components(transforms=tf_array))
     test_loader = DataLoader(dataset=test_dataset, batch_size=args.batch_size, shuffle=False, drop_last=False, num_workers=args.num_workers)
 
     if args.data_type == 'final':

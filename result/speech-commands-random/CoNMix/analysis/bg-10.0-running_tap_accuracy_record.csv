@@ -1,0 +1,4 @@
+,dataset,algorithm,tta-operation,corruption,accuracy,error,severity level,number of weight
+0,speech-commands-random,R50+ViT-B_16,N/A,N/A,95.3021010048284,4.697898995171599,0.0,103692988
+1,speech-commands-random,R50+ViT-B_16,N/A,running_tap,88.92731306276916,11.072686937230841,10.0,103692988
+2,speech-commands-random,R50+ViT-B_16,CoNMix-STDA,running_tap,91.50463265039802,8.495367349601977,10.0,103692988
