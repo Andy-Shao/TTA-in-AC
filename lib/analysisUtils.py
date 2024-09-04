@@ -345,7 +345,7 @@ def error_rate_analysis(
     ax.set_ylabel('Error rate (%)')
     ax.set_title(title)
     ax.set_xticks(x + width, datasets)
-    ax.legend(loc='upper left', ncols=3)
+    ax.legend()
     ax.set_ylim(0, 100)
 
     plt.show()
