@@ -326,3 +326,26 @@ def analyze_background(all_records: dict[DatasetType, pd.DataFrame], noise_type:
             RecordColumn.Model: 'Transfer Learning'
         }
     })
+
+def error_rate_analysis(
+        result: dict[str, tuple], datasets:list[str], title:str, width=.2) -> None:
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    x = np.arange(len(datasets))
+    multiplier = 0
+
+    fig, ax = plt.subplots(layout='constrained')
+    for attribute, measurement in result.items():
+        offset = width * multiplier
+        rects = ax.bar(x + offset, measurement, width, label=attribute)
+        ax.bar_label(rects, padding=3)
+        multiplier += 1
+
+    ax.set_ylabel('Error rate (%)')
+    ax.set_title(title)
+    ax.set_xticks(x + width, datasets)
+    ax.legend(loc='upper left', ncols=3)
+    ax.set_ylim(0, 100)
+
+    plt.show()
