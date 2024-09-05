@@ -324,6 +324,16 @@ def analyze_background(all_records: dict[DatasetType, pd.DataFrame], noise_type:
             RecordColumn.Algorithm: None,
             RecordColumn.TTA_OP: 'TTT, ts, bn, online',
             RecordColumn.Model: 'Transfer Learning'
+        },
+        11: {
+            RecordColumn.Dataset: DatasetType.Speech_Command_Random.value,
+            RecordColumn.Records: all_records[DatasetType.Speech_Command_Random][TTA_Type.CONMIX],
+            RecordColumn.TTA_Type: TTA_Type.CONMIX.value,
+            RecordColumn.Corruption: noise_type,
+            RecordColumn.Severity_Level: [10.0, 3.0],
+            RecordColumn.Algorithm: None,
+            RecordColumn.TTA_OP: 'CoNMix-STDA',
+            RecordColumn.Model: 'R50+ViT-B_16'
         }
     })
 
