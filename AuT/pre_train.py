@@ -77,8 +77,6 @@ if __name__ == '__main__':
         sample_rate=48000
         n_mels=128
         hop_length=377
-        mean_vals = [-52.9362, -52.9362, -52.9362]
-        std_vals = [19.3889, 19.3889, 19.3889]
         train_tf = [
             pad_trunc(max_ms=max_ms, sample_rate=sample_rate),
             time_shift(shift_limit=.25, is_random=True, is_bidirection=True),
