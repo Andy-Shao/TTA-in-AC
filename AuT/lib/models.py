@@ -1,7 +1,7 @@
 import torch.nn as nn
 import torch
 
-import aut_config
+import AuT.lib.aut_config as aut_config
 from .aut_model import AudioTransformer
 
 def init_weights(m: nn.Module):
@@ -17,14 +17,14 @@ def init_weights(m: nn.Module):
         nn.init.zeros_(m.bias)
 
 class AuT(nn.Module):
-    def __init__(self) -> None:
+    def __init__(self, mel_spec_shape:list[int]=[224, 224], in_channels=3) -> None:
         super(AuT, self).__init__()
         config_aut = aut_config.get_r50_b16_config()
         config_aut.n_classes = 100
         config_aut.n_skip = 3
-        config_aut.patches.grid = (int(224 / 16), int(224 / 16))
-        self.feature_extractor = AudioTransformer(config_aut, img_size=[224, 224])
-        self.out_features = 2048
+        config_aut.patches.grid = (int(mel_spec_shape[0] / 16), int(mel_spec_shape[1] / 16))
+        self.feature_extractor = AudioTransformer(config_aut, mel_spec_shape=mel_spec_shape, in_channels=in_channels)
+        self.out_features = self.feature_extractor.output_format.fc.out_features
 
     def forward(self, x):
         _, feat = self.feature_extractor(x)

@@ -3,9 +3,11 @@ import os
 import numpy as np
 import random
 import wandb
+from tqdm import tqdm
 
 import torch
 import torch.nn as nn
+import torch.optim as optim
 import torchvision.transforms as v_transforms
 import torchaudio.transforms as a_transforms
 from torch.utils.data import DataLoader
@@ -15,9 +17,35 @@ from lib.wavUtils import Components, pad_trunc, time_shift
 from CoNMix.lib.prepare_dataset import ExpandChannel
 from lib.datasets import load_datapath, AudioMINST, ClipDataset
 from AuT.lib.models import AuT, AudioClassifier
+from CoNMix.lib.loss import CrossEntropyLabelSmooth
+
+def lr_scheduler(optimizer: torch.optim.Optimizer, epoch:int, max_epoch:int, gamma=10, power=0.75) -> optim.Optimizer:
+    decay = (1 + gamma * epoch / max_epoch) ** (-power)
+    for param_group in optimizer.param_groups:
+        param_group['lr'] = param_group['lr0'] * decay
+        param_group['weight_decay'] = 1e-3
+        param_group['momentum'] = .9
+        param_group['nestenv'] = True
+    return optimizer
+
+def op_copy(optimizer: optim.Optimizer) -> optim.Optimizer:
+    for param_group in optimizer.param_groups:
+        param_group['lr0'] = param_group['lr']
+    return optimizer
+
+def build_optimizer(args: argparse.Namespace, auT:nn.Module, auC:nn.Module) -> optim.Optimizer:
+    param_group = []
+    learning_rate = args.lr
+    for k, v in auT.named_parameters():
+        param_group += [{'params':v, 'lr':learning_rate * .1}]
+    for k, v in auC.named_parameters():
+        param_group += [{'params':v, 'lr':learning_rate}]
+    optimizer = optim.SGD(params=param_group)
+    optimizer = op_copy(optimizer)
+    return optimizer
 
 def load_models(args: argparse.Namespace) -> tuple[nn.Module, nn.Module]:
-    auT = AuT().to(device=args.device)
+    auT = AuT(in_channels=3).to(device=args.device)
     auC = AudioClassifier(
         type=args.classifier, feature_dim=auT.out_features, bottleneck_dim=args.bottleneck, cls_type=args.layer,
         class_num=args.class_num
@@ -41,7 +69,7 @@ if __name__ == '__main__':
     ap.add_argument('--test_rate', type=float, default=.3)
 
     ap.add_argument('--max_epoch', type=int, default=200, help='max epoch')
-    ap.add_argument('--interval', type=int, default=50, help='interval')
+    ap.add_argument('--interval', type=int, default=1, help='interval')
     ap.add_argument('--batch_size', type=int, default=64, help='batch size')
     ap.add_argument('--lr', type=float, default=1e-2, help='learning rate')
     ap.add_argument('--bottleneck', type=int, default=256)
@@ -73,36 +101,37 @@ if __name__ == '__main__':
         config=args, tags=['Audio Classification', args.dataset, 'AuT'])
     
     if args.dataset == 'audio-mnist':
+        args.class_num = 10
         max_ms=1000
         sample_rate=48000
-        n_mels=128
-        hop_length=377
+        n_mels=80
+        n_fft = 4096
+        hop_length= n_fft // 2
         train_tf = [
             pad_trunc(max_ms=max_ms, sample_rate=sample_rate),
             time_shift(shift_limit=.25, is_random=True, is_bidirection=True),
-            a_transforms.MelSpectrogram(sample_rate=sample_rate, n_fft=1024, n_mels=n_mels, hop_length=hop_length),
+            a_transforms.MelSpectrogram(sample_rate=sample_rate, n_fft=n_fft, n_mels=n_mels, hop_length=hop_length),
             a_transforms.AmplitudeToDB(top_db=80),
             ExpandChannel(out_channel=3),
-            v_transforms.Resize((256, 256), antialias=False),
-            v_transforms.RandomCrop(224),
-            v_transforms.RandomHorizontalFlip(),
         ]
         train_data_paths = load_datapath(root_path=args.dataset_root_path, filter_fn=lambda x: x['accent'] == 'German')
         if args.normalized:
-            print('calculate mean and standard deviation')
+            print('calculate train dataset mean and standard deviation')
             train_dataset = AudioMINST(data_paths=train_data_paths, data_trainsforms=Components(transforms=train_tf), include_rate=False)
             mean_vals, std_vals = cal_norm(loader=DataLoader(dataset=train_dataset, batch_size=256, shuffle=False, drop_last=False))
             train_tf.append(v_transforms.Normalize(mean=mean_vals, std=std_vals))
         train_dataset = AudioMINST(data_paths=train_data_paths, data_trainsforms=Components(transforms=train_tf), include_rate=False)
-        args.class_num = 10
         test_tf = [
             pad_trunc(max_ms=max_ms, sample_rate=sample_rate),
-            a_transforms.MelSpectrogram(sample_rate=sample_rate, n_fft=1024, n_mels=n_mels, hop_length=hop_length),
+            a_transforms.MelSpectrogram(sample_rate=sample_rate, n_fft=n_fft, n_mels=n_mels, hop_length=hop_length),
             a_transforms.AmplitudeToDB(top_db=80),
             ExpandChannel(out_channel=3),
-            v_transforms.Resize((224, 224), antialias=False),
-            v_transforms.Normalize(mean=mean_vals, std=std_vals)
         ]
+        if args.normalized:
+            print('calculat test dataset mean and standard deviation')
+            test_dataset = AudioMINST(data_paths=train_data_paths, data_trainsforms=Components(transforms=test_tf), include_rate=False)
+            mean_vals, std_vals = cal_norm(loader=DataLoader(dataset=test_dataset, batch_size=256, shuffle=False, drop_last=False))
+            test_tf.append(v_transforms.Normalize(mean=mean_vals, std=std_vals))
         test_dataset = AudioMINST(data_paths=train_data_paths, data_trainsforms=Components(transforms=test_tf), include_rate=False)
         test_dataset = ClipDataset(dataset=test_dataset, rate=args.test_rate)
     else:
@@ -113,3 +142,61 @@ if __name__ == '__main__':
     auT, auC = load_models(args=args)
     store_model_structure_to_txt(model=auT, output_path=os.path.join(args.full_output_path, 'AuT_structure.txt'))
     store_model_structure_to_txt(model=auC, output_path=os.path.join(args.full_output_path, 'AuC_structure.txt'))
+    optimizer = build_optimizer(args, auT=auT, auC=auC)
+    classifier_loss = CrossEntropyLabelSmooth(num_classes=args.class_num, epsilon=args.smooth, use_gpu=torch.cuda.is_available())
+
+    best_accuracy = 0.
+    ttl_train_loss = 0.
+    ttl_train_num = 0
+    ttl_train_corr = 0
+    for epoch in range(args.max_epoch):
+        print(f'Epoch {epoch+1}/{args.max_epoch}')
+        print('Training...')
+        auT.train()
+        auC.train()
+        for features, labels in tqdm(train_loader):
+            features, labels = features.to(args.device), labels.to(args.device)
+            outputs = auC(auT(features))
+            loss = classifier_loss(outputs, labels)
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+            _, preds = torch.max(outputs.detach(), dim=1)   
+            ttl_train_corr += (preds == labels).sum().cpu().item()
+            ttl_train_loss += loss.cpu().item()
+            ttl_train_num += labels.shape[0]
+            features = None
+            labels = None
+            loss = None
+            outputs = None
+
+        if epoch % args.interval == 0 or epoch == args.max_epoch-1:
+            lr_scheduler(optimizer=optimizer, epoch=epoch, max_epoch=args.max_epoch)
+
+        auT.eval()
+        auC.eval()
+        ttl_corr = 0
+        ttl_size = 0
+        print('Validating...')
+        for features, labels in tqdm(test_loader):
+            features, labels = features.to(args.device), labels.to(args.device)
+            with torch.no_grad():
+                outputs = auC(auT(features))
+                _, preds = torch.max(outputs.detach(), dim=1)
+            ttl_corr += (preds == labels).sum().cpu().item()
+            ttl_size += labels.shape[0]
+        curr_accu = ttl_corr / ttl_size * 100.
+        wandb_run.log({'Train/Accuracy': ttl_train_corr/ttl_train_num*100.}, step=epoch)
+        wandb_run.log({'Val/Accuracy': curr_accu}, step=epoch)
+        wandb_run.log({'Train/classifier_loss': ttl_train_loss/ttl_train_num}, step=epoch)
+        wandb_run.log({'Train/learning_rate': optimizer.param_groups[0]['lr']}, step=epoch, commit=True)
+        print(f'train accu: {ttl_train_corr/ttl_train_num*100.:.2f}%, val accu: {curr_accu:.2f}%')
+        if curr_accu > best_accuracy:
+            best_accuracy = curr_accu
+            best_auT = auT.state_dict()
+            best_auC = auC.state_dict()
+            torch.save(best_auT, os.path.join(args.full_output_path, f'{args.output_weight_prefix}_best_auT.pt'))
+            torch.save(best_auC, os.path.join(args.full_output_path, f'{args.output_weight_prefix}_best_auC.pt'))
+        features = None
+        labels = None
+        outputs = None

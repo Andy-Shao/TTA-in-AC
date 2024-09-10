@@ -85,30 +85,28 @@ class MultilayerPerceptron(nn.Module):
 class Embeddings(nn.Module):
     """Construct the embeddings from patch, position embeddings.
     """
-    def __init__(self, config: ConfigDict, img_size, in_channels=3):
+    def __init__(self, config: ConfigDict, mel_spec_shape, in_channels=3):
         from torch.nn.modules.utils import _pair
 
         super(Embeddings, self).__init__()
         self.hybrid = None
         self.config = config
-        # img_size = _pair(img_size)
 
         if config.patches.get("grid") is not None:   # ResNet
             grid_size = config.patches["grid"]
-            patch_size = (img_size[0] // 16 // grid_size[0], img_size[1] // 16 // grid_size[1])
+            patch_size = (mel_spec_shape[0] // 16 // grid_size[0], mel_spec_shape[1] // 16 // grid_size[1])
             patch_size_real = (patch_size[0] * 16, patch_size[1] * 16)
-            n_patches = (img_size[0] // patch_size_real[0]) * (img_size[1] // patch_size_real[1])  
+            n_patches = (mel_spec_shape[0] // patch_size_real[0]) * (mel_spec_shape[1] // patch_size_real[1])  
             self.hybrid = True
         else:
             patch_size = _pair(config.patches["size"])
-            n_patches = (img_size[0] // patch_size[0]) * (img_size[1] // patch_size[1])
+            n_patches = (mel_spec_shape[0] // patch_size[0]) * (mel_spec_shape[1] // patch_size[1])
             self.hybrid = False
 
         if self.hybrid:
-            self.hybrid_model = ResNetV2(block_units=config.resnet.num_layers, width_factor=config.resnet.width_factor)
-            in_channels = self.hybrid_model.width * 16
+            self.hybrid_model = ResNetV2(in_channels=in_channels, block_units=config.resnet.num_layers, width_factor=config.resnet.width_factor)
         self.patch_embeddings = nn.Conv2d(
-            in_channels=in_channels, out_channels=config.hidden_size, kernel_size=patch_size, stride=patch_size
+            in_channels=self.hybrid_model.width * 16, out_channels=config.hidden_size, kernel_size=patch_size, stride=patch_size
         )
         # self.position_embeddings = nn.Parameter(torch.zeros(1, n_patches, config.hidden_size))
         self.dropout = nn.Dropout(config.transformer["dropout_rate"])
@@ -166,9 +164,9 @@ class Encoder(nn.Module):
         return encoded, attn_weights
     
 class Transformer(nn.Module):
-    def __init__(self, config, img_size, vis):
+    def __init__(self, config, mel_spec_shape, vis, in_channels=3):
         super(Transformer, self).__init__()
-        self.embeddings = Embeddings(config, img_size=img_size)
+        self.embeddings = Embeddings(config, mel_spec_shape=mel_spec_shape, in_channels=in_channels)
         self.encoder = Encoder(config, vis)
 
     def forward(self, input_ids):
@@ -219,8 +217,8 @@ class OutputFormat(nn.Module):
     def __init__(self, config):
         super().__init__()
         self.config = config
-        self.fc= nn.Linear(config.hidden_size,2048)
-        self.avgpool= nn.AdaptiveAvgPool1d(1)
+        self.fc= nn.Linear(in_features=config.hidden_size, out_features=2048)
+        self.avgpool= nn.AdaptiveAvgPool1d(output_size=1)
     def forward(self, hidden_states, features=None):
         B, n_patch, hidden = hidden_states.size()  # reshape from (B, n_patch, hidden) to (B, h, w, hidden)
         ### unified multi-scale transformer
@@ -232,9 +230,9 @@ class OutputFormat(nn.Module):
         return x
     
 class AudioTransformer(nn.Module):
-    def __init__(self, config, img_size=224, vis=False):
+    def __init__(self, config, mel_spec_shape=224, vis=False, in_channels=3):
         super(AudioTransformer, self).__init__()
-        self.transformer = Transformer(config, img_size, vis)
+        self.transformer = Transformer(config, mel_spec_shape, vis, in_channels=in_channels)
         self.output_format = OutputFormat(config)
         self.config = config
 
