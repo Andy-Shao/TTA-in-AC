@@ -14,7 +14,6 @@ from torch.utils.data import DataLoader
 
 from lib.toolkit import print_argparse, cal_norm, store_model_structure_to_txt
 from lib.wavUtils import Components, pad_trunc, time_shift
-from CoNMix.lib.prepare_dataset import ExpandChannel
 from lib.datasets import load_datapath, AudioMINST, ClipDataset
 from AuT.lib.models import AuT, AudioClassifier
 from CoNMix.lib.loss import CrossEntropyLabelSmooth
@@ -45,7 +44,7 @@ def build_optimizer(args: argparse.Namespace, auT:nn.Module, auC:nn.Module) -> o
     return optimizer
 
 def load_models(args: argparse.Namespace) -> tuple[nn.Module, nn.Module]:
-    auT = AuT(in_channels=3).to(device=args.device)
+    auT = AuT(in_channels=1).to(device=args.device)
     auC = AudioClassifier(
         type=args.classifier, feature_dim=auT.out_features, bottleneck_dim=args.bottleneck, cls_type=args.layer,
         class_num=args.class_num
@@ -60,7 +59,7 @@ if __name__ == '__main__':
     ap.add_argument('--num_workers', type=int, default=16)
     ap.add_argument('--output_path', type=str, default='./result')
     ap.add_argument('--output_csv_name', type=str, default='training_records.csv')
-    ap.add_argument('--output_weight_prefix', type=str, default='speech-commands')
+    ap.add_argument('--output_weight_prefix', type=str, default='audio-mnist')
     ap.add_argument('--temporary_path', type=str)
     ap.add_argument('--wandb', action='store_true')
 
@@ -112,7 +111,6 @@ if __name__ == '__main__':
             time_shift(shift_limit=.25, is_random=True, is_bidirection=True),
             a_transforms.MelSpectrogram(sample_rate=sample_rate, n_fft=n_fft, n_mels=n_mels, hop_length=hop_length),
             a_transforms.AmplitudeToDB(top_db=80),
-            ExpandChannel(out_channel=3),
         ]
         train_data_paths = load_datapath(root_path=args.dataset_root_path, filter_fn=lambda x: x['accent'] == 'German')
         if args.normalized:
@@ -125,7 +123,6 @@ if __name__ == '__main__':
             pad_trunc(max_ms=max_ms, sample_rate=sample_rate),
             a_transforms.MelSpectrogram(sample_rate=sample_rate, n_fft=n_fft, n_mels=n_mels, hop_length=hop_length),
             a_transforms.AmplitudeToDB(top_db=80),
-            ExpandChannel(out_channel=3),
         ]
         if args.normalized:
             print('calculat test dataset mean and standard deviation')

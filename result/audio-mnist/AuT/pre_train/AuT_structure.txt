@@ -4,7 +4,7 @@ AuT(
       (embeddings): Embeddings(
         (hybrid_model): ResNetV2(
           (root): Sequential(
-            (conv): StandardConv2d(3, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
+            (conv): StandardConv2d(1, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
             (gn): GroupNorm(32, 64, eps=1e-06, affine=True)
             (relu): ReLU(inplace=True)
           )

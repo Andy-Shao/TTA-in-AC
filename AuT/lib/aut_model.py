@@ -235,10 +235,9 @@ class AudioTransformer(nn.Module):
         self.transformer = Transformer(config, mel_spec_shape, vis, in_channels=in_channels)
         self.output_format = OutputFormat(config)
         self.config = config
+        self.in_channels=in_channels
 
     def forward(self, x):
-        if x.size()[1] == 1:
-            x = x.repeat(1,3,1,1)
         x0, attn_weights, features = self.transformer(x)  # (B, n_patch, hidden)
         x1 = self.output_format(x0, features)
         f=list(reversed(features))
