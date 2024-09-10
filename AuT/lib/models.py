@@ -19,7 +19,7 @@ def init_weights(m: nn.Module):
 class AuT(nn.Module):
     def __init__(self, mel_spec_shape:list[int]=[224, 224], in_channels=3) -> None:
         super(AuT, self).__init__()
-        config_aut = aut_config.get_r50_b16_config()
+        config_aut = aut_config.get_r50_l16_config()
         config_aut.n_classes = 100
         config_aut.n_skip = 3
         config_aut.patches.grid = (int(mel_spec_shape[0] / 16), int(mel_spec_shape[1] / 16))
