@@ -71,6 +71,7 @@ if __name__ == '__main__':
     ap.add_argument('--interval', type=int, default=1, help='interval')
     ap.add_argument('--batch_size', type=int, default=64, help='batch size')
     ap.add_argument('--lr', type=float, default=1e-2, help='learning rate')
+    ap.add_argument('--lr_gamma', type=float, default=10)
     ap.add_argument('--bottleneck', type=int, default=256)
     ap.add_argument('--epsilon', type=float, default=1e-5)
     ap.add_argument('--layer', type=str, default='wn', choices=['linear', 'wn'])
@@ -168,7 +169,7 @@ if __name__ == '__main__':
             outputs = None
 
         if epoch % args.interval == 0 or epoch == args.max_epoch-1:
-            lr_scheduler(optimizer=optimizer, epoch=epoch, max_epoch=args.max_epoch)
+            lr_scheduler(optimizer=optimizer, epoch=epoch, max_epoch=args.max_epoch, gamma=args.lr_gamma)
 
         auT.eval()
         auC.eval()
