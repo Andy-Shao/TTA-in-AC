@@ -1,14 +1,10 @@
 # Test-time Adaptation in Audio Classification
 
 ## Project Structure
-+ **legacy**: it includes all previous research algorithm implements
 + **lib**: the library code for this project.
 + **TTT**: the TTBA test-time training algorithm implemented.
 + **CoNMix**: the CoNMix test-time training algorithm implement
 + **tent**: the OTTA test time training (tent adaptation, norm adaptation)
-
-`Note`: the **legacy** is `excluded from this project's implementation`. 
-You can ignore them since they are abandoned implements.
 
 ## Software Environment
 ```shell
