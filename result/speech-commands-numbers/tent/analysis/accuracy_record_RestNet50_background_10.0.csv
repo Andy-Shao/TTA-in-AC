@@ -1,0 +1,11 @@
+,dataset,algorithm,tta-operation,corruption,accuracy,error,severity level,number of weight
+0,speech-commands-numbers,restnet50,N/A,N/A,90.67398119122258,9.32601880877742,0.0,25567042
+1,speech-commands-numbers,restnet50,N/A,doing_the_dishes,74.7257053291536,25.274294670846402,10.0,25567042
+2,speech-commands-numbers,restnet50,Tent Adaptation + normalized,doing_the_dishes,37.57836990595611,62.42163009404389,10.0,25567042
+3,speech-commands-numbers,restnet50,Norm Adaptation + normalized,doing_the_dishes,33.26802507836991,66.7319749216301,10.0,25567042
+4,speech-commands-numbers,restnet50,N/A,exercise_bike,69.31818181818183,30.681818181818173,10.0,25567042
+5,speech-commands-numbers,restnet50,Tent Adaptation + normalized,exercise_bike,36.83385579937304,63.16614420062696,10.0,25567042
+6,speech-commands-numbers,restnet50,Norm Adaptation + normalized,exercise_bike,31.387147335423197,68.6128526645768,10.0,25567042
+7,speech-commands-numbers,restnet50,N/A,running_tap,72.53134796238244,27.46865203761756,10.0,25567042
+8,speech-commands-numbers,restnet50,Tent Adaptation + normalized,running_tap,36.637931034482754,63.362068965517246,10.0,25567042
+9,speech-commands-numbers,restnet50,Norm Adaptation + normalized,running_tap,32.327586206896555,67.67241379310344,10.0,25567042

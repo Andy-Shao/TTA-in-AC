@@ -56,7 +56,7 @@ if __name__ == '__main__':
                 v_transforms.RandomHorizontalFlip(),
             ]
             train_dataset = FilterAudioMNIST(
-                root_path=dataset_root_path, include_rate=False, data_tsf=Components(transforms=tsf), 
+                root_path=dataset_root_path, include_rate=False, data_tsf=Components(transforms=[pad_trunc(max_ms=1000, sample_rate=sample_rate)]), 
                 filter_fn=lambda x: x['accent'] == 'German'
             )
             tsf = [
@@ -67,7 +67,7 @@ if __name__ == '__main__':
                 v_transforms.Resize((224, 224), antialias=False),
             ]
             test_dataset = FilterAudioMNIST(
-                root_path=dataset_root_path, include_rate=False, data_tsf=Components(transforms=tsf),
+                root_path=dataset_root_path, include_rate=False, data_tsf=Components(transforms=[pad_trunc(max_ms=1000, sample_rate=sample_rate)]),
                 filter_fn=lambda x: x['accent'] != 'German'
             )
             val_dateset = None
@@ -89,7 +89,7 @@ if __name__ == '__main__':
                 v_transforms.RandomHorizontalFlip(),
             ]
             train_dataset = SpeechCommandsDataset(
-                root_path=dataset_root_path, include_rate=False, data_tfs=Components(transforms=tsf), mode='train'
+                root_path=dataset_root_path, include_rate=False, mode='train', data_tfs=pad_trunc(max_ms=1000, sample_rate=sample_rate)
             )
             tsf = [
                 pad_trunc(max_ms=1000, sample_rate=sample_rate),
@@ -99,10 +99,10 @@ if __name__ == '__main__':
                 v_transforms.Resize((224, 224), antialias=False),
             ]
             test_dataset = SpeechCommandsDataset(
-                root_path=dataset_root_path, include_rate=False, data_tfs=Components(transforms=tsf), mode='test'
+                root_path=dataset_root_path, include_rate=False, mode='test', data_tfs=pad_trunc(max_ms=1000, sample_rate=sample_rate)
             )
             val_dateset = SpeechCommandsDataset(
-                root_path=dataset_root_path, include_rate=False, data_tfs=Components(transforms=tsf), mode='validation'
+                root_path=dataset_root_path, include_rate=False, mode='validation', data_tfs=pad_trunc(max_ms=1000, sample_rate=sample_rate)
             )
         elif dataset == 'speech-commands-norm':
             class_num = 30
@@ -129,8 +129,8 @@ if __name__ == '__main__':
                 pad_trunc(max_ms=1000, sample_rate=sample_rate)
             ]
             train_dataset = SpeechCommandsDataset(
-                root_path=dataset_root_path, include_rate=False, data_tfs=Components(transforms=tsf), mode='train',
-                data_type='numbers'
+                root_path=dataset_root_path, include_rate=False, mode='train',
+                data_type='numbers', data_tfs=pad_trunc(max_ms=1000, sample_rate=sample_rate)
             )
             tsf = [
                 pad_trunc(max_ms=1000, sample_rate=sample_rate),
@@ -140,12 +140,12 @@ if __name__ == '__main__':
                 v_transforms.Resize((224, 224), antialias=False),
             ]
             test_dataset = SpeechCommandsDataset(
-                root_path=dataset_root_path, include_rate=False, data_tfs=Components(transforms=tsf), mode='test',
-                data_type='numbers'
+                root_path=dataset_root_path, include_rate=False, mode='test',
+                data_type='numbers', data_tfs=pad_trunc(max_ms=1000, sample_rate=sample_rate)
             )
             val_dateset = SpeechCommandsDataset(
-                root_path=dataset_root_path, include_rate=False, data_tfs=Components(transforms=tsf), mode='validation',
-                data_type='numbers'
+                root_path=dataset_root_path, include_rate=False, mode='validation',
+                data_type='numbers', data_tfs=pad_trunc(max_ms=1000, sample_rate=sample_rate)
             )
         elif dataset == 'speech-commands-random':
             class_num = 30
@@ -165,8 +165,8 @@ if __name__ == '__main__':
                 v_transforms.RandomHorizontalFlip(),
             ]
             train_dataset = RandomSpeechCommandsDataset(
-                root_path=dataset_root_path, include_rate=False, data_tfs=Components(transforms=tsf), mode='train', 
-                data_type='all', seed=2024
+                root_path=dataset_root_path, include_rate=False, mode='train', 
+                data_type='all', seed=2024, data_tfs=pad_trunc(max_ms=1000, sample_rate=sample_rate)
             )
             tsf = [
                 pad_trunc(max_ms=1000, sample_rate=sample_rate),
@@ -176,12 +176,12 @@ if __name__ == '__main__':
                 v_transforms.Resize((224, 224), antialias=False),
             ]
             test_dataset = RandomSpeechCommandsDataset(
-                root_path=dataset_root_path, include_rate=False, data_tfs=Components(transforms=tsf), mode='test',
-                data_type='all', seed=2024
+                root_path=dataset_root_path, include_rate=False, mode='test',
+                data_type='all', seed=2024, data_tfs=pad_trunc(max_ms=1000, sample_rate=sample_rate)
             )
             val_dateset = RandomSpeechCommandsDataset(
-                root_path=dataset_root_path, include_rate=False, data_tfs=Components(transforms=tsf), mode='validation',
-                data_type='all', seed=2024
+                root_path=dataset_root_path, include_rate=False, mode='validation',
+                data_type='all', seed=2024, data_tfs=pad_trunc(max_ms=1000, sample_rate=sample_rate)
             )
         else:
             raise Exception('No support')
