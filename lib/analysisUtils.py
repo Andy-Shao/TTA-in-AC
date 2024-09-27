@@ -338,7 +338,7 @@ def analyze_background(all_records: dict[DatasetType, pd.DataFrame], noise_type:
     })
 
 def error_rate_analysis(
-        result: dict[str, tuple], datasets:list[str], title:str, width=.2, legend_loc=None) -> None:
+        result: dict[str, tuple], datasets:list[str], title:str, width=.2, legend_loc=None, ylim=True) -> None:
     import matplotlib.pyplot as plt
     import numpy as np
 
@@ -356,6 +356,6 @@ def error_rate_analysis(
     ax.set_title(title)
     ax.set_xticks(x + width, datasets)
     ax.legend() if legend_loc is None else ax.legend(loc=legend_loc)
-    ax.set_ylim(0, 100)
+    ax.set_ylim(0, 100) if ylim else 1+1
 
     plt.show()
