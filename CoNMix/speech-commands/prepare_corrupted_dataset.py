@@ -30,7 +30,7 @@ def find_background_noise(args: argparse.Namespace) -> tuple[str, torch.Tensor]:
 
 if __name__ == '__main__':
     ap = argparse.ArgumentParser()
-    ap.add_argument('--dataset', type=str, default='speech-commands', choices=['speech-commands', 'speech-commands-purity', 'speech-commands-random'])
+    ap.add_argument('--dataset', type=str, default='speech-commands', choices=['speech-commands', 'speech-commands-purity', 'speech-commands-random', 'speech-commands-numbers'])
     ap.add_argument('--dataset_root_path', type=str)
     ap.add_argument('--output_path', type=str, default='./result')
     ap.add_argument('--data_type', type=str, choices=['raw', 'final'], default='final')
@@ -63,6 +63,8 @@ if __name__ == '__main__':
         args.dataset_type = 'all'
     elif args.dataset == 'speech-commands-purity':
         args.dataset_type = 'commands'
+    elif args.dataset == 'speech-commands-numbers':
+        args.dataset_type = 'numbers'
     else:
         raise Exception('No support')
 
