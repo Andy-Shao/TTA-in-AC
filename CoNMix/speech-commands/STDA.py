@@ -168,7 +168,7 @@ def build_dataset(args: argparse.Namespace) -> tuple[Dataset, Dataset, Dataset]:
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser(description='Rand-Augment')
-    ap.add_argument('--dataset', type=str, default='speech-commands', choices=['speech-commands', 'speech-commands-purity', 'speech-commands-random'])
+    ap.add_argument('--dataset', type=str, default='speech-commands', choices=['speech-commands', 'speech-commands-purity', 'speech-commands-random', 'speech-commands-numbers'])
     ap.add_argument('--weak_aug_dataset_root_path', type=str)
     ap.add_argument('--strong_aug_dataset_root_path', type=str)
     ap.add_argument('--num_workers', type=int, default=16)
@@ -228,6 +228,9 @@ if __name__ == "__main__":
     elif args.dataset == 'speech-commands-purity':
         args.class_num = 10
         args.dataset_type = 'commands'
+    elif args.dataset == 'speech-commands-numbers':
+        args.class_num = 10
+        args.dataset_type = 'numbers'
     args.device = 'cuda' if torch.cuda.is_available() else 'cpu'
     args.full_output_path = os.path.join(args.output_path, args.dataset, 'CoNMix', 'STDA')
     try:
