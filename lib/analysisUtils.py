@@ -338,13 +338,14 @@ def analyze_background(all_records: dict[DatasetType, pd.DataFrame], noise_type:
     })
 
 def error_rate_analysis(
-        result: dict[str, tuple], datasets:list[str], title:str, width=.2, legend_loc=None, ylim=True) -> None:
+        result: dict[str, tuple], datasets:list[str], title:str, width=.2, legend_loc=None, ylim=True, figsize=None) -> None:
     import matplotlib.pyplot as plt
     import numpy as np
 
     x = np.arange(len(datasets))
     multiplier = 0
 
+    plt.figure(figsize=figsize) if figsize is not None else 1+1
     fig, ax = plt.subplots(layout='constrained')
     for attribute, measurement in result.items():
         offset = width * multiplier
