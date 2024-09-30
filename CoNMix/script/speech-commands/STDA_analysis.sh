@@ -140,13 +140,24 @@ export BASE_PATH=${BASE_PATH:-'/root'}
 #     --normalized --severity_level 3.0 --data_type 'final' --corruption 'exercise_bike' \
 #     --dataset 'speech-commands-random' --output_csv_name 'bg-3.0-exercise_bike_accuracy_record.csv' --analyze_STDA
 
+# python -m CoNMix.speech-commands.STDA_analysis --dataset_root_path $BASE_PATH'/data/speech_commands' \
+#     --temporary_path $BASE_PATH'/tmp/speech-commands-random/running_tap-bg/3.0-running_tap-weak' \
+#     --modelF_weight_path './result/speech-commands-random/CoNMix/pre_train/speech-commands_best_modelF.pt' \
+#     --modelB_weight_path './result/speech-commands-random/CoNMix/pre_train/speech-commands_best_modelB.pt' \
+#     --modelC_weight_path './result/speech-commands-random/CoNMix/pre_train/speech-commands_best_modelC.pt' \
+#     --adapted_modelF_weight_path './result/speech-commands-random/CoNMix/STDA/speech-commands-random_modelF-bg-3.0-running_tap.pt' \
+#     --adapted_modelB_weight_path './result/speech-commands-random/CoNMix/STDA/speech-commands-random_modelB-bg-3.0-running_tap.pt' \
+#     --adapted_modelC_weight_path './result/speech-commands-random/CoNMix/STDA/speech-commands-random_modelC-bg-3.0-running_tap.pt' \
+#     --normalized --severity_level 3.0 --data_type 'final' --corruption 'running_tap' \
+#     --dataset 'speech-commands-random' --analyze_STDA --output_csv_name 'bg-3.0-running_tap_accuracy_record.csv'
+
 python -m CoNMix.speech-commands.STDA_analysis --dataset_root_path $BASE_PATH'/data/speech_commands' \
-    --temporary_path $BASE_PATH'/tmp/speech-commands-random/running_tap-bg/3.0-running_tap-weak' \
-    --modelF_weight_path './result/speech-commands-random/CoNMix/pre_train/speech-commands_best_modelF.pt' \
-    --modelB_weight_path './result/speech-commands-random/CoNMix/pre_train/speech-commands_best_modelB.pt' \
-    --modelC_weight_path './result/speech-commands-random/CoNMix/pre_train/speech-commands_best_modelC.pt' \
-    --adapted_modelF_weight_path './result/speech-commands-random/CoNMix/STDA/speech-commands-random_modelF-bg-3.0-running_tap.pt' \
-    --adapted_modelB_weight_path './result/speech-commands-random/CoNMix/STDA/speech-commands-random_modelB-bg-3.0-running_tap.pt' \
-    --adapted_modelC_weight_path './result/speech-commands-random/CoNMix/STDA/speech-commands-random_modelC-bg-3.0-running_tap.pt' \
-    --normalized --severity_level 3.0 --data_type 'final' --corruption 'running_tap' \
-    --dataset 'speech-commands-random' --analyze_STDA --output_csv_name 'bg-3.0-running_tap_accuracy_record.csv'
+    --temporary_path $BASE_PATH'/tmp/speech-commands-numbers/exercise_bike-bg/10.0-exercise_bike-weak' \
+    --modelF_weight_path './result/speech-commands-numbers/CoNMix/pre_train/speech-commands-numbers_best_modelF.pt' \
+    --modelB_weight_path './result/speech-commands-numbers/CoNMix/pre_train/speech-commands-numbers_best_modelB.pt' \
+    --modelC_weight_path './result/speech-commands-numbers/CoNMix/pre_train/speech-commands-numbers_best_modelC.pt' \
+    --adapted_modelF_weight_path './result/speech-commands-numbers/CoNMix/STDA/speech-commands-numbers_modelF-bg-10.0-exercise_bike.pt' \
+    --adapted_modelB_weight_path './result/speech-commands-numbers/CoNMix/STDA/speech-commands-numbers_modelB-bg-10.0-exercise_bike.pt' \
+    --adapted_modelC_weight_path './result/speech-commands-numbers/CoNMix/STDA/speech-commands-numbers_modelC-bg-10.0-exercise_bike.pt' \
+    --normalized --severity_level 10.0 --data_type 'final' --corruption 'exercise_bike' \
+    --dataset 'speech-commands-numbers' --output_csv_name 'bg-10.0-exercise_bike_accuracy_record.csv' --analyze_STDA
