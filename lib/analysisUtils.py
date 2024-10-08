@@ -214,7 +214,7 @@ def analyze_guassian_noise(all_records: dict[DatasetType, pd.DataFrame]) -> pd.D
     })
 
 def analyze_background(all_records: dict[DatasetType, pd.DataFrame], noise_type:str) -> pd.DataFrame:
-    return analyze_multi_model_accu(configs={
+    configs={
         0: {
             RecordColumn.Dataset: DatasetType.Audio_MINIST.value,
             RecordColumn.Records: all_records[DatasetType.Audio_MINIST][TTA_Type.TENT],
@@ -335,7 +335,39 @@ def analyze_background(all_records: dict[DatasetType, pd.DataFrame], noise_type:
             RecordColumn.TTA_OP: 'CoNMix-STDA',
             RecordColumn.Model: 'R50+ViT-B_16'
         }
-    })
+    }
+    if noise_type == 'exercise_bike':
+        configs[12] = {
+            RecordColumn.Dataset: DatasetType.Speech_Command_Numbers.value,
+            RecordColumn.Records: all_records[DatasetType.Speech_Command_Numbers][TTA_Type.TENT],
+            RecordColumn.TTA_Type: TTA_Type.NORM.value,
+            RecordColumn.Corruption: noise_type,
+            RecordColumn.Severity_Level: [10.0, 3.0],
+            RecordColumn.Algorithm: 'restnet50',
+            RecordColumn.TTA_OP: 'Norm Adaptation + normalized',
+            RecordColumn.Model: 'RestNet50'
+        }
+        configs[13] = {
+            RecordColumn.Dataset: DatasetType.Speech_Command_Numbers.value,
+            RecordColumn.Records: all_records[DatasetType.Speech_Command_Numbers][TTA_Type.TTT],
+            RecordColumn.TTA_Type: TTA_Type.TTT.value,
+            RecordColumn.Corruption: noise_type,
+            RecordColumn.Severity_Level: [10.0, 3.0],
+            RecordColumn.Algorithm: None,
+            RecordColumn.TTA_OP: 'TTT, ts, bn, online',
+            RecordColumn.Model: 'Transfer Learning'
+        }
+        configs[14] = {
+            RecordColumn.Dataset: DatasetType.Speech_Command_Numbers.value,
+            RecordColumn.Records: all_records[DatasetType.Speech_Command_Numbers][TTA_Type.CONMIX],
+            RecordColumn.TTA_Type: TTA_Type.CONMIX.value,
+            RecordColumn.Corruption: noise_type,
+            RecordColumn.Severity_Level: [10.0, 3.0],
+            RecordColumn.Algorithm: None,
+            RecordColumn.TTA_OP: 'CoNMix-STDA',
+            RecordColumn.Model: 'R50+ViT-B_16'
+        }
+    return analyze_multi_model_accu(configs)
 
 def error_rate_analysis(
         result: dict[str, tuple], datasets:list[str], title:str, width=.2, legend_loc=None, ylim=True, figsize=None) -> None:
