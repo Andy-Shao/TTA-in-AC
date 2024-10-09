@@ -4,8 +4,9 @@ import os
 from torch.utils.data import DataLoader
 
 from lib.datasets import FilterAudioMNIST
+from lib.scDataset import SpeechCommandsDataset
 from lib.wavUtils import pad_trunc
-from dataset_analysis.lib.tSEN_utils import cal_tSNE
+from dataset_analysis.lib.tSEN_utils import cal_tSNE, inverse_dict
 
 if __name__ == '__main__':
     arg_parse = argparse.ArgumentParser()
@@ -36,6 +37,13 @@ if __name__ == '__main__':
             filter_fn=lambda x: True,
             data_tsf=pad_trunc(max_ms=1000, sample_rate=48000),
             include_rate=False
+        )
+    elif args.dataset == 'speech-commands':
+        label_dict = inverse_dict(SpeechCommandsDataset.label_dic)
+        dataset = SpeechCommandsDataset(
+            root_path=args.dataset_root_path, mode='full', 
+            include_rate=False, data_type='all',
+            data_tfs=pad_trunc(max_ms=1000, sample_rate=16000)
         )
     else:
         raise Exception('No support')

@@ -17,12 +17,13 @@ def cal_tSNE(data_loader: DataLoader, label_dict:dict) -> pd.DataFrame:
     full_features = None
     full_labels = None
     for index, (features, labels) in enumerate(data_loader):
+        batch_size = features.shape[0]
         if index == 0:
-            full_features = features
-            full_labels = labels
+            full_features = features.reshape(batch_size, -1)
+            full_labels = labels.reshape(-1)
         else:
-            full_features = torch.cat([full_features, features], dim=0)
-            full_labels = torch.cat([full_labels, labels])
+            full_features = torch.cat([full_features, features.reshape(batch_size, -1)], dim=0)
+            full_labels = torch.cat([full_labels, labels.reshape(-1)])
     full_features = full_features.detach().cpu().numpy()
     full_labels = full_labels.detach().cpu().numpy()
     
