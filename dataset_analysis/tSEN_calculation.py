@@ -7,6 +7,7 @@ from lib.datasets import FilterAudioMNIST
 from lib.scDataset import SpeechCommandsDataset
 from lib.wavUtils import pad_trunc
 from dataset_analysis.lib.tSEN_utils import cal_tSNE, inverse_dict
+from lib.toolkit import print_argparse
 
 if __name__ == '__main__':
     arg_parse = argparse.ArgumentParser()
@@ -16,6 +17,7 @@ if __name__ == '__main__':
     arg_parse.add_argument('--output_root_path', type=str, default='./result')
     arg_parse.add_argument('--batch_size', type=int, default=256)
     arg_parse.add_argument('--output_file', type=str)
+    arg_parse.add_argument('--mode', type=str, default=['train', 'test'])
 
     args = arg_parse.parse_args()
     output_full_root_path = os.path.join(args.output_root_path, 'dataset_analysis', args.dataset)
@@ -25,6 +27,7 @@ if __name__ == '__main__':
     except:
         pass
 
+    print_argparse(args=args)
     #################################################
 
     if args.dataset == 'audio-mnist':
@@ -34,16 +37,16 @@ if __name__ == '__main__':
         }
         dataset = FilterAudioMNIST(
             root_path=args.dataset_root_path, 
-            filter_fn=lambda x: True,
+            filter_fn=lambda x: x['accent'] == 'German' if args.mode == 'train' else lambda x: x['accent'] != 'German',
             data_tsf=pad_trunc(max_ms=1000, sample_rate=48000),
             include_rate=False
         )
     elif args.dataset == 'speech-commands':
         label_dict = inverse_dict(SpeechCommandsDataset.label_dic)
         dataset = SpeechCommandsDataset(
-            root_path=args.dataset_root_path, mode='full', 
+            root_path=args.dataset_root_path, mode=args.mode, 
             include_rate=False, data_type='all',
-            data_tfs=pad_trunc(max_ms=1000, sample_rate=16000)
+            data_tfs=pad_trunc(max_ms=1000, sample_rate=16000),
         )
     else:
         raise Exception('No support')
