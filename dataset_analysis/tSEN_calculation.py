@@ -32,8 +32,8 @@ if __name__ == '__main__':
 
     if args.dataset == 'audio-mnist':
         label_dict = {
-            0:'0', 1:'1', 2:'2', 3:'3', 4:'4', 
-            5:'5', 6:'6', 7:'7', 8:'8', 9:'9'
+            0:'zero', 1:'one', 2:'two', 3:'three', 4:'four', 
+            5:'five', 6:'six', 7:'seven', 8:'eight', 9:'nine'
         }
         dataset = FilterAudioMNIST(
             root_path=args.dataset_root_path, 
