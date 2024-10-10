@@ -6,7 +6,7 @@ from torch.utils.data import DataLoader
 from lib.datasets import FilterAudioMNIST
 from lib.scDataset import SpeechCommandsDataset
 from lib.wavUtils import pad_trunc
-from dataset_analysis.lib.tSEN_utils import cal_tSNE, inverse_dict
+from dataset_analysis.lib.tSEN_utils import cal_tSNE, inverse_dict, cal_tSNEs
 from lib.toolkit import print_argparse
 
 if __name__ == '__main__':
@@ -17,7 +17,7 @@ if __name__ == '__main__':
     arg_parse.add_argument('--output_root_path', type=str, default='./result')
     arg_parse.add_argument('--batch_size', type=int, default=256)
     arg_parse.add_argument('--output_file', type=str)
-    arg_parse.add_argument('--mode', type=str, default=['train', 'test'])
+    arg_parse.add_argument('--mode', type=str, default=['train', 'test', 'full'])
 
     args = arg_parse.parse_args()
     output_full_root_path = os.path.join(args.output_root_path, 'dataset_analysis', args.dataset)
@@ -35,26 +35,67 @@ if __name__ == '__main__':
             0:'zero', 1:'one', 2:'two', 3:'three', 4:'four', 
             5:'five', 6:'six', 7:'seven', 8:'eight', 9:'nine'
         }
-        dataset = FilterAudioMNIST(
-            root_path=args.dataset_root_path, 
-            filter_fn=lambda x: x['accent'] == 'German' if args.mode == 'train' else lambda x: x['accent'] != 'German',
-            data_tsf=pad_trunc(max_ms=1000, sample_rate=48000),
-            include_rate=False
-        )
+        
+        if args.mode == 'full':
+            train_dataset = FilterAudioMNIST(
+                root_path=args.dataset_root_path,
+                filter_fn=lambda x: x['accent'] == 'German',
+                data_tsf=pad_trunc(max_ms=1000, sample_rate=48000),
+                include_rate=False
+            )
+            test_dataset = FilterAudioMNIST(
+                root_path=args.dataset_root_path,
+                filter_fn=lambda x: x['accent'] != 'German',
+                data_tsf=pad_trunc(max_ms=1000, sample_rate=48000),
+                include_rate=False
+            )
+        else:
+            dataset = FilterAudioMNIST(
+                root_path=args.dataset_root_path, 
+                filter_fn=lambda x: x['accent'] == 'German' if args.mode == 'train' else lambda x: x['accent'] != 'German',
+                data_tsf=pad_trunc(max_ms=1000, sample_rate=48000),
+                include_rate=False
+            )
     elif args.dataset == 'speech-commands':
         label_dict = inverse_dict(SpeechCommandsDataset.label_dic)
-        dataset = SpeechCommandsDataset(
-            root_path=args.dataset_root_path, mode=args.mode, 
-            include_rate=False, data_type='all',
-            data_tfs=pad_trunc(max_ms=1000, sample_rate=16000),
-        )
+        if args.mode == 'full':
+            train_dataset = SpeechCommandsDataset(
+                root_path=args.dataset_root_path, mode='train',
+                include_rate=False, data_type='all',
+                data_tfs=pad_trunc(max_ms=1000, sample_rate=16000)
+            )
+            test_dataset = SpeechCommandsDataset(
+                root_path=args.dataset_root_path, mode='test',
+                include_rate=False, data_type='all',
+                data_tfs=pad_trunc(max_ms=1000, sample_rate=16000)
+            )
+        else:
+            dataset = SpeechCommandsDataset(
+                root_path=args.dataset_root_path, mode=args.mode, 
+                include_rate=False, data_type='all',
+                data_tfs=pad_trunc(max_ms=1000, sample_rate=16000),
+            )
     else:
         raise Exception('No support')
     
-    data_loader = DataLoader(
-        dataset=dataset, batch_size=args.batch_size, shuffle=False, 
-        drop_last=False, num_workers=args.num_workers
-    )
+    if args.mode == 'full':
+        train_loader = DataLoader(
+            dataset=train_dataset, batch_size=args.batch_size, shuffle=False,
+            drop_last=False, num_workers=args.num_workers
+        )
+        test_loader = DataLoader(
+            dataset=test_dataset, batch_size=args.batch_size, shuffle=False,
+            drop_last=False, num_workers=args.num_workers
+        )
+        tsne_data = cal_tSNEs(
+            loaders={'train': train_loader, 'test': test_loader},
+            label_dict=label_dict
+        )
+    else:
+        data_loader = DataLoader(
+            dataset=dataset, batch_size=args.batch_size, shuffle=False, 
+            drop_last=False, num_workers=args.num_workers
+        )
 
-    tsne_data = cal_tSNE(data_loader=data_loader, label_dict=label_dict)
+        tsne_data = cal_tSNE(data_loader=data_loader, label_dict=label_dict)
     tsne_data.to_csv(os.path.join(output_full_root_path, args.output_file))

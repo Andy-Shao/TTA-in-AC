@@ -38,35 +38,29 @@ def cal_tSNE(data_loader: DataLoader, label_dict:dict) -> pd.DataFrame:
     df['label'] = full_labels
     return df
 
-def cal_tSNE(train_loader: DataLoader, test_loader: DataLoader, label_dict: dict) -> pd.DataFrame:
+def cal_tSNEs(loaders: dict[str, DataLoader], label_dict: dict) -> pd.DataFrame:
     from sklearn.manifold import TSNE
     from sklearn.decomposition import PCA
     full_features = None
     full_labels = None
     full_source = None
-    for index, (features, labels) in enumerate(train_loader):
-        batch_size = features.shape[0]
-        if index == 0:
-            full_features = features.reshape(batch_size, -1)
-            full_labels = labels.reshape(-1)
-            full_source = torch.tensor(['train']).repeat(batch_size)
-        else:
-            full_features = torch.cat([full_features, features.reshape(batch_size, -1)], dim=0)
-            full_labels = torch.cat([full_labels, labels.reshape(-1)])
-            full_source = torch.cat([full_source, torch.tensor(['train']).repeat(batch_size)])
-    for index, (features, labels) in enumerate(test_loader):
-        batch_size = features.shape[0]
-        if index == 0:
-            full_features = features.reshape(batch_size, -1)
-            full_labels = labels.reshape(-1)
-            full_source = torch.tensor(['test']).repeat(batch_size)
-        else:
-            full_features = torch.cat([full_features, features.reshape(batch_size, -1)], dim=0)
-            full_labels = torch.cat([full_labels, labels.reshape(-1)])
-            full_source = torch.cat([full_source, torch.tensor(['test']).repeat(batch_size)])
+    flag = False
+    for source, loader in loaders.items():
+        for index, (features, labels) in enumerate(loader):
+            batch_size = features.shape[0]
+            if flag == False and index == 0:
+                full_features = features.reshape(batch_size, -1)
+                full_labels = labels.reshape(-1)
+                full_source = np.array([source]).repeat(batch_size)
+                flag = True
+            else:
+                full_features = torch.cat([full_features, features.reshape(batch_size, -1)], dim=0)
+                full_labels = torch.cat([full_labels, labels.reshape(-1)])
+                full_source = np.concatenate((full_source, np.array([source]).repeat(batch_size)))
     full_features = full_features.detach().cpu().numpy()
     full_labels = full_labels.detach().cpu().numpy()
-    full_source = full_source.detach().cpu().numpy()
+
+    print('Finish loading!')
 
     pca = PCA(n_components=50)
     reduced_data = pca.fit_transform(full_features)
@@ -93,15 +87,18 @@ def merg_tSNE(df: pd.DataFrame, mode='mean') -> pd.DataFrame:
         ret.loc[len(ret)] = merged_df
     return ret
 
-def show_tSNE(train_df: pd.DataFrame, test_df: pd.DataFrame, title:str) -> None:
+def show_tSNE(title:str, train_df: pd.DataFrame=None, test_df: pd.DataFrame=None) -> None:
     import matplotlib.pyplot as plt
-    plt.scatter(train_df['col1'], train_df['col2'], color='lightblue', s=100, edgecolors='black', label='train')
-    for index, row in train_df.iterrows():
-        plt.text(row['col1'], row['col2'], row['label'], fontsize=12, ha='right')
 
-    plt.scatter(test_df['col1'], test_df['col2'], color='red', s=100, edgecolors='black', label='test')
-    for index, row in test_df.iterrows():
-        plt.text(row['col1'], row['col2'], row['label'], fontsize=12, ha='right')
+    if train_df is not None:
+        plt.scatter(train_df['col1'], train_df['col2'], color='lightblue', s=100, edgecolors='black', label='train')
+        for index, row in train_df.iterrows():
+            plt.text(row['col1'], row['col2'], row['label'], fontsize=12, ha='right')
+
+    if test_df is not None:
+        plt.scatter(test_df['col1'], test_df['col2'], color='red', s=100, edgecolors='black', label='test')
+        for index, row in test_df.iterrows():
+            plt.text(row['col1'], row['col2'], row['label'], fontsize=12, ha='right')
 
     plt.legend()
     plt.xlabel('col1')
