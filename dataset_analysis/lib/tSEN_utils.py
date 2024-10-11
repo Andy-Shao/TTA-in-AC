@@ -119,3 +119,35 @@ def show_tSNE(title:str, train_df: pd.DataFrame=None, test_df: pd.DataFrame=None
     plt.ylabel('col2')
     plt.title(title)
     plt.show()
+
+def show_by_label(df: pd.DataFrame, figheight=12, figwidth=12) -> None:
+    import matplotlib.pyplot as plt
+
+    def cal_plots(label_num:int) -> tuple[int, int]:
+        import math
+        heigh = int(math.sqrt(label_num))
+        width = heigh
+        if heigh * width < label_num:
+            width += 1
+        return width, heigh
+
+    label_type = df['label'].unique()
+    width, heigh = cal_plots(label_num=len(label_type))
+    f, axis = plt.subplots(width, heigh)
+    f.set_figheight(figheight)
+    f.set_figwidth(figwidth)
+
+    for index, label in enumerate(label_type):
+        data =  df[df['label'] == label]
+        data = data.sample(n=800)
+        w = index // heigh
+        h = index - (w * heigh)
+        axis[w, h].scatter(data['col1'], data['col2'], color='lightblue', label=label)
+        axis[w, h].set_title(label)
+        axis[w, h].axis('off')
+    if len(label_type) < (width * heigh):
+        for index in range(len(label_type), (width * heigh)):
+            w = index // heigh
+            h = index - (w * heigh)
+            axis[w, h].axis('off')
+    plt.show()
