@@ -11,7 +11,7 @@ def inverse_dict(data: dict) -> dict:
         ret[value] = key
     return ret
 
-def cal_tSNE(data_loader: DataLoader, label_dict:dict) -> pd.DataFrame:
+def cal_tSNE(data_loader: DataLoader, label_dict:dict, reduceable=True) -> pd.DataFrame:
     from sklearn.manifold import TSNE
     from sklearn.decomposition import PCA
     full_features = None
@@ -27,8 +27,15 @@ def cal_tSNE(data_loader: DataLoader, label_dict:dict) -> pd.DataFrame:
     full_features = full_features.detach().cpu().numpy()
     full_labels = full_labels.detach().cpu().numpy()
     
-    pca = PCA(n_components=50)
-    reduced_data = pca.fit_transform(full_features)
+    if reduceable:
+        print('reduced mode')
+        pca = PCA(n_components=50)
+        reduced_data = pca.fit_transform(full_features)
+    else:
+        print('unreduced mode')
+        reduced_data = full_features
+
+    print(f'calculation features shape: {full_features.shape}')
 
     tsne = TSNE(n_components=2, perplexity=30, method='barnes_hut')
     tsne_features = tsne.fit_transform(reduced_data)
@@ -38,7 +45,7 @@ def cal_tSNE(data_loader: DataLoader, label_dict:dict) -> pd.DataFrame:
     df['label'] = full_labels
     return df
 
-def cal_tSNEs(loaders: dict[str, DataLoader], label_dict: dict) -> pd.DataFrame:
+def cal_tSNEs(loaders: dict[str, DataLoader], label_dict: dict, reduceable=True) -> pd.DataFrame:
     from sklearn.manifold import TSNE
     from sklearn.decomposition import PCA
     full_features = None
@@ -62,8 +69,15 @@ def cal_tSNEs(loaders: dict[str, DataLoader], label_dict: dict) -> pd.DataFrame:
 
     print('Finish loading!')
 
-    pca = PCA(n_components=50)
-    reduced_data = pca.fit_transform(full_features)
+    if reduceable:
+        print('reduced mode')
+        pca = PCA(n_components=50)
+        reduced_data = pca.fit_transform(full_features)
+    else:
+        print('unreduced mode')
+        reduced_data = full_features
+
+    print(f'calculate features shape: {full_features.shape}')
 
     tsne = TSNE(n_components=2, perplexity=30, method='barnes_hut')
     tsne_features = tsne.fit_transform(reduced_data)

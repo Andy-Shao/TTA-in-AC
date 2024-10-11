@@ -3,7 +3,7 @@ import os
 
 from torch.utils.data import DataLoader
 
-from lib.datasets import FilterAudioMNIST
+from lib.datasets import FilterAudioMNIST, ClipDataset
 from lib.scDataset import SpeechCommandsDataset
 from lib.wavUtils import pad_trunc
 from dataset_analysis.lib.tSEN_utils import cal_tSNE, inverse_dict, cal_tSNEs
@@ -18,6 +18,8 @@ if __name__ == '__main__':
     arg_parse.add_argument('--batch_size', type=int, default=256)
     arg_parse.add_argument('--output_file', type=str)
     arg_parse.add_argument('--mode', type=str, default=['train', 'test', 'full'])
+    arg_parse.add_argument('--rate', type=float, default=1.0)
+    arg_parse.add_argument('--no_reduce', action='store_true')
 
     args = arg_parse.parse_args()
     output_full_root_path = os.path.join(args.output_root_path, 'dataset_analysis', args.dataset)
@@ -49,6 +51,10 @@ if __name__ == '__main__':
                 data_tsf=pad_trunc(max_ms=1000, sample_rate=48000),
                 include_rate=False
             )
+            if args.rate < 1.0:
+                print('using ClipDataset')
+                train_dataset = ClipDataset(dataset=train_dataset, rate=args.rate)
+                test_dataset = ClipDataset(dataset=test_dataset, rate=args.rate)
         else:
             dataset = FilterAudioMNIST(
                 root_path=args.dataset_root_path, 
@@ -56,6 +62,9 @@ if __name__ == '__main__':
                 data_tsf=pad_trunc(max_ms=1000, sample_rate=48000),
                 include_rate=False
             )
+            if args.rate < 1.0:
+                print('using ClipDataset')
+                dataset = ClipDataset(dataset=dataset, rate=args.rate)
     elif args.dataset == 'speech-commands':
         label_dict = inverse_dict(SpeechCommandsDataset.label_dic)
         if args.mode == 'full':
@@ -69,12 +78,18 @@ if __name__ == '__main__':
                 include_rate=False, data_type='all',
                 data_tfs=pad_trunc(max_ms=1000, sample_rate=16000)
             )
+            if args.rate < 1.0:
+                print('using ClipDataset')
+                train_dataset = ClipDataset(dataset=train_dataset, rate=args.rate)
         else:
             dataset = SpeechCommandsDataset(
                 root_path=args.dataset_root_path, mode=args.mode, 
                 include_rate=False, data_type='all',
                 data_tfs=pad_trunc(max_ms=1000, sample_rate=16000),
             )
+            if args.rate < 1.0:
+                print('using ClipDataset')
+                dataset = ClipDataset(dataset=dataset, rate=args.rate)
     else:
         raise Exception('No support')
     
@@ -89,7 +104,8 @@ if __name__ == '__main__':
         )
         tsne_data = cal_tSNEs(
             loaders={'train': train_loader, 'test': test_loader},
-            label_dict=label_dict
+            label_dict=label_dict,
+            reduceable=False if args.no_reduce else True
         )
     else:
         data_loader = DataLoader(
@@ -97,5 +113,5 @@ if __name__ == '__main__':
             drop_last=False, num_workers=args.num_workers
         )
 
-        tsne_data = cal_tSNE(data_loader=data_loader, label_dict=label_dict)
+        tsne_data = cal_tSNE(data_loader=data_loader, label_dict=label_dict, reduceable=False if args.no_reduce else True)
     tsne_data.to_csv(os.path.join(output_full_root_path, args.output_file))
