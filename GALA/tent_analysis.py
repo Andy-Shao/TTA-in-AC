@@ -53,7 +53,6 @@ def gala_inference(
     ) -> float:
     test_accu = 0.
     test_size = 0.
-    # test_iter = iter(loader)
     for index in tqdm(range(len(loader) * step)):
         if index % len(loader) == 0:
             test_iter = iter(loader)
