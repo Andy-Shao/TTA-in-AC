@@ -15,10 +15,43 @@ from lib.scDataset import BackgroundNoiseDataset
 from lib.wavUtils import Components, pad_trunc, BackgroundNoise, GuassianNoise
 from lib.models import ElasticRestNet50
 from lib.tentAdapt import get_params, model_formate
-from lib.normAdapt import NormAdapt
 from CoNMix.lib.prepare_dataset import ExpandChannel
 from tent.speech_commands.pre_train import prep_dataset
-from GALA.tent_analysis import gala_inference
+from GALA.lib.galaTentAdapt import adapted_forward
+
+def gala_inference(
+        model: nn.Module, loader: DataLoader, device: str, optimizer: optim.Optimizer, lr:float,
+        threshold:float, step=1
+    ) -> float:
+    test_accu = 0.
+    test_size = 0.
+    for index in tqdm(range(len(loader) * step)):
+        if index % len(loader) == 0:
+            test_iter = iter(loader)
+        inputs, labels = next(test_iter)
+        inputs, labels = inputs.to(device), labels.to(device)
+        outputs = adapted_forward(
+            x=inputs, model=model, optimizer=optimizer, lr=lr, threshold=threshold, 
+            selected=False if index % len(loader) == 0 else True
+        )
+        # outputs = []
+        # for k in range(inputs.shape[0]):
+        #     output = adapted_forward(
+        #         x=inputs[k:k+1], model=model, optimizer=optimizer, lr=lr, threshold=threshold,
+        #         selected=False if k==0 and index % len(loader)==0 else True
+        #     )
+        #     outputs.append(output)
+        # outputs = torch.cat(outputs, dim=0)
+        if index >= (step - 1) * len(loader):
+            _, preds = torch.max(outputs.detach(), dim=1)
+            test_accu += (preds == labels).sum().cpu().item()
+            test_size += labels.shape[0]
+
+        inputs = None
+        labels = None
+        outputs = None
+        preds = None
+    return test_accu / test_size * 100.
 
 def find_noise(noise_type: str) -> torch.Tensor:
     background_noise_dataset = BackgroundNoiseDataset(root_path=args.dataset_root_path)
@@ -89,7 +122,7 @@ if __name__ == '__main__':
         args.data_type = 'all'
     else:
         raise Exception('No support')
-    args.output_full_path = os.path.join(args.output_path, args.dataset, 'tent', 'analysis')
+    args.output_full_path = os.path.join(args.output_path, args.dataset, 'GALA', 'analysis')
     try:
         os.makedirs(args.output_full_path)
     except:
