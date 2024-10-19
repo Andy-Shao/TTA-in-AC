@@ -1,4 +1,4 @@
-## conda install anaconda::scikit-learn
+## conda install anaconda::scikit-learn==1.5.1
 import pandas as pd
 import numpy as np
 

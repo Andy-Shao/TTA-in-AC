@@ -90,6 +90,31 @@ if __name__ == '__main__':
             if args.rate < 1.0:
                 print('using ClipDataset')
                 dataset = ClipDataset(dataset=dataset, rate=args.rate)
+    elif args.dataset == 'speech-commands-numbers':
+        label_dict = inverse_dict(SpeechCommandsDataset.numbers)
+        if args.mode == 'full':
+            train_dataset = SpeechCommandsDataset(
+                root_path=args.dataset_root_path, mode='train',
+                include_rate=False, data_type='numbers',
+                data_tfs=pad_trunc(max_ms=1000, sample_rate=16000)
+            )
+            test_dataset = SpeechCommandsDataset(
+                root_path=args.dataset_root_path, mode='test',
+                include_rate=False, data_type='numbers',
+                data_tfs=pad_trunc(max_ms=1000, sample_rate=16000)
+            )
+            if args.rate < 1.0:
+                print('using ClipDataset')
+                train_dataset = ClipDataset(dataset=train_dataset, rate=args.rate)
+        else:
+            dataset = SpeechCommandsDataset(
+                root_path=args.dataset_root_path, mode=args.mode,
+                include_rate=False, data_type='numbers',
+                data_tfs=pad_trunc(max_ms=1000, sample_rate=16000)
+            )
+            if args.rate < 1.0:
+                print('using ClipDataset')
+                dataset = ClipDataset(dataset=dataset, rate=args.rate)
     else:
         raise Exception('No support')
     
