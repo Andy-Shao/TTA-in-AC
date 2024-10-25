@@ -19,6 +19,14 @@ from lib.normAdapt import NormAdapt
 from CoNMix.lib.prepare_dataset import ExpandChannel
 from tent.speech_commands.pre_train import prep_dataset
 
+def operation_tag(base_op:str, args: argparse.Namespace) -> str:
+    ret = base_op
+    if args.normalized:
+        ret += ' + normalized'
+    if args.offline:
+        ret += ' + offline'
+    return ret
+
 def find_noise(noise_type: str) -> torch.Tensor:
     background_noise_dataset = BackgroundNoiseDataset(root_path=args.dataset_root_path)
     for _noise_type, noise, _ in background_noise_dataset:
@@ -72,6 +80,8 @@ if __name__ == '__main__':
     ap.add_argument('--batch_size', type=int, default=64)
     ap.add_argument('--tent_batch_size', type=int, default=200)
     ap.add_argument('--normalized', action='store_true')
+    ap.add_argument('--offline', action='store_true')
+    ap.add_argument('--offline_times', type=int, default=20)
 
     args = ap.parse_args()
     args.corruption_types = ['doing_the_dishes', 'dude_miaowing', 'exercise_bike', 'pink_noise', 'running_tap', 'white_noise', 'gaussian_noise']
@@ -203,9 +213,14 @@ if __name__ == '__main__':
         tent_optimizer = optim.Adam(params=tent_params, lr=1e-3, betas=(.9,.99), weight_decay=0.)
         # tent_optimizer = optim.SGD(params=model.parameters(), lr=1e-3, weight_decay=5e-4, momentum=.9)
         tent_model = TentAdapt(model=model, optimizer=tent_optimizer, steps=1, resetable=False).to(device=args.device)
-        test_accuracy = inference(model=tent_model, data_loader=corrupted_loader, args=args)
+        if not args.offline:
+            test_accuracy = inference(model=tent_model, data_loader=corrupted_loader, args=args)
+        else:
+            for epoch in range(args.offline_times):
+                print(f'Epoch:{epoch+1}/{args.offline_times}')
+                test_accuracy = inference(model=tent_model, data_loader=corrupted_loader, args=args)
         print(f'{noise_type} tent adaptation test accuracy: {test_accuracy:.2f}%')
-        records.loc[len(records)] = [args.dataset, args.model, 'Tent Adaptation' if not args.normalized else 'Tent Adaptation + normalized', noise_type, test_accuracy, 100.-test_accuracy, args.severity_level, number_of_weight]
+        records.loc[len(records)] = [args.dataset, args.model, operation_tag('Tent Adaptation', args), noise_type, test_accuracy, 100.-test_accuracy, args.severity_level, number_of_weight]
         model = None
         tent_model = None
         tent_params = None
@@ -218,8 +233,13 @@ if __name__ == '__main__':
         model = load_model(args)
         number_of_weight = count_ttl_params(model=model)
         norm_model = NormAdapt(model=model, momentum=.9).to(device=args.device)
-        test_accuracy = inference(model=norm_model, data_loader=corrupted_loader, args=args)
+        if not args.offline:
+            test_accuracy = inference(model=norm_model, data_loader=corrupted_loader, args=args)
+        else:
+            for epoch in range(args.offline_times):
+                print(f'Epoch:{epoch+1}/{args.offline_times}')
+                test_accuracy = inference(model=norm_model, data_loader=corrupted_loader, args=args)
         print(f'{noise_type} norm adaptation test accuracy:{test_accuracy:.2f}%')
-        records.loc[len(records)] = [args.dataset, args.model, 'Norm Adaptation' if not args.normalized else 'Norm Adaptation + normalized', noise_type, test_accuracy, 100. - test_accuracy, args.severity_level, number_of_weight]
+        records.loc[len(records)] = [args.dataset, args.model, operation_tag('Norm Adaptation', args), noise_type, test_accuracy, 100. - test_accuracy, args.severity_level, number_of_weight]
 
     records.to_csv(os.path.join(args.output_full_path, args.output_csv_name))
