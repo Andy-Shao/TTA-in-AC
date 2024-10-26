@@ -19,7 +19,7 @@ from ttt.lib.time_shift_rotation import rotate_batch
 def adapt_one(feature: torch.Tensor, ssh: nn.Module, ext: nn.Module, args: argparse.Namespace, 
               criterion: nn.Module, data_transf: nn.Module, optimizer: optim.Optimizer, net: nn.Module, 
               head: nn.Module, mode='online') -> None:
-    assert mode in ['online', 'slow'], 'mode is error'
+    assert mode in ['online', 'slow', 'offline'], 'mode is error'
     # if mode == 'slow':
     #     refresh_model(args=args, net=net, head=head)
     ssh.eval()
@@ -74,6 +74,7 @@ if __name__ == '__main__':
     parser.add_argument('--corruptions')
     parser.add_argument('--TTT_analysis', action='store_true')
     parser.add_argument('--normalized', action='store_true')
+    parser.add_argument('--mode', type=str, default='online', choices=['slow', 'online', 'offline'])
 
     args = parser.parse_args()
     args.corruptions = [it.strip() for it in args.corruptions.strip().split(sep=',')]
@@ -114,6 +115,7 @@ if __name__ == '__main__':
         args.ttt_operation = f'TTT, ts, bn'
     else: 
         args.ttt_operation = f'TTT, ts, gn'
+    args.ttt_operation += f', {args.mode}'
     print_argparse(args)
     # Finish args prepare
     ##########################################
@@ -163,18 +165,22 @@ if __name__ == '__main__':
             train_transfs = train_transforms(args)
             criterion_ssh = nn.CrossEntropyLoss().to(device=args.device)
             optimizer_ssh = optim.SGD(params=ssh.parameters(), lr=args.lr)
-            ttt_corr = 0
-            for feature, label in tqdm(corrupted_dataset):
-                input = corrupted_tsf[TimeShiftOps.ORIGIN].tran_one(feature)
-                input = input.to(args.device)
-                _, confidence = measure_one(model=ssh, audio=input, label=0)
-                if confidence < args.threshold:
-                    adapt_one(feature=feature, ssh=ssh, ext=ext, args=args, criterion=criterion_ssh, data_transf=train_transfs, 
-                        optimizer=optimizer_ssh, net=net, head=head, mode='online')
-                correctness, _ = measure_one(model=net, audio=input, label=label)
-                ttt_corr += correctness
+            max_epoch = 1 if args.mode == 'online' else args.niter
+            for epoch in range(max_epoch):
+                print(f'Epoch:{epoch+1}/{max_epoch}')
+                ttt_corr = 0
+                for feature, label in tqdm(corrupted_dataset):
+                    input = corrupted_tsf[TimeShiftOps.ORIGIN].tran_one(feature)
+                    input = input.to(args.device)
+                    _, confidence = measure_one(model=ssh, audio=input, label=0)
+                    if confidence < args.threshold:
+                        adapt_one(
+                            feature=feature, ssh=ssh, ext=ext, args=args, criterion=criterion_ssh, data_transf=train_transfs, 
+                            optimizer=optimizer_ssh, net=net, head=head, mode='online')
+                    correctness, _ = measure_one(model=net, audio=input, label=label)
+                    ttt_corr += correctness
             ttt_accu = ttt_corr / len(corrupted_dataset) * 100.
             print(f'Online TTT adaptation data size: {len(corrupted_dataset)}, accuracy: {ttt_accu:.2f}%')
-            accu_record.loc[len(accu_record)] = [args.dataset, f'RestNet{args.depth}_base', args.ttt_operation + ', online', corruption, ttt_accu, 100. - ttt_accu, args.severity_level, ttl_weight_num]
+            accu_record.loc[len(accu_record)] = [args.dataset, f'RestNet{args.depth}_base', args.ttt_operation, corruption, ttt_accu, 100. - ttt_accu, args.severity_level, ttl_weight_num]
 
     accu_record.to_csv(os.path.join(args.output_full_path, args.output_csv_name))
