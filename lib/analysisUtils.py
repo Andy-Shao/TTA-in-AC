@@ -392,3 +392,68 @@ def error_rate_analysis(
     ax.set_ylim(0, 100) if ylim else 1+1
 
     plt.show()
+
+def analyze_offline_background(all_records: dict[DatasetType, pd.DataFrame], noise_type:str) -> pd.DataFrame:
+    configs = {
+        0: {
+            RecordColumn.Dataset: DatasetType.Speech_Commands.value,
+            RecordColumn.Records: all_records[DatasetType.Speech_Commands][TTA_Type.TENT],
+            RecordColumn.TTA_Type: TTA_Type.TENT.value + ', offline',
+            RecordColumn.Corruption: noise_type,
+            RecordColumn.Severity_Level: [10.0, 3.0],
+            RecordColumn.Algorithm: 'restnet50',
+            RecordColumn.TTA_OP: 'Tent Adaptation + normalized + offline',
+            RecordColumn.Model: 'RestNet50'
+        },
+        1: {
+            RecordColumn.Dataset: DatasetType.Speech_Commands.value,
+            RecordColumn.Records: all_records[DatasetType.Speech_Commands][TTA_Type.TENT],
+            RecordColumn.TTA_Type: TTA_Type.TENT.value,
+            RecordColumn.Corruption: noise_type,
+            RecordColumn.Severity_Level: [10.0, 3.0],
+            RecordColumn.Algorithm: 'restnet50',
+            RecordColumn.TTA_OP: 'Tent Adaptation + normalized',
+            RecordColumn.Model: 'RestNet50'
+        },
+        2: {
+            RecordColumn.Dataset: DatasetType.Speech_Commands.value,
+            RecordColumn.Records: all_records[DatasetType.Speech_Commands][TTA_Type.TENT],
+            RecordColumn.TTA_Type: TTA_Type.NORM.value + ', offline',
+            RecordColumn.Corruption: noise_type,
+            RecordColumn.Severity_Level: [10.0, 3.0],
+            RecordColumn.Algorithm: 'restnet50',
+            RecordColumn.TTA_OP: 'Norm Adaptation + normalized + offline',
+            RecordColumn.Model: 'RestNet50'
+        },
+        3: {
+            RecordColumn.Dataset: DatasetType.Speech_Commands.value,
+            RecordColumn.Records: all_records[DatasetType.Speech_Commands][TTA_Type.TENT],
+            RecordColumn.TTA_Type: TTA_Type.NORM.value,
+            RecordColumn.Corruption: noise_type,
+            RecordColumn.Severity_Level: [10.0, 3.0],
+            RecordColumn.Algorithm: 'restnet50',
+            RecordColumn.TTA_OP: 'Norm Adaptation + normalized',
+            RecordColumn.Model: 'RestNet50'
+        },
+        4: {
+            RecordColumn.Dataset: DatasetType.Speech_Commands.value,
+            RecordColumn.Records: all_records[DatasetType.Speech_Commands][TTA_Type.TTT],
+            RecordColumn.TTA_Type: TTA_Type.TTT.value + ', offline',
+            RecordColumn.Corruption: noise_type,
+            RecordColumn.Severity_Level: [10.0, 3.0],
+            RecordColumn.Algorithm: None,
+            RecordColumn.TTA_OP: 'TTT, ts, bn, offline',
+            RecordColumn.Model: 'Transfer Learning'
+        },
+        5: {
+            RecordColumn.Dataset: DatasetType.Speech_Commands.value,
+            RecordColumn.Records: all_records[DatasetType.Speech_Commands][TTA_Type.TTT],
+            RecordColumn.TTA_Type: TTA_Type.TTT.value,
+            RecordColumn.Corruption: noise_type,
+            RecordColumn.Severity_Level: [10.0, 3.0],
+            RecordColumn.Algorithm: None,
+            RecordColumn.TTA_OP: 'TTT, ts, bn, online',
+            RecordColumn.Model: 'Transfer Learning'
+        },
+    }
+    return analyze_multi_model_accu(configs)

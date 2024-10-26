@@ -229,7 +229,7 @@ if __name__ == '__main__':
 
         print(f'{noise_type} norm test')
         if args.model == 'restnet50':
-            corrupted_loader = DataLoader(dataset=corrupted_dataset, batch_size=120, shuffle=False, drop_last=False)
+            corrupted_loader = DataLoader(dataset=corrupted_dataset, batch_size=100, shuffle=False, drop_last=False)
         model = load_model(args)
         number_of_weight = count_ttl_params(model=model)
         norm_model = NormAdapt(model=model, momentum=.9).to(device=args.device)
