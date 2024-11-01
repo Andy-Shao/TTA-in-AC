@@ -101,18 +101,51 @@ def merg_tSNE(df: pd.DataFrame, mode='mean') -> pd.DataFrame:
         ret.loc[len(ret)] = merged_df
     return ret
 
-def show_tSNE(title:str, train_df: pd.DataFrame=None, test_df: pd.DataFrame=None) -> None:
+def clip_df(df: pd.DataFrame, min_distance:float, max_distance:float) -> pd.DataFrame:
+    return df[(df['distance'] >= min_distance) & (df['distance'] <= max_distance)]
+
+def omit_outline(df: pd.DataFrame) -> pd.DataFrame:
+    import math
+
+    ret = pd.DataFrame(columns=['col1', 'col2', 'label'])
+    df = df.copy()
+    distances = []
+    for index, row in df.iterrows():
+        distances.append(math.sqrt(row['col1']**2 + row['col2']**2))
+    df['distance'] = distances
+    for label in df['label'].unique():
+        sub_df = df[df['label'] == label]['distance']
+        sub_mean = sub_df.mean(axis=0)
+        sub_std = sub_df.std(axis=0)
+        min_dist = sub_mean - 2 * sub_std
+        max_dist = sub_mean + 2 * sub_std
+        tmp = clip_df(
+            df=df[df['label'] == label], min_distance=min_dist, max_distance=max_dist
+        )[['col1', 'col2', 'label']]
+        ret = pd.concat([ret, tmp], axis=0, ignore_index=True, copy=True)
+    return ret
+
+def sampling(df: pd.DataFrame, max_size:int) -> pd.DataFrame:
+    ret = pd.DataFrame(columns=['col1', 'col2', 'label'])
+    for label in df['label'].unique():
+        sub_df = df[df['label'] == label].sample(n=max_size, replace=False)
+        ret = pd.concat([ret, sub_df], axis=0, ignore_index=True, copy=True)
+    return ret
+
+def show_tSNE(title:str, train_df: pd.DataFrame=None, test_df: pd.DataFrame=None, point_size=5) -> None:
     import matplotlib.pyplot as plt
 
     if train_df is not None:
-        plt.scatter(train_df['col1'], train_df['col2'], color='lightblue', s=100, edgecolors='black', label='train')
-        for index, row in train_df.iterrows():
-            plt.text(row['col1'], row['col2'], row['label'], fontsize=12, ha='right')
+        plt.scatter(train_df['col1'], train_df['col2'], color='green', label='train', s=point_size)
+        merged_df = merg_tSNE(df=train_df, mode='mean')
+        for index, row in merged_df.iterrows():
+            plt.text(row['col1'], row['col2'], row['label'], fontsize=12, ha='right', color='green')
 
     if test_df is not None:
-        plt.scatter(test_df['col1'], test_df['col2'], color='red', s=100, edgecolors='black', label='test')
-        for index, row in test_df.iterrows():
-            plt.text(row['col1'], row['col2'], row['label'], fontsize=12, ha='right')
+        plt.scatter(test_df['col1'], test_df['col2'], color='red', label='test', s=point_size)
+        merged_df = merg_tSNE(df=test_df, mode='mean')
+        for index, row in merged_df.iterrows():
+            plt.text(row['col1'], row['col2'], row['label'], fontsize=12, ha='right', color='red')
 
     plt.legend()
     plt.xlabel('col1')
