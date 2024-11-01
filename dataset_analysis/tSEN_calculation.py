@@ -2,6 +2,8 @@ import argparse
 import os
 
 from torch.utils.data import DataLoader
+from torchvision.datasets import CIFAR10
+import torchvision.transforms as v_transforms
 
 from lib.datasets import FilterAudioMNIST, ClipDataset
 from lib.scDataset import SpeechCommandsDataset
@@ -11,7 +13,7 @@ from lib.toolkit import print_argparse
 
 if __name__ == '__main__':
     arg_parse = argparse.ArgumentParser()
-    arg_parse.add_argument('--dataset', type=str, default=['audio-mnist', 'speech-commands', 'speech-commands-numbers', 'speech-commands-random'])
+    arg_parse.add_argument('--dataset', type=str, default=['audio-mnist', 'speech-commands', 'speech-commands-numbers', 'speech-commands-random', 'cifar-10'])
     arg_parse.add_argument('--dataset_root_path', type=str)
     arg_parse.add_argument('--num_workers', type=int, default=16)
     arg_parse.add_argument('--output_root_path', type=str, default='./result')
@@ -51,10 +53,7 @@ if __name__ == '__main__':
                 data_tsf=pad_trunc(max_ms=1000, sample_rate=48000),
                 include_rate=False
             )
-            if args.rate < 1.0:
-                print('using ClipDataset')
-                train_dataset = ClipDataset(dataset=train_dataset, rate=args.rate)
-                test_dataset = ClipDataset(dataset=test_dataset, rate=args.rate)
+            ignore_test_clip = False
         else:
             dataset = FilterAudioMNIST(
                 root_path=args.dataset_root_path, 
@@ -62,9 +61,6 @@ if __name__ == '__main__':
                 data_tsf=pad_trunc(max_ms=1000, sample_rate=48000),
                 include_rate=False
             )
-            if args.rate < 1.0:
-                print('using ClipDataset')
-                dataset = ClipDataset(dataset=dataset, rate=args.rate)
     elif args.dataset == 'speech-commands':
         label_dict = inverse_dict(SpeechCommandsDataset.label_dic)
         if args.mode == 'full':
@@ -78,18 +74,13 @@ if __name__ == '__main__':
                 include_rate=False, data_type='all',
                 data_tfs=pad_trunc(max_ms=1000, sample_rate=16000)
             )
-            if args.rate < 1.0:
-                print('using ClipDataset')
-                train_dataset = ClipDataset(dataset=train_dataset, rate=args.rate)
+            ignore_test_clip = True
         else:
             dataset = SpeechCommandsDataset(
                 root_path=args.dataset_root_path, mode=args.mode, 
                 include_rate=False, data_type='all',
                 data_tfs=pad_trunc(max_ms=1000, sample_rate=16000),
             )
-            if args.rate < 1.0:
-                print('using ClipDataset')
-                dataset = ClipDataset(dataset=dataset, rate=args.rate)
     elif args.dataset == 'speech-commands-numbers':
         label_dict = inverse_dict(SpeechCommandsDataset.numbers)
         if args.mode == 'full':
@@ -103,22 +94,40 @@ if __name__ == '__main__':
                 include_rate=False, data_type='numbers',
                 data_tfs=pad_trunc(max_ms=1000, sample_rate=16000)
             )
-            if args.rate < 1.0:
-                print('using ClipDataset')
-                train_dataset = ClipDataset(dataset=train_dataset, rate=args.rate)
+            ignore_test_clip = True
         else:
             dataset = SpeechCommandsDataset(
                 root_path=args.dataset_root_path, mode=args.mode,
                 include_rate=False, data_type='numbers',
                 data_tfs=pad_trunc(max_ms=1000, sample_rate=16000)
             )
-            if args.rate < 1.0:
-                print('using ClipDataset')
-                dataset = ClipDataset(dataset=dataset, rate=args.rate)
+    elif args.dataset == 'cifar-10':
+        label_dict = {
+            0:'airplane', 1:'automobile', 2:'bird', 3:'cat', 4:'deer', 
+            5:'dog', 6:'frog', 7:'horse', 8:'ship', 9:'truck'
+        }
+        if args.mode == 'full':
+            train_dataset = CIFAR10(
+                root=args.dataset_root_path, download=True, train=True, transform=v_transforms.ToTensor()
+            )
+            test_dataset = CIFAR10(
+                root=args.dataset_root_path, download=True, train=False, transform=v_transforms.ToTensor()
+            )
+            ignore_test_clip = False
+        else:
+            dataset = CIFAR10(
+                root=args.dataset_root_path, download=True, train=True if args.mode == 'train' else False,
+                transform=v_transforms.ToTensor()
+            )
     else:
         raise Exception('No support')
     
     if args.mode == 'full':
+        if args.rate < 1.0:
+            print('using ClipDataset')
+            train_dataset = ClipDataset(dataset=train_dataset, rate=args.rate)
+            if not ignore_test_clip:
+                test_dataset = ClipDataset(dataset=test_dataset, rate=args.rate)
         train_loader = DataLoader(
             dataset=train_dataset, batch_size=args.batch_size, shuffle=False,
             drop_last=False, num_workers=args.num_workers
@@ -133,6 +142,9 @@ if __name__ == '__main__':
             reduceable=False if args.no_reduce else True
         )
     else:
+        if args.rate < 1.0:
+            print('using ClipDataset')
+            dataset = ClipDataset(dataset=dataset, rate=args.rate)
         data_loader = DataLoader(
             dataset=dataset, batch_size=args.batch_size, shuffle=False, 
             drop_last=False, num_workers=args.num_workers
