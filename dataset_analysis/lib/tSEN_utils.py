@@ -153,6 +153,25 @@ def show_tSNE(title:str, train_df: pd.DataFrame=None, test_df: pd.DataFrame=None
     plt.title(title)
     plt.show()
 
+def show_tSNE_samples(title:str, colors:dict[str,str], train_df: pd.DataFrame=None, test_df: pd.DataFrame=None) -> None:
+    import matplotlib.pyplot as plt
+
+    if train_df is not None:
+        for label in train_df['label'].unique():
+            sub_df = train_df[train_df['label'] == label]
+            plt.scatter(sub_df['col1'], sub_df['col2'], color=colors[label], marker='.', label='tr '+label)
+
+    if test_df is not None:
+        for label in test_df['label'].unique():
+            sub_df = test_df[test_df['label'] == label]
+            plt.scatter(sub_df['col1'], sub_df['col2'], color=colors[label], marker='x', label='te ' + label)
+
+    # plt.legend()
+    plt.xlabel('col1')
+    plt.ylabel('col2')
+    plt.title(title)
+    plt.show()
+
 def show_by_label(df: pd.DataFrame, figheight=12, figwidth=12) -> None:
     import matplotlib.pyplot as plt
 
