@@ -10,7 +10,7 @@ python -m CoNMix.speech-commands.STDA \
     --STDA_modelF_weight_file_name 'speech-commands_modelF-bg-3.0-doing_the_dishes-org.pt' \
     --STDA_modelB_weight_file_name 'speech-commands_modelB-bg-3.0-doing_the_dishes-org.pt' \
     --STDA_modelC_weight_file_name 'speech-commands_modelC-bg-3.0-doing_the_dishes-org.pt' --normalized \
-    --data_type 'final' --const_par 0.2 --fbnm_par 4.0 --cls_par 1.0 --corruption 'doing_the_dishes' \
+    --data_type 'final' --const_par 0.2 --fbnm_par 6.0 --cls_par 0.2 --corruption 'doing_the_dishes' \
     --alpha 0.9 --initc_num 1 --dataset 'speech-commands' --cls_mode 'logsoft_ce' --lr_gamma 30 --wandb --tag 'org'
 
 python -m CoNMix.speech-commands.STDA \
@@ -23,7 +23,7 @@ python -m CoNMix.speech-commands.STDA \
     --STDA_modelF_weight_file_name 'speech-commands_modelF-bg-3.0-exercise_bike-org.pt' \
     --STDA_modelB_weight_file_name 'speech-commands_modelB-bg-3.0-exercise_bike-org.pt' \
     --STDA_modelC_weight_file_name 'speech-commands_modelC-bg-3.0-exercise_bike-org.pt' --normalized \
-    --data_type 'final' --const_par 0.2 --fbnm_par 4.0 --cls_par 1.0 --corruption 'exercise_bike' \
+    --data_type 'final' --const_par 0.2 --fbnm_par 6.0 --cls_par 0.2 --corruption 'exercise_bike' \
     --alpha 0.9 --initc_num 1 --dataset 'speech-commands' --cls_mode 'logsoft_ce' --lr_gamma 30 --wandb --tag 'org'
 
 python -m CoNMix.speech-commands.STDA \
@@ -36,5 +36,5 @@ python -m CoNMix.speech-commands.STDA \
     --STDA_modelF_weight_file_name 'speech-commands_modelF-bg-3.0-running_tap-org.pt' \
     --STDA_modelB_weight_file_name 'speech-commands_modelB-bg-3.0-running_tap-org.pt' \
     --STDA_modelC_weight_file_name 'speech-commands_modelC-bg-3.0-running_tap-org.pt' --normalized \
-    --data_type 'final' --wandb --const_par 0.2 --fbnm_par 4.0 --cls_par 1.0 --corruption 'running_tap' \
+    --data_type 'final' --wandb --const_par 0.2 --fbnm_par 6.0 --cls_par 0.2 --corruption 'running_tap' \
     --alpha 0.9 --initc_num 1 --dataset 'speech-commands' --cls_mode 'logsoft_ce' --lr_gamma 30 --tag 'org'
