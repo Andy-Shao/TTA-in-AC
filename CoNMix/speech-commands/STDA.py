@@ -180,6 +180,7 @@ if __name__ == "__main__":
     ap.add_argument('--STDA_modelB_weight_file_name', type=str)
     ap.add_argument('--STDA_modelC_weight_file_name', type=str)
     ap.add_argument('--wandb', action='store_true')
+    ap.add_argument('--wandb_name', type=str, default='')
     ap.add_argument('--data_type', type=str, choices=['raw', 'final'], default='final')
 
     ap.add_argument('--corruption', type=str, choices=['doing_the_dishes', 'dude_miaowing', 'exercise_bike', 'pink_noise', 'running_tap', 'white_noise', 'gaussian_noise'])
@@ -194,8 +195,8 @@ if __name__ == "__main__":
     ap.add_argument('--test_batch_size', type=int, default=128, help="batch_size")
     ap.add_argument('--lr', type=float, default=1e-3, help="learning rate")
 
-    ap.add_argument('--consist', type=bool, default=True, help='Consist loss -> soft cross-entropy loss')
-    ap.add_argument('--fbnm', type=bool, default=True, help='fbnm -> Nuclear-norm Maximization loss')
+    # ap.add_argument('--consist', type=int, default=0, help='Consist loss -> soft cross-entropy loss')
+    # ap.add_argument('--fbnm', type=int, default=0, help='fbnm -> Nuclear-norm Maximization loss')
 
     ap.add_argument('--threshold', type=int, default=0)
     ap.add_argument('--cls_par', type=float, default=0.2, help='lambda 2 | Pseudo-label loss capable')
@@ -220,6 +221,7 @@ if __name__ == "__main__":
     ap.add_argument('--sdlr', type=int, default=1, help='lr_scheduler capable')
     ap.add_argument('--initc_num', type=int, default=1)
     ap.add_argument('--early_stop', type=int, default=-1)
+    ap.add_argument('--backup_weight', type=int, default=0)
 
     args = ap.parse_args()
     if args.dataset == 'speech-commands' or args.dataset == 'speech-commands-random':
@@ -248,8 +250,10 @@ if __name__ == "__main__":
     #################################################
 
     wandb.init(
-        project=f'Audio Classification CoNMix-STDA ({args.dataset})', name=f'{args.corruption}_{args.severity_level}', mode='online' if args.wandb else 'disabled',
-        config=args, tags=['Audio Classification', args.dataset, 'ViT'])
+        project=f'Audio Classification CoNMix-STDA ({args.dataset})', 
+        name=f'{args.corruption}_{args.severity_level}' if args.wandb_name == '' else args.wandb_name, 
+        mode='online' if args.wandb else 'disabled', config=args, tags=['Audio Classification', args.dataset, 'ViT']
+    )
     
     test_dataset, weak_test_dataset, strong_test_dataset = build_dataset(args)
     test_loader = DataLoader(dataset=test_dataset, batch_size=args.test_batch_size, shuffle=False, drop_last=False, num_workers=args.num_workers)
@@ -337,7 +341,7 @@ if __name__ == "__main__":
                 classifier_loss = torch.tensor(.0).cuda()
 
             # fbnm -> Nuclear-norm Maximization loss
-            if args.fbnm:
+            if args.fbnm_par > 0:
                 softmax_output = nn.Softmax(dim=1)(outputs)
                 list_svd,_ = torch.sort(torch.sqrt(torch.sum(torch.pow(softmax_output,2),dim=0)), descending=True)
                 fbnm_loss = - torch.mean(list_svd[:min(softmax_output.shape[0],softmax_output.shape[1])])
@@ -367,7 +371,7 @@ if __name__ == "__main__":
                 im_loss = torch.tensor(0.0).cuda()
             
             # Consist loss -> soft cross-entropy loss
-            if args.consist:
+            if args.const_par > 0:
                 softmax_output = nn.Softmax(dim=1)(outputs)
                 expectation_ratio = mean_all_output/torch.mean(softmax_output[0:batch_size],dim=0)
                 with torch.no_grad():
@@ -398,9 +402,10 @@ if __name__ == "__main__":
         accuracy = inference(modelF=modelF, modelB=modelB, modelC=modelC, data_loader=test_loader, device=args.device)
         if accuracy > max_accu:
             max_accu = accuracy
-            torch.save(modelF.state_dict(), os.path.join(args.full_output_path, args.STDA_modelF_weight_file_name))
-            torch.save(modelB.state_dict(), os.path.join(args.full_output_path, args.STDA_modelB_weight_file_name))
-            torch.save(modelC.state_dict(), os.path.join(args.full_output_path, args.STDA_modelC_weight_file_name))
+            if args.backup_weight == 0:
+                torch.save(modelF.state_dict(), os.path.join(args.full_output_path, args.STDA_modelF_weight_file_name))
+                torch.save(modelB.state_dict(), os.path.join(args.full_output_path, args.STDA_modelB_weight_file_name))
+                torch.save(modelC.state_dict(), os.path.join(args.full_output_path, args.STDA_modelC_weight_file_name))
         wandb.log({'Accuracy/classifier accuracy': accuracy, 'Accuracy/max classifier accuracy': max_accu}, step=epoch)
         print(f'Accuracy/classifier accuracy: {accuracy:.2f}%, Accuracy/max classifier accuracy: {max_accu:.2f}%')
         wandb.log({
