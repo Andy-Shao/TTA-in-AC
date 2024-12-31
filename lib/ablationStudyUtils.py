@@ -21,12 +21,14 @@ def format_loss(
 def loss_ablation(
         x:np.ndarray, 
         title:str,
-        lines:dict[str, dict[str, object]]
+        lines:dict[str, dict[str, object]],
+        xlabel='Epoch',
+        ylabel='Accuracy (%)'
     ) -> None:
     for label, line in lines.items():
         plt.plot(x, line['data'].to_numpy(), label=label, ls=line['linestyle'], color=line['color'])
-    plt.xlabel('Epoch')
-    plt.ylabel('Accuracy (%)')
+    plt.xlabel(xlabel=xlabel)
+    plt.ylabel(ylabel=ylabel)
     plt.title(title)
     plt.legend()
     plt.show()
