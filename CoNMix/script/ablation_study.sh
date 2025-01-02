@@ -167,7 +167,7 @@ python -m CoNMix.STDA --dataset 'audio-mnist' \
     --STDA_modelB_weight_file_name 'audio-mnist_modelB-RT-3.0-bg-rand.pt' \
     --STDA_modelC_weight_file_name 'audio-mnist_modelC-RT-3.0-bg-rand.pt' --normalized \
     --corruption 'running_tap' --cls_par 1.0 --lr_gamma 10 --fbnm_par 4.0 --cls_mode 'logsoft_ce' \
-    --plr 0 --const_par 0.2 --wandb_name 'RT-10dB-org' --backup_weight 1 --early_stop 2 --wandb
+    --plr 0 --const_par 0.2 --wandb_name 'RT-10dB-org' --backup_weight 1 --early_stop 20 --wandb
 
 python -m CoNMix.STDA --dataset 'audio-mnist' \
     --weak_aug_dataset_root_path $BASE_PATH'/tmp/AudioMNIST_analysis/running_tap/3.0-bg-rand_weak' \
