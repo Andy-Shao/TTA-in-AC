@@ -59,7 +59,7 @@ sh script/ttt_analysis.sh
 ```
 `Note`: Modify the `--dataset_root_path ` to your AudioMNIST location. Modify the `--background_root_path` to your SpeechCommands V0.01 location.
 
-### CoNMix for AudioMNIST
+### CoNMix
 Model download:
 ```shell
 wget https://storage.googleapis.com/vit_models/imagenet21k/R50+ViT-B_16.npz
