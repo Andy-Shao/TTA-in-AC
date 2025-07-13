@@ -38,25 +38,25 @@ cd TTA-in-AC
 ```shell
 sh script/pre_train.sh
 ```
-`Note`: try to modify the `--dataset_root_path ` to your AudioMNIST location.
+`Note`: Modify the `--dataset_root_path ` to your AudioMNIST location.
 #### Analysis
 ```shell
 sh script/analysis.sh
 ```
-`Note`: try to modify the `--dataset_root_path ` to your AudioMNIST location. Try to modify the `--background_root_path` to your SpeechCommands v0.01 location.
+`Note`: Modify the `--dataset_root_path ` to your AudioMNIST location. Modify the `--background_root_path` to your SpeechCommands v0.01 location.
 
 ### TTT Adaptation
 #### Pre-train
 ```shell
 sh script/ttt_pre_train.sh
 ```
-`Note`: try to modify the `--dataset_root_path ` to your AudioMNIST location.
+`Note`: Modify the `--dataset_root_path ` to your AudioMNIST location.
 
 #### Analysis
 ```shell
 sh script/ttt_analysis.sh
 ```
-`Note`: try to modify the `--dataset_root_path ` to your AudioMNIST location. Try to modify the `--background_root_path` to your SpeechCommands V0.01 location.
+`Note`: Modify the `--dataset_root_path ` to your AudioMNIST location. Modify the `--background_root_path` to your SpeechCommands V0.01 location.
 
 ### CoNMix for AudioMNIST
 Model download:
@@ -69,12 +69,12 @@ mv R50+ViT-B_16.npz model/vit_checkpoint/imagenet21k/R50+ViT-B_16.npz
 ```shell
 sh CoNMix/script/pre-train.sh
 ```
-`Note`: try to modify the `--dataset_root_path` to your AudioMNIST location.
+`Note`: Modify the `--dataset_root_path` to your AudioMNIST location.
 #### Prepare The Corruption Data
 ```shell
 sh CoNMix/script/prepare_dataset.sh
 ```
-`Note`: try to modify the `--dataset_root_path ` to your AudioMNIST location. Try to modify the `--temporary_path` to your location
+`Note`: Modify the `--dataset_root_path ` to your AudioMNIST location. Modify the `--temporary_path` to your location
 #### STDA
 ```shell
 sh CoNMix/script/STDA.sh
@@ -83,10 +83,10 @@ sh CoNMix/script/STDA.sh
 ```shell
 sh CoNMix/script/analysis.sh
 ```
-`Note`: try to modify the `--dataset_root_path ` to your AudioMNIST location. Try to modify the `--temporary_path` to your location
+`Note`: Modify the `--dataset_root_path ` to your AudioMNIST location. Modify the `--temporary_path` to your location
 
 ## Exhibition
-After that open and run the `analysis_exhibition.ipynb` to demonstrate the analysis feedback. 
+After that, open and run the `analysis_exhibition.ipynb` to demonstrate the analysis feedback. 
 
 ## Dataset
 ### Audio MNIST
