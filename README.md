@@ -35,7 +35,7 @@ conda activate my-audio
 cd TTA-in-AC
 ```
 ### Tent & Norm Adaptation
-#### Pre-train
+#### Pre-training
 ```shell
 sh script/pre_train.sh
 ```
