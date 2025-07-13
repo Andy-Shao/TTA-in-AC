@@ -1,3 +1,4 @@
+#!bin/bash
 export BASE_PATH='/root'
 
 # python -m CoNMix.speech-commands.pre_train --dataset_root_path $BASE_PATH'/data/speech_commands' --max_epoch 20 \

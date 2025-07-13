@@ -1,4 +1,4 @@
-# export PYTHONPATH=$PYTHONPATH:$(pwd)
+#!bin/bash
 export BASE_PATH=${BASE_PATH:-'/home/andyshao'}
 
 # python -m ttt.time_shift_analysis --origin_model_weight_file_path './result/audio-mnist/ttt/pre_time_shift_train/ts_bn_ckpt.pth' \

@@ -1,3 +1,4 @@
+#!bin/bash
 export BASE_PATH=${BASE_PATH:-'/root'}
 
 # python -m CoNMix.speech-commands.STDA_analysis --dataset_root_path $BASE_PATH'/data/speech_commands' \

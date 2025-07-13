@@ -1,3 +1,4 @@
+#!bin/bash
 export BASE_PATH=${BASE_PATH:-'/root'}
 
 # python -m ttt.speech_commands.time_shift_analysis \

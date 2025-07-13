@@ -1,3 +1,4 @@
+#!bin/bash
 export BASE_PATH=${BASE_PATH:-'/root'}
 
 # python -m ttt.speech_commands.pre_time_shift_train --dataset_root_path $BASE_PATH'/data/speech_commands' --max_epoch 20 \

@@ -1,4 +1,4 @@
-# export PYTHONPATH=$PYTHONPATH:$(pwd)
+#!bin/bash
 export BASE_PATH=${BASE_PATH:-'/root'}
 
 # python -m CoNMix.prepare_corrupted_dataset --dataset 'audio-mnist' --dataset_root_path $BASE_PATH'/data/AudioMNIST/data' \

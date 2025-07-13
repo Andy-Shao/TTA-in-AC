@@ -1,3 +1,4 @@
+#!bin/bash
 export BASE_PATH=${BASE_PATH:-'/home/andyshao'}
 # python -m tent.speech_commands.analysis --dataset_root_path $BASE_PATH'/data/speech_commands' --model 'cnn' \
 #     --severity_level 0.005 --output_csv_name 'accuracy_record_cnn_gaussian_noise_005.csv' \

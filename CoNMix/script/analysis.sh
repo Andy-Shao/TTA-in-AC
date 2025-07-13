@@ -1,4 +1,4 @@
-# export PYTHONPATH=$PYTHONPATH:$(pwd)
+#!bin/bash
 export BASE_PATH=${BASE_PATH:-'/root'}
 
 # python -m CoNMix.analysis --dataset 'audio-mnist' --dataset_root_path '/root/data/AudioMNIST/data' \

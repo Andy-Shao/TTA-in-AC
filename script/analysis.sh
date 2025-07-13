@@ -1,5 +1,4 @@
-# export PYTHONPATH=$PYTHONPATH:$(pwd)
-# export 'PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:256'
+#!bin/bash
 export BASE_PATH=${BASE_PATH:-'/home/andyshao'}
 
 # python -m tent.analysis --model_weight_file_path './result/audio-mnist/tent/pre_train/model_weights.pt' --dataset_root_path $BASE_PATH'/data/AudioMNIST/data' \
