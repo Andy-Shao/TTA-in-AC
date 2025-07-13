@@ -69,7 +69,7 @@ mv R50+ViT-B_16.npz model/vit_checkpoint/imagenet21k/R50+ViT-B_16.npz
 ```
 #### Pre-training
 ```shell
-sh CoNMix/script/pre-train.sh
+sh CoNMix/script/pre_train.sh
 ```
 `Note`: Modify the `--dataset_root_path` to your AudioMNIST location.
 #### Prepare The Corruption Data
