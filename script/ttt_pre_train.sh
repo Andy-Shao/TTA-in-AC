@@ -1,5 +1,5 @@
 # export PYTHONPATH=$PYTHONPATH:$(pwd)
-export BASE_PATH='/root'
+export BASE_PATH=${BASE_PATH:-'/root'}
 
 python -m ttt.pre_time_shift_train --dataset_root_path $BASE_PATH'/data/AudioMNIST/data' --max_epoch 10 --depth 26 --shift_limit 0.2625 \
     --batch_size 126 --rotation_type 'expand' --output_csv_name 'ts_bn_accu_record.csv' --output_weight_name 'ts_bn_ckpt.pth'
