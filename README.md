@@ -30,6 +30,8 @@ pip install soundfile
 ## Processing
 ```
 export BASE_PATH={the parent path of this project}
+conda activate my-audio
+cd TTA-in-AC
 ```
 ### Tent & Norm Adaptation
 #### Pre-train
