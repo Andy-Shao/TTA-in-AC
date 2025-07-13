@@ -44,7 +44,7 @@ sh script/pre_train.sh
 ```shell
 sh script/analysis.sh
 ```
-`Note`: Modify the `--dataset_root_path ` to your AudioMNIST location. Modify the `--background_root_path` to your SpeechCommands v0.01 location.
+`Note`: Modify the `--dataset_root_path ` to your AudioMNIST location. Modify the `--background_root_path` to your SpeechCommands V1 location.
 
 ### TTT Adaptation
 #### Pre-training
@@ -57,7 +57,7 @@ sh script/ttt_pre_train.sh
 ```shell
 sh script/ttt_analysis.sh
 ```
-`Note`: Modify the `--dataset_root_path ` to your AudioMNIST location. Modify the `--background_root_path` to your SpeechCommands V0.01 location.
+`Note`: Modify the `--dataset_root_path ` to your AudioMNIST location. Modify the `--background_root_path` to your SpeechCommands V1 location.
 
 ### CoNMix
 Model download:
@@ -99,7 +99,7 @@ After that, open and run the `analysis_exhibition.ipynb` to demonstrate the anal
 [Official Audio MNIST Link](https://github.com/soerenab/AudioMNIST/tree/master)<br/>
 [Hosting Download Link](https://drive.google.com/file/d/1kq5_qCKRUTHmViDIziSRKPjW4fIoyT9u/view?usp=drive_link)
 
-### SpeechCommands v0.01
+### SpeechCommands V1
 The dataset (1.4 GB) has 65,000 one-second-long utterances of 30 short words by thousands of different people, contributed by public members through the AIY website. This is a set of one-second .wav audio files, each containing a single spoken English word.
 
 In both versions, ten of them are used as commands by convention: "Yes", "No", "Up", "Down", "Left",
