@@ -2,9 +2,9 @@
 
 ## Project Structure
 + **lib**: The library code for this project.
-+ **ttt**: The TTBA test-time training algorithm -- TTT is implemented.
-+ **CoNMix**: The CoNMix test-time training algorithm is implemented
-+ **tent**: The OTTA test time training -- TENT (tent adaptation, norm adaptation)
++ **ttt**: The TTBA test-time training algorithm -- [TTT](https://yueatsprograms.github.io/ttt/home.html) is implemented.
++ **CoNMix**: The [CoNMix](https://sites.google.com/view/conmix-vcl) test-time training algorithm is implemented
++ **tent**: The OTTA test time training -- [TENT](https://doi.org/10.48550/arXiv.2006.10726) (tent adaptation, norm adaptation)
 
 ## Software Environment
 Machine image: nvidia/cuda:11.8.0-devel-ubuntu22.04
