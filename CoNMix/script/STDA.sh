@@ -1,4 +1,4 @@
-# export PYTHONPATH=$PYTHONPATH:$(pwd)
+#!bin/bash
 export BASE_PATH=${BASE_PATH:-'/root'}
 
 # python -m CoNMix.STDA --dataset 'audio-mnist' --weak_aug_dataset_root_path $BASE_PATH'/tmp/AudioMNIST_analysis_005_weak' \
