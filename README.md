@@ -34,6 +34,7 @@ git clone https://github.com/Andy-Shao/TTA-in-AC.git
 conda activate my-audio
 cd TTA-in-AC
 ```
+[Trained weights](https://drive.google.com/file/d/1LOGKHBgUm43SC6pGq3MKq_P7weRIgIJW/view?usp=drive_link) for TENT, TTT, and CoNMix on AudioMNIST.
 ### Tent & Norm Adaptation
 #### Pre-training
 ```shell
@@ -81,7 +82,6 @@ sh CoNMix/script/prepare_dataset.sh
 sh CoNMix/script/STDA.sh
 ```
 #### Analysis
-[Trained weights](https://drive.google.com/file/d/1LOGKHBgUm43SC6pGq3MKq_P7weRIgIJW/view?usp=drive_link) for pre-training and STDA on AudioMNIST.
 ```shell
 sh CoNMix/script/analysis.sh
 ```
