@@ -28,30 +28,33 @@ pip install soundfile
 ```
 
 ## Processing
+```
+export BASE_PATH={the parent path of this project}
+```
 ### Tent & Norm Adaptation
 #### Pre-train
 ```shell
 sh script/pre_train.sh
 ```
-`Note`: try to modify the `--dataset_root_path ` for your dataset location.
+`Note`: try to modify the `--dataset_root_path ` to your AudioMNIST location.
 #### Analysis
 ```shell
 sh script/analysis.sh
 ```
-`Note`: try to modify the `--dataset_root_path ` for your dataset location.
+`Note`: try to modify the `--dataset_root_path ` to your AudioMNIST location. Try to modify the `--background_root_path` to your SpeechCommands v0.01 location.
 
 ### TTT Adaptation
 #### Pre-train
 ```shell
 sh script/ttt_pre_train.sh
 ```
-`Note`: try to modify the `--dataset_root_path ` for your dataset location.
+`Note`: try to modify the `--dataset_root_path ` to your AudioMNIST location.
 
 #### Analysis
 ```shell
 sh script/ttt_analysis.sh
 ```
-`Note`: try to modify the `--dataset_root_path ` for your dataset location.
+`Note`: try to modify the `--dataset_root_path ` to your AudioMNIST location. Try to modify the `--background_root_path` to your SpeechCommands V0.01 location.
 
 ### CoNMix for AudioMNIST
 Model download:
@@ -64,10 +67,12 @@ mv R50+ViT-B_16.npz model/vit_checkpoint/imagenet21k/R50+ViT-B_16.npz
 ```shell
 sh CoNMix/script/pre-train.sh
 ```
+`Note`: try to modify the `--dataset_root_path` to your AudioMNIST location.
 #### Prepare The Corruption Data
 ```shell
 sh CoNMix/script/prepare_dataset.sh
 ```
+`Note`: try to modify the `--dataset_root_path ` to your AudioMNIST location. Try to modify the `--temporary_path` to your location
 #### STDA
 ```shell
 sh CoNMix/script/STDA.sh
@@ -76,6 +81,7 @@ sh CoNMix/script/STDA.sh
 ```shell
 sh CoNMix/script/analysis.sh
 ```
+`Note`: try to modify the `--dataset_root_path ` to your AudioMNIST location. Try to modify the `--temporary_path` to your location
 
 ## Exhibition
 After that open and run the `analysis_exhibition.ipynb` to demonstrate the analysis feedback. 
@@ -86,9 +92,10 @@ After that open and run the `analysis_exhibition.ipynb` to demonstrate the analy
 + sample rate: 48000
 + sample data shape: [1, 14073 - 47998]
   
-[Audio MNIST Link](https://github.com/soerenab/AudioMNIST/tree/master)
+[Official Audio MNIST Link](https://github.com/soerenab/AudioMNIST/tree/master)<br/>
+[Hosting Download Link](https://drive.google.com/file/d/1kq5_qCKRUTHmViDIziSRKPjW4fIoyT9u/view?usp=drive_link)
 
-### Speech Commands Dataset v0.01
+### SpeechCommands v0.01
 The dataset (1.4 GB) has 65,000 one-second long utterances of 30 short words by thousands of different people, contributed by public members through the AIY website. This is a set of one-second .wav audio files, each containing a single spoken English word.
 
 In both versions, ten of them are used as commands by convention: "Yes", "No", "Up", "Down", "Left",
