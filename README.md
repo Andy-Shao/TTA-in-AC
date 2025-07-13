@@ -30,6 +30,7 @@ pip install soundfile
 ## Processing
 ```
 export BASE_PATH={the parent path of this project}
+git clone https://github.com/Andy-Shao/TTA-in-AC.git
 conda activate my-audio
 cd TTA-in-AC
 ```
