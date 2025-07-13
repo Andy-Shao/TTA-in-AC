@@ -47,7 +47,7 @@ sh script/analysis.sh
 `Note`: Modify the `--dataset_root_path ` to your AudioMNIST location. Modify the `--background_root_path` to your SpeechCommands v0.01 location.
 
 ### TTT Adaptation
-#### Pre-train
+#### Pre-training
 ```shell
 sh script/ttt_pre_train.sh
 ```
@@ -66,7 +66,7 @@ wget https://storage.googleapis.com/vit_models/imagenet21k/R50+ViT-B_16.npz
 mkdir -p model/vit_checkpoint/imagenet21k
 mv R50+ViT-B_16.npz model/vit_checkpoint/imagenet21k/R50+ViT-B_16.npz
 ```
-#### Pre-train
+#### Pre-training
 ```shell
 sh CoNMix/script/pre-train.sh
 ```
