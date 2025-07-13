@@ -1,10 +1,10 @@
 # Test-time Adaptation in Audio Classification
 
 ## Project Structure
-+ **lib**: the library code for this project.
-+ **TTT**: the TTBA test-time training algorithm implemented.
-+ **CoNMix**: the CoNMix test-time training algorithm implement
-+ **tent**: the OTTA test time training (tent adaptation, norm adaptation)
++ **lib**: The library code for this project.
++ **TTT**: The TTBA test-time training algorithm is implemented.
++ **CoNMix**: The CoNMix test-time training algorithm is implemented
++ **tent**: The OTTA test time training (tent adaptation, norm adaptation)
 
 ## Software Environment
 Machine image: nvidia/cuda:11.8.0-devel-ubuntu22.04
@@ -91,7 +91,7 @@ sh CoNMix/script/analysis.sh
 After that, open and run the `analysis_exhibition.ipynb` to demonstrate the analysis feedback. 
 
 ## Dataset
-### Audio MNIST
+### AudioMNIST
 + sample size: 30000
 + sample rate: 48000
 + sample data shape: [1, 14073 - 47998]
@@ -100,16 +100,16 @@ After that, open and run the `analysis_exhibition.ipynb` to demonstrate the anal
 [Hosting Download Link](https://drive.google.com/file/d/1kq5_qCKRUTHmViDIziSRKPjW4fIoyT9u/view?usp=drive_link)
 
 ### SpeechCommands v0.01
-The dataset (1.4 GB) has 65,000 one-second long utterances of 30 short words by thousands of different people, contributed by public members through the AIY website. This is a set of one-second .wav audio files, each containing a single spoken English word.
+The dataset (1.4 GB) has 65,000 one-second-long utterances of 30 short words by thousands of different people, contributed by public members through the AIY website. This is a set of one-second .wav audio files, each containing a single spoken English word.
 
 In both versions, ten of them are used as commands by convention: "Yes", "No", "Up", "Down", "Left",
-"Right", "On", "Off", "Stop", "Go". Other words are considered to be auxiliary (in the current implementation
+"Right", "On", "Off", "Stop", "Go". Other words are considered to be auxiliary (in the current implementation,
 it is marked by the `True` value of `the "is_unknown"` feature). Their function is to teach a model to distinguish core words
 from unrecognized ones.
 
 + Sample size: 64721 (train: 51088, test: 6835, validation: 6798)
 + sample rate: 16000
-+ sampel data shape: [1, 5945 - 16000]
++ sample data shape: [1, 5945 - 16000]
 
 |backgroud noise type|sample data shape|sample rate|
 |--|--|--|
@@ -125,8 +125,8 @@ from unrecognized ones.
 <!-- [TensorFlow Document](https://www.tensorflow.org/datasets/community_catalog/huggingface/speech_commands) -->
 
 ## Code Reference
-+ [tent](https://github.com/DequanWang/tent)
-+ [ttt_cifar_release](https://github.com/yueatsprograms/ttt_cifar_release/tree/master)
++ [TENT](https://github.com/DequanWang/tent)
++ [TTT_cifar_release](https://github.com/yueatsprograms/ttt_cifar_release/tree/master)
 + [CoNMix](https://github.com/vcl-iisc/CoNMix/tree/master)
 + [TransUNet](https://github.com/Beckschen/TransUNet)
 + [SHOT](https://github.com/tim-learn/SHOT)
