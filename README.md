@@ -100,7 +100,7 @@ After that, open and run the `analysis_exhibition.ipynb` to demonstrate the anal
 [Hosting Download Link](https://drive.google.com/file/d/1kq5_qCKRUTHmViDIziSRKPjW4fIoyT9u/view?usp=drive_link)
 
 ### SpeechCommands V1
-The dataset (1.4 GB) has 65,000 one-second-long utterances of 30 short words by thousands of different people, contributed by public members through the AIY website. This is a set of one-second .wav audio files, each containing a single spoken English word.
+The dataset (1.4 GB) comprises 65,000 one-second-long utterances of 30 short words, contributed by thousands of different people through the AIY website. This is a set of one-second .wav audio files, each containing a single spoken English word.
 
 In both versions, ten of them are used as commands by convention: "Yes", "No", "Up", "Down", "Left",
 "Right", "On", "Off", "Stop", "Go". Other words are considered to be auxiliary (in the current implementation,
