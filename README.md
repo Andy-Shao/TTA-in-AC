@@ -130,3 +130,16 @@ from unrecognized ones.
 + [CoNMix](https://github.com/vcl-iisc/CoNMix/tree/master)
 + [TransUNet](https://github.com/Beckschen/TransUNet)
 + [SHOT](https://github.com/tim-learn/SHOT)
+
+## Citation
+```text
+@misc{shao2025investigationtesttimeadaptationaudio,
+      title={An Investigation of Test-time Adaptation for Audio Classification under Background Noise}, 
+      author={Weichuang Shao and Iman Yi Liao and Tomas Henrique Bode Maul and Tissa Chandesa},
+      year={2025},
+      eprint={2507.15523},
+      archivePrefix={arXiv},
+      primaryClass={cs.LG},
+      url={https://arxiv.org/abs/2507.15523}, 
+}
+```
