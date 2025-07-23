@@ -7,7 +7,7 @@
 + **tent**: The OTTA test time training -- [TENT](https://doi.org/10.48550/arXiv.2006.10726) (tent adaptation, norm adaptation)
 
 ## Software Environment
-Machine image: nvidia/cuda:11.8.0-devel-ubuntu22.04
+Docker image: nvidia/cuda:11.8.0-devel-ubuntu22.04
 ```shell
 conda create --name my-audio python=3.9 -y 
 conda activate my-audio
