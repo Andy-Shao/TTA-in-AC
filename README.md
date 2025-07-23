@@ -8,6 +8,7 @@
 
 ## Software Environment
 Docker image: nvidia/cuda:11.8.0-devel-ubuntu22.04
+GPU: RTX 4090
 ```shell
 conda create --name my-audio python=3.9 -y 
 conda activate my-audio
