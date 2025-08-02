@@ -98,7 +98,8 @@ After that, open and run the `analysis_exhibition.ipynb` to demonstrate the anal
 + sample data shape: [1, 14073 - 47998]
   
 [Official Audio MNIST Link](https://github.com/soerenab/AudioMNIST/tree/master)<br/>
-[Hosting Download Link](https://drive.google.com/file/d/1kq5_qCKRUTHmViDIziSRKPjW4fIoyT9u/view?usp=drive_link)
+<!--[Hosting Download Link](https://drive.google.com/file/d/1kq5_qCKRUTHmViDIziSRKPjW4fIoyT9u/view?usp=drive_link)-->
+[Hosting Download Link](https://www.kaggle.com/datasets/sripaadsrinivasan/audio-mnist)
 
 ### SpeechCommands V1
 The dataset (1.4 GB) comprises 65,000 one-second-long utterances of 30 short words, contributed by thousands of different people through the AIY website. This is a set of one-second .wav audio files, each containing a single spoken English word.
