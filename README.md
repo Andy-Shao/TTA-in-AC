@@ -135,13 +135,10 @@ from unrecognized ones.
 
 ## Citation
 ```text
-@misc{shao2025investigationtesttimeadaptationaudio,
-      title={An Investigation of Test-time Adaptation for Audio Classification under Background Noise}, 
-      author={Weichuang Shao and Iman Yi Liao and Tomas Henrique Bode Maul and Tissa Chandesa},
-      year={2025},
-      eprint={2507.15523},
-      archivePrefix={arXiv},
-      primaryClass={cs.LG},
-      url={https://arxiv.org/abs/2507.15523}, 
+@article{shao2025investigation,
+  title={An Investigation of Test-time Adaptation for Audio Classification under Background Noise},
+  author={Shao, Weichuang and Liao, Iman Yi and Maul, Tomas Henrique Bode and Chandesa, Tissa},
+  journal={arXiv preprint arXiv:2507.15523},
+  year={2025}
 }
 ```
